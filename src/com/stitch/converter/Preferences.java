@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 
-import javafx.scene.paint.Color;
+import com.stitch.converter.model.StitchColor;
 
 public class Preferences {
 	private static HashMap<String, String> keyStore = new HashMap<>();
@@ -156,7 +156,7 @@ public class Preferences {
 		}
 	}
 
-	public static Color getColor(final String key) throws NoSuchElementException, ClassCastException {
+	public static StitchColor getColor(final String key) throws NoSuchElementException, ClassCastException {
 		final String value = keyStore.get(key);
 		if (value == null) {
 			throw new NoSuchElementException();
@@ -164,7 +164,7 @@ public class Preferences {
 		return stringToColor(value);
 	}
 
-	public static Color getColor(final String key, final Color defaultValue) {
+	public static StitchColor getColor(final String key, final StitchColor defaultValue) {
 		try {
 			return getColor(key);
 		} catch (final NoSuchElementException | ClassCastException e) {
@@ -174,24 +174,19 @@ public class Preferences {
 		}
 	}
 	
-	private static Color stringToColor(final String colorCode) throws ClassCastException {
-		double red, green, blue, alpha;
+	private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
+		int red, green, blue;
 		try {
-			red = (double) Integer.valueOf(colorCode.substring(1, 3), 16) / 255;
-			green = (double) Integer.valueOf(colorCode.substring(3, 5), 16) / 255;
-			blue = (double) Integer.valueOf(colorCode.substring(5, 7), 16) / 255;
-			try {
-				alpha = (double) Integer.valueOf(colorCode.substring(7, 9), 16) / 255;
-			} catch (final NumberFormatException | IndexOutOfBoundsException e) {
-				alpha = 1.0d;
-			}
+			red = Integer.valueOf(colorCode.substring(1, 3), 16);
+			green = Integer.valueOf(colorCode.substring(3, 5), 16);
+			blue = Integer.valueOf(colorCode.substring(5, 7), 16);
 		} catch (final NumberFormatException | IndexOutOfBoundsException e) {
 			throw new ClassCastException();
 		}
-		return new Color(red, green, blue, alpha);
+		return new StitchColor(red, green, blue, colorCode);
 	}
 
-	private static String colorToString(final Color color) {
+	private static String colorToString(final StitchColor color) {
 		String colorCode = "#";
 		colorCode += Integer.toHexString((int) color.getRed() * 255);
 		colorCode += Integer.toHexString((int) color.getGreen() * 255);

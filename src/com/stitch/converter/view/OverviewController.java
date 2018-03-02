@@ -121,7 +121,7 @@ public class OverviewController extends Controller {
 			final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
 					new File(Preferences.getString("csvFile", "dmc.csv")), file);
 			builder.setMaximumColor(Preferences.getInteger("maximumColorLimit", 0));
-			builder.setBackground(Preferences.getColor("backgroundColor", Color.WHITE));
+			builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
 			builder.setThread(Preferences.getInteger("workingThread", 0));
 			builder.setResize(Preferences.getBoolean("resizeImage", true));
 			
@@ -169,7 +169,7 @@ public class OverviewController extends Controller {
 	public void save() {
 		setTitleChanged(false);
 		try {
-			Resources.write(dmcFile, canvasController.getImage());
+			Resources.writeObject(dmcFile, canvasController.getImage());
 			LogPrinter.print(Resources.getString("file_saved", dmcFile.getName(), Resources.getString("dmc_file")));
 		} catch (IOException e) {
 			e.printStackTrace();

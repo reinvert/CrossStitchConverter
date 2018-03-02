@@ -1,15 +1,19 @@
 package com.stitch.converter;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import com.stitch.converter.model.StitchImage;
 
 public class Resources {
 	private static ResourceBundle bundle;
@@ -54,7 +58,23 @@ public class Resources {
 		}
 	}
 	
-	public static void write(final String dir, final Object object) throws FileNotFoundException, IOException {
+	public static Object readObject(final String dir) throws IOException, ClassNotFoundException {
+		try(final FileInputStream fis = new FileInputStream(dir)) {
+			try(final ObjectInputStream ois  = new ObjectInputStream(fis);) {
+				return ois.readObject();
+			}
+		}
+	}
+	
+	public static Object readObject(final File file) throws IOException, ClassNotFoundException {
+		try(final FileInputStream fis = new FileInputStream(file)) {
+			try(final ObjectInputStream ois  = new ObjectInputStream(fis);) {
+				return ois.readObject();
+			}
+		}
+	}
+	
+	public static void writeObject(final String dir, final Object object) throws FileNotFoundException, IOException {
 		try (FileOutputStream fos = new FileOutputStream(dir)) {
 			try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 				oos.writeObject(object);
@@ -62,7 +82,7 @@ public class Resources {
 		}
 	}
 	
-	public static void write(final File file, final Object object) throws FileNotFoundException, IOException {
+	public static void writeObject(final File file, final Object object) throws FileNotFoundException, IOException {
 		try (FileOutputStream fos = new FileOutputStream(file)) {
 			try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 				oos.writeObject(object);

@@ -143,10 +143,10 @@ class ImageTools {
 		return Math.abs(or - tr) + Math.abs(og - tg) + Math.abs(ob - tb);
 	}
 
-	static String calculateRemoveString(final StitchImage colorSet, final HashMap<String, Integer> usedColorCount) {
-		String differname = "";
+	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {
+		StitchColor uselessColor = null;
 		double difference = 255 + 255 + 255;
-		final ArrayList<PixelList> list = new ArrayList<PixelList>(colorSet.getPixelLists());
+		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {
 				final StitchColor originalColor = list.get(i).getColor();
@@ -164,14 +164,14 @@ class ImageTools {
 					final int tarcount = usedColorCount.get(list.get(j).getColor().getName());
 					difference = avgcolor;
 					if (orgcount >= tarcount) {
-						differname = list.get(j).getColor().getName();
+						uselessColor = list.get(j).getColor();
 					} else {
-						differname = list.get(i).getColor().getName();
+						uselessColor = list.get(i).getColor();
 					}
 				}
 			}
 		}
-		return differname;
+		return uselessColor;
 	}
 
 	static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {

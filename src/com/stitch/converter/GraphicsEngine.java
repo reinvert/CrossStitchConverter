@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.TreeSet;
 
@@ -21,13 +22,13 @@ import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
 
 /**
- * Creates Blueprint image and used thread list.
+ * Convert and save the output image.
  * 
  * @author Reinvert
  */
 public class GraphicsEngine extends CustomThread {
 	/**
-	 * Defines {@link GraphicsEngine}.
+	 * Builder of {@link GraphicsEngine}.
 	 * 
 	 * @author Reinvert
 	 */
@@ -39,15 +40,15 @@ public class GraphicsEngine extends CustomThread {
 		private Mode loadMode = Mode.NEW_FILE;
 		private int maximumColor = -1, thread;
 		private boolean resize = false;
-		private Color backgroundColor = Color.WHITE;
+		private StitchColor backgroundColor = new StitchColor(Color.WHITE, "");
 
 		/**
-		 * Builder of {@link GraphicsEngine}.
+		 * Constructor of the {@link Builder}.
 		 * 
 		 * @param csv
-		 *            - the csv {@link java.io.File File} containing color information.
+		 *            - the csv {@link File} containing color information.
 		 * @param file
-		 *            - the image {@link java.io.File File} to convert.
+		 *            - the image {@link File} to convert.
 		 */
 		public Builder(final File csv, final File file) {
 			this.file = file;
@@ -68,7 +69,7 @@ public class GraphicsEngine extends CustomThread {
 		}
 
 		/**
-		 * Set whether or not to resize the image.
+		 * Sets whether or not to resize the image.
 		 * 
 		 * @param resize
 		 *            - the boolean whether or not to resize the images.
@@ -86,7 +87,7 @@ public class GraphicsEngine extends CustomThread {
 		 *            - the background {@link javafx.scene.paint.Color Color} of image.
 		 * @return this instance.
 		 */
-		public Builder setBackground(final Color backgroundColor) {
+		public Builder setBackground(final StitchColor backgroundColor) {
 			this.backgroundColor = backgroundColor;
 			return this;
 		}
@@ -128,7 +129,7 @@ public class GraphicsEngine extends CustomThread {
 		}
 
 		/**
-		 * Build {@link GraphicsEngine} instance.
+		 * Build and returns {@link GraphicsEngine} instance.
 		 * 
 		 * @return the {@link GraphicsEngine} instance.
 		 */
@@ -140,19 +141,20 @@ public class GraphicsEngine extends CustomThread {
 
 	/**
 	 * the {@link Mode} whether it is a new file or an existing one.
+	 * 
 	 * @author Reinvert
 	 *
 	 */
 	public enum Mode {
 		LOAD, NEW_FILE
 	}
-	
+
 	private ArrayList<StitchColor> colorList;
-	private StitchImage convertedImage;
+	private StitchImage stitchImage;
 	private final File csv;
 	private final File file;
 	private BufferedImage image;
-	private final Color backgroundColor;
+	private final StitchColor backgroundColor;
 	private final Mode loadMode;
 
 	private final int maxColor, thread;
@@ -189,7 +191,7 @@ public class GraphicsEngine extends CustomThread {
 	 * @param key
 	 *            - the name of used {@link java.awt.Color Color}.
 	 */
-	private synchronized void addCount(final String key) {
+	private void addCount(final String key) {
 		try {
 			usedColorCount.put(key, usedColorCount.get(key) + 1);
 		} catch (final NullPointerException e) {
@@ -220,7 +222,7 @@ public class GraphicsEngine extends CustomThread {
 	 * @return the {@link StitchImage}.
 	 */
 	public StitchImage getConvertedImage() {
-		return convertedImage;
+		return stitchImage;
 	}
 
 	/**
@@ -250,79 +252,57 @@ public class GraphicsEngine extends CustomThread {
 		}
 		long time = System.currentTimeMillis();
 
-		convertedImage = new StitchImage();
+		stitchImage = new StitchImage();
 		LogPrinter.print(Resources.getString("load_file", file.getPath()));
 		try {
 			int resizeLength = Preferences.getInteger("resizeLength", 200);
 			image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
-		} catch (final Exception e) {
-			e.printStackTrace();
+		} catch (final IOException e) {
+			LogPrinter.print(e);
 			LogPrinter.print(Resources.getString("cant_read_image"));
 			return;
 		}
 		boolean onceRunned = false;
-		String removestring = "";
-		Collection<PixelList> pixelListArray = null;
+		StitchColor toRemove = null;
+		Collection<PixelList> pixelLists = null;
 		do {
-			convertedImage.setSize(image.getWidth(), image.getHeight());
+			stitchImage.setSize(image.getWidth(), image.getHeight());
 			if (onceRunned) {
-				removeColor(colorList, removestring);
+				removeColor(colorList, toRemove);
 			}
 			usedColorCount.clear();
 
-			final ColorConverter converter = new ColorConverter.Builder(image, convertedImage, colorList)
+			final ColorConverter converter = new ColorConverter.Builder(image, stitchImage, colorList)
 					.setThread(thread).build();
 			converter.addListener(new MessageListener() {
-
 				@Override
 				public void onTaskCompleted(final StitchImage stitchImage, final double scale) {
-					stitchImage.setBackground(new StitchColor(backgroundColor, ""));
+					stitchImage.setBackground(backgroundColor);
 					sendGraphics(stitchImage, scale);
 				}
-
 			});
 			converter.start();
-			/*
-			 * final MessageListener blueprintListener = new MessageListener() {
-			 * 
-			 * @Override public void onGraphicsChanged(final Canvas canvas) {
-			 * sendGraphics(canvas); }
-			 * 
-			 * @Override public void onStringReceived(String str) { sendString(str); }
-			 * 
-			 * @Override public void onTaskCompleted() {
-			 * 
-			 * } }; final String imageFileName = resources.getString("blueprint_image",
-			 * file.getPath().replaceFirst("[.][^.]+$", "")); final File imageFile = new
-			 * File(imageFileName); try { blueprint = new Blueprint.Builder(convertedWidth,
-			 * convertedHeight, convertedImage, imageFile)
-			 * .setListener(blueprintListener).setStyle(style).build(); } catch (final
-			 * OutOfMemoryError e) { sendString(resources.getString("out_of_memory"));
-			 * return; } blueprint.start();
-			 */
 			try {
 				converter.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			pixelListArray = convertedImage.getPixelLists();
+			} catch (final InterruptedException e) {
 
-			for (final PixelList pixelList : pixelListArray) {
+			}
+			pixelLists = stitchImage.getPixelLists();
+
+			for (final PixelList pixelList : pixelLists) {
 				final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
 				for (final Pixel pixel : pixelSet) {
-					drawPixelToImage(pixel, convertedImage);
+					drawPixelToImage(pixel, stitchImage);
 				}
 			}
 			onceRunned = true;
-			removestring = ImageTools.calculateRemoveString(convertedImage, usedColorCount);
-		} while (maxColor != 0 && convertedImage.getPixelLists().size() > maxColor);
-		/*
-		 * try { blueprint.join(); } catch (InterruptedException e) { }
-		 */
+			toRemove = ImageTools.calculateRemoveString(stitchImage, usedColorCount);
+		} while (maxColor != 0 && stitchImage.getPixelLists().size() > maxColor);
 		try {
 			writeFiles(file);
-		} catch (IOException e) {
-			LogPrinter.print(e.getMessage());
+		} catch (final IOException e) {
+			LogPrinter.print(e);
+			LogPrinter.print(Resources.getString("save_failed", file.getName()));
 			return;
 		}
 		time = System.currentTimeMillis() - time;
@@ -330,46 +310,34 @@ public class GraphicsEngine extends CustomThread {
 	}
 
 	/**
-	 * Read from saved *.dmc file to ConvertedImage instance.
+	 * Read from saved *.dmc {@link File} to {@link StitchImage} instance.
 	 * 
 	 * @param file
-	 *            - saved *.dmc file.
+	 *            - saved *.dmc {@link File}.
 	 */
 	private void readFromSavedFile(final File file) {
-		convertedImage = new StitchImage();
-		ObjectInputStream ois = null;
-		FileInputStream fis = null;
 		try {
-			fis = new FileInputStream(file);
-			ois = new ObjectInputStream(fis);
-			convertedImage = (StitchImage) ois.readObject();
-		} catch (final Exception e) {
-			e.printStackTrace();
-			LogPrinter.print(Resources.getString("read_failed", Resources.getString("dmc")));
-			return;
-		} finally {
-			try {
-				ois.close();
-				fis.close();
-			} catch (final Exception e) {
-			}
+			stitchImage = (StitchImage) Resources.readObject(file);
+		} catch (ClassNotFoundException | IOException e) {
+			LogPrinter.print(e);
+			LogPrinter.print(Resources.getString("read_failed", file.getName()));
 		}
 
 		if (this.loadMode == Mode.NEW_FILE) {
-			for (final PixelList pixelList : convertedImage.getPixelLists()) {
+			for (final PixelList pixelList : stitchImage.getPixelLists()) {
 				for (final Pixel pixel : pixelList.getPixelSet()) {
-					drawPixelToImage(pixel, convertedImage);
+					drawPixelToImage(pixel, stitchImage);
 				}
 			}
 		}
 
 		totalTime = System.currentTimeMillis() - totalTime;
 		LogPrinter.print(Resources.getString("task_completed", Resources.getString("load"), totalTime));
-		sendGraphics(convertedImage, 15.0);
+		sendGraphics(stitchImage, Preferences.getDouble("scale", 15.0));
 	}
 
 	/**
-	 * Delete the color thread from the list. Only works if maximum color is
+	 * Remove the color from the {@link Collection}. Only works if maximum color is
 	 * limited.
 	 * 
 	 * @param colorName
@@ -381,14 +349,15 @@ public class GraphicsEngine extends CustomThread {
 	 * @param toRemove
 	 *            - the name of the thread to delete.
 	 */
-	private void removeColor(final ArrayList<StitchColor> colorList, final String toRemove) {
-		int num;
-		for (num = 0; num < colorList.size(); num++) {
-			if (colorList.get(num).getName().equals(toRemove)) {
+	private void removeColor(final Collection<StitchColor> colorList, final StitchColor toRemove) {
+		Iterator<StitchColor> iterator = colorList.iterator();
+		StitchColor color;
+		while((color = iterator.next()) != null) {
+			if(color.equals(toRemove)) {
+				colorList.remove(color);
 				return;
 			}
 		}
-		colorList.remove(num);
 	}
 
 	/**
@@ -419,7 +388,7 @@ public class GraphicsEngine extends CustomThread {
 		final String fileName = file.getParent() + File.separator
 				+ file.getName().substring(0, file.getName().lastIndexOf(".")) + ".dmc";
 		try {
-			Resources.write(fileName, convertedImage);
+			Resources.writeObject(fileName, stitchImage);
 			LogPrinter.print(Resources.getString("file_saved", fileName, Resources.getString("dmc_file")));
 		} catch (final IOException e) {
 			e.printStackTrace();
