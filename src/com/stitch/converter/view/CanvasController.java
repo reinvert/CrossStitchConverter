@@ -99,10 +99,10 @@ public class CanvasController {
 		for (final PixelList pixelList : image.getPixelLists()) {
 			final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
 			for (final Pixel pixel : pixelSet) {
-				if (!pixelList.isHighlighted()) {
+				if (pixelList.isHighlighted() == false) {
 					continue;
 				}
-				context.setFill(pixelList.getColor().asFX());
+				context.setFill(Color.WHITE);
 				context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
 			}
 		}
@@ -110,30 +110,30 @@ public class CanvasController {
 
 	private void drawGrid(int x, int y, int width, int height) {
 		context.setFill(new Color(0d, 0d, 0d, 0.1d));
-		for (int count = 0; count < width + 1; count++) {
+		for (int count = 0; count <= width; count++) {
 			if (count % 5 == 0) {
 				continue;
 			}
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}
-		for (int count = 0; count < height + 1; count++) {
+		for (int count = 0; count <= height; count++) {
 			if (count % 5 == 0) {
 				continue;
 			}
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
 		context.setFill(new Color(0d, 0d, 0d, 0.5d));
-		for (int count = 5; count < width + 1; count += 10) {
+		for (int count = 5; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}
-		for (int count = 5; count < width + 1; count += 10) {
+		for (int count = 5; count <= height; count += 10) {
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
 		context.setFill(new Color(0d, 0d, 0d, 1d));
-		for (int count = 0; count < width + 1; count += 10) {
+		for (int count = 0; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}
-		for (int count = 0; count < width + 1; count += 10) {
+		for (int count = 0; count <= height; count += 10) {
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
 	}
@@ -150,9 +150,13 @@ public class CanvasController {
 				if (pixel.getColor().equals(image.getBackground())) {
 					continue;
 				}
-				if (isHighlightExist == false && pixel.getColor().getRed() + pixel.getColor().getBlue()
-						+ pixel.getColor().getGreen() < 128 * 3) {
-					context.setFill(Color.WHITE);
+				if (isHighlightExist == false) {
+					if(pixel.getColor().getRed() + pixel.getColor().getBlue()
+							+ pixel.getColor().getGreen() < 128 * 3) {
+							context.setFill(Color.WHITE);
+					} else {
+						context.setFill(Color.BLACK);
+					}
 				} else {
 					context.setFill(Color.BLACK);
 				}
