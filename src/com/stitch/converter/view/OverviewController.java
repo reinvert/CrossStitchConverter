@@ -167,6 +167,9 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void save() {
+		if(save.isDisable() == true) {
+			return;
+		}
 		setTitleChanged(false);
 		try {
 			Resources.writeObject(dmcFile, canvasController.getImage());
@@ -179,6 +182,9 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void saveTo() {
+		if(saveTo.isDisable() == true) {
+			return;
+		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
 		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
@@ -193,6 +199,9 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void exportImage() {
+		if(exportPng.isDisable() == true) {
+			return;
+		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
 		fileChooser.setInitialFileName(dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + ".png");
@@ -215,6 +224,9 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void exportColor() {
+		if(exportCsv.isDisable() == true) {
+			return;
+		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
 		fileChooser.setInitialFileName(dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + ".csv");
@@ -247,6 +259,9 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void exportBlueprint() {
+		if(exportBlueprint.isDisable() == true) {
+			return;
+		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
 		fileChooser.setInitialFileName(

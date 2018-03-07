@@ -9,6 +9,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
@@ -48,11 +49,13 @@ public class Main extends Application {
 
 			final Scene scene = new Scene(rootLayout);
 			primaryStage.setScene(scene);
-			primaryStage.show();
 
 			controller = loader.getController();
 			controller.setStage(primaryStage);
 			controller.setApp(this);
+			
+			primaryStage.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
+			primaryStage.show();
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
