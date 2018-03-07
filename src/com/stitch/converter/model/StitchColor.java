@@ -2,7 +2,7 @@ package com.stitch.converter.model;
 
 import java.io.Serializable;
 
-public class StitchColor implements Serializable, Cloneable {
+public class StitchColor implements Serializable, Cloneable, Comparable<StitchColor> {
 	private static final long serialVersionUID = 1L;
 
 	private final int red, green, blue;
@@ -91,6 +91,17 @@ public class StitchColor implements Serializable, Cloneable {
 			return super.clone();
 		} catch (CloneNotSupportedException e) {
 			throw new AssertionError();
+		}
+	}
+
+	@Override
+	public int compareTo(final StitchColor target) {
+		try {
+			int integerName = Integer.parseInt(this.getName());
+			int targetIntegerName = Integer.parseInt(target.getName());
+			return Integer.compare(integerName, targetIntegerName);
+		} catch(final NumberFormatException e) {
+			return this.getName().compareTo(target.getName());
 		}
 	}
 }

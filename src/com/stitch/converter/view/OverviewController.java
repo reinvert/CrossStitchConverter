@@ -120,7 +120,7 @@ public class OverviewController extends Controller {
 
 			final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
 					new File(Preferences.getString("csvFile", "dmc.csv")), file);
-			builder.setMaximumColor(Preferences.getInteger("maximumColorLimit", 0));
+			builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
 			builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
 			builder.setThread(Preferences.getInteger("workingThread", 0));
 			builder.setResize(Preferences.getBoolean("resizeImage", true));
@@ -480,8 +480,9 @@ public class OverviewController extends Controller {
 		});
 	}
 	
-	public void setImage(final StitchImage stitchImage, final double scale) {
+	public void setImage(final StitchImage stitchImage) {
 		canvasController = new CanvasController(stitchImage, canvas);
+		double scale = Preferences.getDouble("scale", 15.0d);
 		canvasController.setScale(scale);
 		zoom.setText((scale * 100) + "%");
 		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList();

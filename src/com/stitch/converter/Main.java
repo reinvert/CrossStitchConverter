@@ -1,12 +1,9 @@
 package com.stitch.converter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import com.stitch.converter.model.StitchImage;
-import com.stitch.converter.view.ControllerListener;
 import com.stitch.converter.view.OverviewController;
-import com.sun.javafx.application.HostServicesDelegate;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -27,14 +24,13 @@ public class Main extends Application {
 	private Stage primaryStage;
 	private BorderPane rootLayout;
 
-	private ArrayList<ControllerListener> controllerListener = new ArrayList<ControllerListener>();
-	private final MessageListener listener = new MessageListener() {
+	private Listener listener = new Listener() {
 		@Override
-		public void onTaskCompleted(final StitchImage stitchImage, final double scale) {
+		public void onFinished(StitchImage image) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					controller.setImage(stitchImage, scale);
+					controller.setImage(image);
 				}
 			});
 		}
@@ -42,10 +38,6 @@ public class Main extends Application {
 
 	public static void main(String[] args) {
 		launch(args);
-	}
-
-	public void addListener(final ControllerListener listener) {
-		controllerListener.add(listener);
 	}
 
 	public void initRootLayout() {
@@ -61,19 +53,21 @@ public class Main extends Application {
 			controller = loader.getController();
 			controller.setStage(primaryStage);
 			controller.setApp(this);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public void load(final GraphicsEngine.Builder builder) {
-		graphicsEngine = builder.addListener(listener).setMode(GraphicsEngine.Mode.LOAD).build();
-		graphicsEngine.start();
+		graphicsEngine = builder.setMode(GraphicsEngine.Mode.LOAD).setListener(listener).build();
+		final Thread engineThread = new Thread(graphicsEngine);
+		engineThread.start();
 	}
 
 	public void startConversion(GraphicsEngine.Builder builder) {
-		graphicsEngine = builder.addListener(listener).setMode(GraphicsEngine.Mode.NEW_FILE).build();
-		graphicsEngine.start();
+		graphicsEngine = builder.setMode(GraphicsEngine.Mode.NEW_FILE).setListener(listener).build();
+		final Thread engineThread = new Thread(graphicsEngine);
+		engineThread.start();
 	}
 
 	@Override

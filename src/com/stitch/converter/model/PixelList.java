@@ -25,7 +25,7 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 
 	@Override
 	public int compareTo(final PixelList arg0) {
-		return this.getColor().getName().compareTo(arg0.getColor().getName());
+		return this.getColor().compareTo(arg0.getColor());
 	}
 
 	public StitchColor getColor() {

@@ -13,8 +13,6 @@ import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-import com.stitch.converter.model.StitchImage;
-
 public class Resources {
 	private static ResourceBundle bundle;
 	private static final ArrayList<Locale> supportedLocales = new ArrayList<Locale>();

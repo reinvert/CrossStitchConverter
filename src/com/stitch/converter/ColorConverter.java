@@ -17,7 +17,7 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  *
  */
-public class ColorConverter extends CustomThread {
+public class ColorConverter extends Thread {
 	/**
 	 * Builder of {@link ColorConverter}
 	 * 
@@ -26,7 +26,7 @@ public class ColorConverter extends CustomThread {
 	 */
 	public static class Builder {
 		private final Collection<StitchColor> colorList;
-		private final StitchImage convertedImage;
+		private final StitchImage stitchImage;
 		private final BufferedImage image;
 		private int thread = Runtime.getRuntime().availableProcessors() + 1;
 
@@ -35,15 +35,15 @@ public class ColorConverter extends CustomThread {
 		 * 
 		 * @param image
 		 *            - the original {@link BufferedImage}.
-		 * @param convertedImage
+		 * @param stitchImage
 		 *            - the target {@link StitchImage} to save the converted pixels.
 		 * @param colorList
 		 *            - Stitch color lists.
 		 */
-		public Builder(final BufferedImage image, final StitchImage convertedImage,
+		public Builder(final BufferedImage image, final StitchImage stitchImage,
 				final Collection<StitchColor> colorList) {
 			this.image = image;
-			this.convertedImage = convertedImage;
+			this.stitchImage = stitchImage;
 			this.colorList = colorList;
 		}
 
@@ -62,18 +62,20 @@ public class ColorConverter extends CustomThread {
 			}
 			return this;
 		}
-		
+
 		/**
 		 * Build and returns {@link ColorConverter} instance.
+		 * 
 		 * @return this instance.
 		 */
 		public ColorConverter build() {
-			return new ColorConverter(image, convertedImage, colorList, thread);
+			return new ColorConverter(this);
 		}
 	}
 
 	/**
 	 * Manages the converting color threads.
+	 * 
 	 * @author Reinvert
 	 *
 	 */
@@ -91,10 +93,10 @@ public class ColorConverter extends CustomThread {
 					StitchColor outputColor = null;
 					double calculatedDifference = 0;
 
-					for (final StitchColor calculateColor : colorList) {
-						calculatedDifference = ImageTools.calculateDifference(calculateColor, targetColor);
+					for (final StitchColor listColor : colorList) {
+						calculatedDifference = ImageTools.calculateDifference(listColor, targetColor);
 						if (calculatedDifference < difference) {
-							outputColor = calculateColor;
+							outputColor = listColor;
 							difference = calculatedDifference;
 						}
 					}
@@ -106,36 +108,35 @@ public class ColorConverter extends CustomThread {
 			}
 		}
 	}
-	
+
 	/**
 	 * Reads the image and put pixels to queue.
+	 * 
 	 * @author Reinvert
 	 *
 	 */
 	private class ImageReader implements Runnable {
 		@Override
 		public void run() {
-			for (int x = 0; x < convertedImage.getWidth(); x++) {
-				for (int y = 0; y < convertedImage.getHeight(); y++) {
-					try {
+			try {
+				for (int x = 0; x < stitchImage.getWidth(); x++) {
+					for (int y = 0; y < stitchImage.getHeight(); y++) {
 						inputQueue.put(new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), "")));
-					} catch (final InterruptedException e) {
-
 					}
 				}
-			}
-			for (int threadCount = 0; threadCount < thread; threadCount++) {
-				try {
+				for (int threadCount = 0; threadCount < thread; threadCount++) {
 					inputQueue.put(poisonPill);
-				} catch (InterruptedException e) {
-
 				}
+			} catch (final InterruptedException e) {
+
 			}
 		}
 	}
-	
+
 	/**
-	 * Reads the pixel from queue and write the converted pixels to {@link StitchImage}.
+	 * Reads the pixel from queue and write the converted pixels to
+	 * {@link StitchImage}.
+	 * 
 	 * @author Reinvert
 	 *
 	 */
@@ -149,7 +150,7 @@ public class ColorConverter extends CustomThread {
 						return;
 					}
 					image.setRGB(pixel.getX(), pixel.getY(), pixel.getColor().asAWT().getRGB());
-					convertedImage.add(pixel);
+					stitchImage.add(pixel);
 				} catch (final InterruptedException e) {
 
 				}
@@ -158,7 +159,7 @@ public class ColorConverter extends CustomThread {
 	}
 
 	private final Collection<StitchColor> colorList;
-	private final StitchImage convertedImage;
+	private final StitchImage stitchImage;
 	private final BufferedImage image;
 	private final BlockingQueue<Pixel> inputQueue = new ArrayBlockingQueue<>(16),
 			outputQueue = new ArrayBlockingQueue<>(16);
@@ -175,46 +176,40 @@ public class ColorConverter extends CustomThread {
 	 * 
 	 * @param image
 	 *            - the original {@link BufferedImage}.
-	 * @param convertedImage
+	 * @param stitchImage
 	 *            - the target {@link StitchImage} to save the converted pixels.
 	 * @param colorList
 	 *            - Stitch color lists.
 	 * @param thread
 	 *            - the number of threads.
 	 */
-	private ColorConverter(final BufferedImage image, final StitchImage convertedImage,
-			final Collection<StitchColor> colorList, final int thread) {
-		this.image = image;
-		this.convertedImage = convertedImage;
-		this.colorList = colorList;
-		this.thread = thread;
+	private ColorConverter(final Builder builder) {
+		this.image = builder.image;
+		this.stitchImage = builder.stitchImage;
+		this.colorList = builder.colorList;
+		this.thread = builder.thread;
 	}
 
 	@Override
 	public void run() {
-		new Thread(new ImageReader()).start();
-		for (int createThread = 0; createThread < thread; createThread++) {
-			threadList.add(new Thread(new Converter()));
-		}
-		for (final Thread colorThread : threadList) {
-			colorThread.start();
-		}
-		final Thread writeThread = new Thread(new ImageWriter());
-		writeThread.start();
-		for (final Thread colorThread : threadList) {
-			try {
-				colorThread.join();
-			} catch (final InterruptedException e) {
-
-			}
-		}
 		try {
+			new Thread(new ImageReader()).start();
+			for (int createThread = 0; createThread < thread; createThread++) {
+				threadList.add(new Thread(new Converter()));
+			}
+			for (final Thread colorThread : threadList) {
+				colorThread.start();
+			}
+			final Thread writeThread = new Thread(new ImageWriter());
+			writeThread.start();
+			for (final Thread colorThread : threadList) {
+				colorThread.join();
+			}
 			for (int createThread = 0; createThread < thread; createThread++) {
 				outputQueue.put(poisonPill);
 			}
 		} catch (final InterruptedException e) {
 
 		}
-		sendGraphics(convertedImage, Preferences.getDouble("scale", 15d));
 	}
 }
