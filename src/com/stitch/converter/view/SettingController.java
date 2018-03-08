@@ -35,6 +35,7 @@ public class SettingController extends Controller{
 	@FXML
 	private TableColumn<SimpleEntry<String, String>, String> key, value, description;
 	
+	@SuppressWarnings("unchecked")
 	@FXML
 	private void initialize() {
 		settingTable.setOnKeyPressed(event -> {

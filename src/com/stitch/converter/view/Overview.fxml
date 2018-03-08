@@ -32,20 +32,20 @@
         <menus>
           <Menu mnemonicParsing="false" text="%file">
             <items>
-              <MenuItem mnemonicParsing="false" onAction="#newfile" text="%new_file_button" />
-                  <MenuItem mnemonicParsing="false" onAction="#load" text="%file_open" />
+              <MenuItem mnemonicParsing="false" onAction="#newfile" text="%new_file_menu" />
+                  <MenuItem mnemonicParsing="false" onAction="#load" text="%file_open_menu" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#save" text="%save" />
-                  <MenuItem fx:id="saveTo" disable="true" mnemonicParsing="false" onAction="#saveTo" text="%save_to" />
+                  <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#save" text="%save_menu" />
+                  <MenuItem fx:id="saveTo" disable="true" mnemonicParsing="false" onAction="#saveTo" text="%save_to_menu" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="exportPng" disable="true" mnemonicParsing="false" onAction="#exportImage" text="%export_converted_image" />
-                  <MenuItem fx:id="exportCsv" disable="true" mnemonicParsing="false" onAction="#exportColor" text="%export_stitch_list" />
-                  <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprint" text="%export_blueprint" />
+                  <MenuItem fx:id="exportPng" disable="true" mnemonicParsing="false" onAction="#exportImage" text="%export_converted_image_menu" />
+                  <MenuItem fx:id="exportCsv" disable="true" mnemonicParsing="false" onAction="#exportColor" text="%export_stitch_list_menu" />
+                  <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprint" text="%export_blueprint_menu" />
             </items>
           </Menu>
             <Menu mnemonicParsing="false" text="%setting">
               <items>
-                  <MenuItem mnemonicParsing="false" onAction="#setting" text="%setting" />
+                  <MenuItem mnemonicParsing="false" onAction="#setting" text="%setting_menu" />
               </items>
             </Menu>
           <Menu mnemonicParsing="false" text="%etc">

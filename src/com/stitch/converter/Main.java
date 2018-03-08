@@ -48,13 +48,13 @@ public class Main extends Application {
 			rootLayout = (BorderPane) loader.load();
 
 			final Scene scene = new Scene(rootLayout);
-			primaryStage.setScene(scene);
 
 			controller = loader.getController();
 			controller.setStage(primaryStage);
 			controller.setApp(this);
-			
-			primaryStage.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
+
+			scene.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
+			primaryStage.setScene(scene);
 			primaryStage.show();
 		} catch (final IOException e) {
 			e.printStackTrace();

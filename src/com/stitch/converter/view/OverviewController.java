@@ -305,7 +305,7 @@ public class OverviewController extends Controller {
 			return;
 		}
 		final Stage settingStage = new Stage();
-		settingStage.setTitle(Resources.getString("setting_button"));
+		settingStage.setTitle(Resources.getString("setting"));
 		settingStage.initModality(Modality.WINDOW_MODAL);
 		settingStage.initOwner(overviewStage);
 		settingStage.setResizable(false);
