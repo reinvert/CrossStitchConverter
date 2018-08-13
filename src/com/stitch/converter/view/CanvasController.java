@@ -66,7 +66,7 @@ public class CanvasController {
 
 	public void invalidate() {
 		renderImage();
-		drawGrid(0, 0, (int) image.getWidth(), (int) image.getHeight());
+		drawGrid(0, 0, (int) image.getWidth(), (int) image.getHeight(), isHighlightExist);
 		if (showIndex == true) {
 			drawIndex();
 		}
@@ -85,31 +85,33 @@ public class CanvasController {
 				}
 				context.setFill(pixelList.getColor().asFX());
 				context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
-				if (pixelList.isCompleted() == true) {
-					context.setFill(new Color(0d, 0d, 0d, 1d));
-					context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
-				}
+
 			}
 		}
 		if (isHighlightExist == true) {
 			context.setFill(new Color(0d, 0d, 0d, 0.75d));
 			context.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-		}
-
-		for (final PixelList pixelList : image.getPixelLists()) {
-			final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
-			for (final Pixel pixel : pixelSet) {
-				if (pixelList.isHighlighted() == false) {
-					continue;
+			for (final PixelList pixelList : image.getPixelLists()) {
+				final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
+				for (final Pixel pixel : pixelSet) {
+					if (pixelList.isHighlighted() == true) {
+						context.setFill(Color.WHITE);
+						context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
+						continue;
+					}
+					if (pixelList.isCompleted() == true) {
+						context.setFill(new Color(1d, 1d, 0d, 1d));
+						context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
+						continue;
+					}
 				}
-				context.setFill(Color.WHITE);
-				context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
 			}
 		}
 	}
 
-	private void drawGrid(int x, int y, int width, int height) {
-		context.setFill(new Color(0d, 0d, 0d, 0.1d));
+	private void drawGrid(int x, int y, int width, int height, boolean isHighlightExist) {
+		final double brightness = isHighlightExist?1.0d:0.0d;
+		context.setFill(new Color(brightness, brightness, brightness, 0.1d));
 		for (int count = 0; count <= width; count++) {
 			if (count % 5 == 0) {
 				continue;
@@ -122,14 +124,14 @@ public class CanvasController {
 			}
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
-		context.setFill(new Color(0d, 0d, 0d, 0.5d));
+		context.setFill(new Color(brightness, brightness, brightness, 0.25d));
 		for (int count = 5; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}
 		for (int count = 5; count <= height; count += 10) {
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
-		context.setFill(new Color(0d, 0d, 0d, 1d));
+		context.setFill(new Color(brightness, brightness, brightness, 1d));
 		for (int count = 0; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}

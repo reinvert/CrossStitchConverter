@@ -181,8 +181,6 @@ public class ColorConverter extends Thread {
 				final int width=image.getWidth();
 				final int height=image.getHeight();
 				final float dividedWidth = width/thread;
-				System.out.println("dividedWidth*createThread : " + (int)(dividedWidth*createThread));
-				System.out.println("(int)(dividedWidth) : " + (int)(dividedWidth));
 				if(createThread != thread-1) {
 					threadList.add(new Thread(new Converter((int)(dividedWidth*createThread), 0, (int)(dividedWidth), height)));
 				} else {

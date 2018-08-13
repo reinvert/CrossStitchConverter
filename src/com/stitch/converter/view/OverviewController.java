@@ -529,8 +529,8 @@ public class OverviewController extends Controller {
 	}
 
 	private void clickCanvas(final double originalX, final double originalY) {
-		final int x = (int) (originalX / canvasController.getScale());
-		final int y = (int) (originalY / canvasController.getScale());
+		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
+		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
 		final Pixel pixel = new Pixel(x, y, null);
 		final ExecutorService executorService = Executors
 				.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
