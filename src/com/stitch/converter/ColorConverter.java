@@ -80,14 +80,21 @@ public class ColorConverter extends Thread {
 	 *
 	 */
 	private class Converter implements Runnable {
+		
+		private final int x, y, width, height;
+		
+		private Converter(int x, int y, int width, int height) {
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+		}
+		
 		@Override
 		public void run() {
-			while (true) {
-				try {
-					final Pixel pixel = inputQueue.take();
-					if (pixel == poisonPill) {
-						return;
-					}
+			for(int x=this.x; x<this.x+width; x++) {
+				for(int y=this.y; y<this.y+height; y++) {
+					final Pixel pixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
 					final StitchColor targetColor = pixel.getColor();
 					double difference = 256 + 256 + 256;
 					StitchColor outputColor = null;
@@ -101,34 +108,12 @@ public class ColorConverter extends Thread {
 						}
 					}
 					pixel.setColor(outputColor);
-					outputQueue.put(pixel);
-				} catch (final InterruptedException e) {
-
-				}
-			}
-		}
-	}
-
-	/**
-	 * Reads the image and put pixels to queue.
-	 * 
-	 * @author Reinvert
-	 *
-	 */
-	private class ImageReader implements Runnable {
-		@Override
-		public void run() {
-			try {
-				for (int x = 0; x < stitchImage.getWidth(); x++) {
-					for (int y = 0; y < stitchImage.getHeight(); y++) {
-						inputQueue.put(new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), "")));
+					try {
+						outputQueue.put(pixel);
+					} catch (InterruptedException e) {
+						LogPrinter.print(e);
 					}
 				}
-				for (int threadCount = 0; threadCount < thread; threadCount++) {
-					inputQueue.put(poisonPill);
-				}
-			} catch (final InterruptedException e) {
-
 			}
 		}
 	}
@@ -161,8 +146,7 @@ public class ColorConverter extends Thread {
 	private final Collection<StitchColor> colorList;
 	private final StitchImage stitchImage;
 	private final BufferedImage image;
-	private final BlockingQueue<Pixel> inputQueue = new ArrayBlockingQueue<>(16),
-			outputQueue = new ArrayBlockingQueue<>(16);
+	private final BlockingQueue<Pixel> outputQueue = new ArrayBlockingQueue<>(16);
 	private final Pixel poisonPill = new Pixel(-1, -1, null);
 	private final int thread;
 	private final ArrayList<Thread> threadList = new ArrayList<>();
@@ -193,9 +177,17 @@ public class ColorConverter extends Thread {
 	@Override
 	public void run() {
 		try {
-			new Thread(new ImageReader()).start();
 			for (int createThread = 0; createThread < thread; createThread++) {
-				threadList.add(new Thread(new Converter()));
+				final int width=image.getWidth();
+				final int height=image.getHeight();
+				final float dividedWidth = width/thread;
+				System.out.println("dividedWidth*createThread : " + (int)(dividedWidth*createThread));
+				System.out.println("(int)(dividedWidth) : " + (int)(dividedWidth));
+				if(createThread != thread-1) {
+					threadList.add(new Thread(new Converter((int)(dividedWidth*createThread), 0, (int)(dividedWidth), height)));
+				} else {
+					threadList.add(new Thread(new Converter((int)(dividedWidth*createThread), 0, width-(int)(dividedWidth*createThread), height)));
+				}
 			}
 			for (final Thread colorThread : threadList) {
 				colorThread.start();
@@ -205,9 +197,7 @@ public class ColorConverter extends Thread {
 			for (final Thread colorThread : threadList) {
 				colorThread.join();
 			}
-			for (int createThread = 0; createThread < thread; createThread++) {
-				outputQueue.put(poisonPill);
-			}
+			outputQueue.put(poisonPill);
 		} catch (final InterruptedException e) {
 
 		}

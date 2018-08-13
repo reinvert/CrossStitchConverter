@@ -86,6 +86,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 		return "StitchColor [red=" + red + ", green=" + green + ", blue=" + blue + ", name=" + name + "]";
 	}
 
+	@Override
 	public Object clone() {
 	    try {
 			return super.clone();

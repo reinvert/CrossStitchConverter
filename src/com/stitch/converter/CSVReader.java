@@ -25,7 +25,7 @@ class CSVReader {
 	 * @return 2nd-dimensional {@link ArrayList}.
 	 */
 	static ArrayList<ArrayList<String>> read(final String str) {
-		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.split("\r\n")));
+		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.split("\n")));
 		int maxRowSize = 0;
 		for (int i = 0; i < splitByRow.size(); i++) {
 			final ArrayList<String> row = new ArrayList<String>(Arrays.asList(splitByRow.get(0).split(",")));
@@ -63,13 +63,18 @@ class CSVReader {
 	static ArrayList<StitchColor> readColorList(final ArrayList<ArrayList<String>> csv)
 			throws NoSuchElementException, NumberFormatException, IllegalArgumentException {
 		final ArrayList<StitchColor> output = new ArrayList<StitchColor>();
+		int i = 0;
 		try {
-			for (int i = 0; i < csv.size(); i++) {
+			for (;i < csv.size(); i++) {
 				output.add(new StitchColor(Integer.parseInt(csv.get(i).get(1)), Integer.parseInt(csv.get(i).get(2)),
 						Integer.parseInt(csv.get(i).get(3)), csv.get(i).get(0)));
 			}
 		} catch (final ArrayIndexOutOfBoundsException e) {
-			throw new NoSuchElementException();
+			throw new NoSuchElementException(Integer.toString(i+1));
+		} catch(final NumberFormatException e) {
+			throw new NumberFormatException(Integer.toString(i+1));
+		} catch(final IllegalArgumentException e) {
+			throw new IllegalArgumentException(Integer.toString(i+1));
 		}
 		return output;
 	}

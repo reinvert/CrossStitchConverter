@@ -140,7 +140,7 @@ class ImageTools {
 		final double tg = targetColor.getGreen();
 		final double tb = targetColor.getBlue();
 
-		return Math.abs(or - tr) + Math.abs(og - tg) + Math.abs(ob - tb);
+		return Math.sqrt(Math.pow(or - tr, 2) + Math.pow(og - tg, 2) + Math.pow(ob - tb, 2));
 	}
 
 	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {

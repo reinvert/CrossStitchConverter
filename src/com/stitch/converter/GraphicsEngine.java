@@ -234,15 +234,15 @@ public class GraphicsEngine implements Runnable {
 			return;
 		} catch (final NoSuchElementException e) {
 			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("rgb_missing"));
+			LogPrinter.print(Resources.getString("rgb_missing", e.getMessage()));
 			return;
 		} catch (final NumberFormatException e) {
 			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("rgb_not_integer"));
+			LogPrinter.print(Resources.getString("rgb_not_integer", e.getMessage()));
 			return;
 		} catch (final IllegalArgumentException e) {
 			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("rgb_out_of_range"));
+			LogPrinter.print(Resources.getString("rgb_out_of_range", e.getMessage()));
 			return;
 		}
 		long time = System.currentTimeMillis();

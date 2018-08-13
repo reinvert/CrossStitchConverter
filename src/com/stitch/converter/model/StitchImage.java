@@ -11,7 +11,7 @@ import java.util.TreeSet;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 
-public class StitchImage implements Serializable {
+public class StitchImage implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	private StitchColor background = new StitchColor(Color.WHITE, "");
@@ -158,5 +158,4 @@ public class StitchImage implements Serializable {
 		return "StitchImage [background=" + background + ", pixelListSet=" + pixelListSet + ", width=" + width + ", height="
 				+ height + ", numberVisible=" + numberVisible + "]";
 	}
-
 }
