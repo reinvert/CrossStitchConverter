@@ -156,6 +156,7 @@ public class OverviewController extends Controller {
 		fileChooser.getExtensionFilters().add(imageFilter);
 		fileChooser.getExtensionFilters().add(allFileFilter);
 		dmcFile = fileChooser.showOpenDialog(overviewStage);
+		fileName = dmcFile.getName();
 		if (dmcFile != null) {
 			overviewStage.setTitle(dmcFile.getName());
 			LogPrinter.print(Resources.getString("load_file", dmcFile.getName()));

@@ -91,19 +91,21 @@ public class CanvasController {
 		if (isHighlightExist == true) {
 			context.setFill(new Color(0d, 0d, 0d, 0.75d));
 			context.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-			for (final PixelList pixelList : image.getPixelLists()) {
-				final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
-				for (final Pixel pixel : pixelSet) {
+		}
+		for (final PixelList pixelList : image.getPixelLists()) {
+			final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
+			for (final Pixel pixel : pixelSet) {
+				if (isHighlightExist == true) {
 					if (pixelList.isHighlighted() == true) {
 						context.setFill(Color.WHITE);
 						context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
 						continue;
 					}
-					if (pixelList.isCompleted() == true) {
-						context.setFill(new Color(1d, 1d, 0d, 1d));
-						context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
-						continue;
-					}
+				}
+				if (pixelList.isCompleted() == true) {
+					context.setFill(new Color(1d, 1d, 0d, 1d));
+					context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
+					continue;
 				}
 			}
 		}
