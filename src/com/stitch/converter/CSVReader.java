@@ -24,7 +24,8 @@ class CSVReader {
 	 *            - CSV {@link java.lang.String String}.
 	 * @return 2nd-dimensional {@link ArrayList}.
 	 */
-	static ArrayList<ArrayList<String>> read(final String str) {
+	static ArrayList<ArrayList<String>> read(String str) {
+		str = str.replace("\r", "");
 		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.split("\n")));
 		int maxRowSize = 0;
 		for (int i = 0; i < splitByRow.size(); i++) {
