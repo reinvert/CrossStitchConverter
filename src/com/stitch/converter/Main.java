@@ -40,13 +40,11 @@ public class Main extends Application {
 	};
 
 	public static void main(String[] args) {
-		System.out.println("launch");
 		launch(args);
 	}
 
 	public void initRootLayout() {
 		try {
-			//final FXMLLoader loader = new FXMLLoader(Main.class.getResource("view/Overview.fxml"), Resources.getBundle());
 			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(), Resources.getBundle());
 			rootLayout = (BorderPane) loader.load();
 
