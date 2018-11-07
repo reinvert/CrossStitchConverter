@@ -45,8 +45,7 @@ public class Main extends Application {
 
 	public void initRootLayout() {
 		try {
-			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL()
-					, Resources.getBundle());
+			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(), Resources.getBundle());
 			rootLayout = (BorderPane) loader.load();
 
 			final Scene scene = new Scene(rootLayout);
