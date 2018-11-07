@@ -1,6 +1,8 @@
 package com.stitch.converter;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.view.OverviewController;
@@ -23,7 +25,7 @@ public class Main extends Application {
 
 	private OverviewController controller;
 	private Stage primaryStage;
-	private BorderPane rootLayout;
+	public BorderPane rootLayout;
 
 	private Listener listener = new Listener() {
 		@Override
@@ -38,13 +40,14 @@ public class Main extends Application {
 	};
 
 	public static void main(String[] args) {
+		System.out.println("launch");
 		launch(args);
 	}
 
 	public void initRootLayout() {
 		try {
-			final FXMLLoader loader = new FXMLLoader(Main.class.getResource("view/Overview.fxml"),
-					Resources.getBundle());
+			//final FXMLLoader loader = new FXMLLoader(Main.class.getResource("view/Overview.fxml"), Resources.getBundle());
+			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(), Resources.getBundle());
 			rootLayout = (BorderPane) loader.load();
 
 			final Scene scene = new Scene(rootLayout);

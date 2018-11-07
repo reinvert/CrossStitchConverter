@@ -20,12 +20,13 @@ public class Resources {
 	static {
 		supportedLocales.add(Locale.KOREAN);
 		supportedLocales.add(Locale.ENGLISH);
-		for (final Locale locale : supportedLocales) {
-			if (Locale.getDefault().getLanguage().equals(locale.getLanguage())) {
-				bundle = ResourceBundle.getBundle("Languages", locale);
+		try {
+			for (final Locale locale : supportedLocales) {
+				if (Locale.getDefault().getLanguage().equals(locale.getLanguage())) {
+					bundle = ResourceBundle.getBundle("Languages", locale);
+				}
 			}
-		}
-		if(bundle == null) {
+		} catch(MissingResourceException e) {
 			bundle = ResourceBundle.getBundle("Languages", Locale.ENGLISH);
 		}
 	}

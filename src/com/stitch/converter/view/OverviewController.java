@@ -78,9 +78,9 @@ public class OverviewController extends Controller {
 	@FXML
 	public TextArea log;
 	@FXML
-	private TextField zoom;
+	public TextField zoom;
 	@FXML
-	private CheckBox showNumberCheckbox;
+	public CheckBox showNumberCheckbox;
 
 	private Stage overviewStage;
 
@@ -367,7 +367,7 @@ public class OverviewController extends Controller {
 	}
 
 	@FXML
-	private void onShowNumberCheckboxClicked() {
+	public void onShowNumberCheckboxClicked() {
 		canvasController.setShowIndex(showNumberCheckbox.isSelected());
 		canvasController.invalidate();
 	}
@@ -389,7 +389,7 @@ public class OverviewController extends Controller {
 	}
 
 	@FXML
-	private void initialize() {
+	public void initialize() {
 		LogPrinter.setPrinter(new LogPrinter.Logger() {
 			@Override
 			public void print(final String str) {
