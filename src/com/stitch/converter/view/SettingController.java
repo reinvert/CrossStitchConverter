@@ -31,13 +31,13 @@ import javafx.util.converter.DefaultStringConverter;
 
 public class SettingController extends Controller{
 	@FXML
-	private TableView<SimpleEntry<String, String>> settingTable;
+	public TableView<SimpleEntry<String, String>> settingTable;
 	@FXML
-	private TableColumn<SimpleEntry<String, String>, String> key, value, description;
+	public TableColumn<SimpleEntry<String, String>, String> key, value, description;
 	
 	@SuppressWarnings("unchecked")
 	@FXML
-	private void initialize() {
+	public void initialize() {
 		settingTable.setOnKeyPressed(event -> {
             TablePosition<SimpleEntry<String, String>, ?> pos = settingTable.getFocusModel().getFocusedCell() ;
             if (pos != null && event.getCode().isLetterKey()) {

@@ -6,7 +6,7 @@ import javafx.scene.control.Hyperlink;
 public class AuthorController extends Controller{
 	
 	@FXML
-	Hyperlink hyperlink;
+	public Hyperlink hyperlink;
 	
 	@FXML
 	public void initialize() {

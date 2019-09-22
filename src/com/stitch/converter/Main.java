@@ -2,7 +2,6 @@ package com.stitch.converter;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.view.OverviewController;

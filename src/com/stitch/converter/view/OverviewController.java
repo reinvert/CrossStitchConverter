@@ -17,7 +17,6 @@ import javax.imageio.ImageIO;
 
 import com.stitch.converter.GraphicsEngine;
 import com.stitch.converter.LogPrinter;
-import com.stitch.converter.Main;
 import com.stitch.converter.Preferences;
 import com.stitch.converter.Resources;
 import com.stitch.converter.model.StitchImage;
@@ -156,8 +155,8 @@ public class OverviewController extends Controller {
 		fileChooser.getExtensionFilters().add(imageFilter);
 		fileChooser.getExtensionFilters().add(allFileFilter);
 		dmcFile = fileChooser.showOpenDialog(overviewStage);
-		fileName = dmcFile.getName();
 		if (dmcFile != null) {
+			fileName = dmcFile.getName();
 			overviewStage.setTitle(dmcFile.getName());
 			LogPrinter.print(Resources.getString("load_file", dmcFile.getName()));
 			main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
@@ -215,10 +214,10 @@ public class OverviewController extends Controller {
 					null);
 			try {
 				ImageIO.write(bufferedImage, "png", imageFile);
-				LogPrinter.print(Resources.getString("file_saved", Resources.getString("image_file")));
+				LogPrinter.print(Resources.getString("file_saved", Resources.getString("image_file"), imageFile.getName()));
 			} catch (final IOException e) {
 				LogPrinter.print(e);
-				LogPrinter.print(Resources.getString("save_failed", Resources.getString("image_file")));
+				LogPrinter.print(Resources.getString("save_failed", Resources.getString("image_file"), imageFile.getName()));
 			}
 		}
 	}
@@ -295,10 +294,10 @@ public class OverviewController extends Controller {
 	
 	@FXML
 	public void setting() {
-		final FXMLLoader loader = new FXMLLoader(Main.class.getResource("view/Setting.fxml"),
-				Resources.getBundle());
 		ScrollPane page = null;
 		try {
+			final FXMLLoader loader = new FXMLLoader(new File("resources/Setting.fxml").toURI().toURL(),
+					Resources.getBundle());
 			page = (ScrollPane) loader.load();
 		} catch (final IOException e) {
 			LogPrinter.print(e);
@@ -317,11 +316,11 @@ public class OverviewController extends Controller {
 	
 	@FXML
 	public void author() {
-		final FXMLLoader loader = new FXMLLoader(Main.class.getResource("view/Author.fxml"),
-				Resources.getBundle());
-		
+		FXMLLoader loader = null;
 		AnchorPane page = null;
 		try {
+			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(),
+					Resources.getBundle());
 			page = (AnchorPane) loader.load();
 		} catch (final IOException e) {
 			LogPrinter.print(e);
