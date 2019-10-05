@@ -270,11 +270,22 @@ public class GraphicsEngine implements Runnable {
 			final ColorConverter converter = new ColorConverter.Builder(image, stitchImage, colorList).setThread(thread)
 					.build();
 			converter.start();
+			
 			try {
 				converter.join();
 			} catch (final InterruptedException e) {
 				
 			}
+			
+			/*
+			final ColorConverterSingleThread converter = new ColorConverterSingleThread.Builder(image, stitchImage, colorList).setThread(thread)
+					.build();
+			converter.start();
+			try {
+				converter.join();
+			} catch (final InterruptedException e) {
+				
+			}*/
 			stitchImage.setBackground(backgroundColor);
 			pixelLists = stitchImage.getPixelLists();
 

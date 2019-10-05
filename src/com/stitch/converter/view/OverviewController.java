@@ -1,10 +1,10 @@
 package com.stitch.converter.view;
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
@@ -229,27 +229,48 @@ public class OverviewController extends Controller {
 		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-		fileChooser.setInitialFileName(dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + ".csv");
+		fileChooser.setInitialFileName(dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + ".act");
 		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
-				Resources.getString("filter_csv"), "*.csv");
+				Resources.getString("filter_csv"), "*.act");
 		fileChooser.setSelectedExtensionFilter(extensionFilter);
-		final File textFile = fileChooser.showSaveDialog(overviewStage);
-		if (textFile != null) {
-			if (textFile.exists()) {
-				textFile.delete();
+		final File actFile = fileChooser.showSaveDialog(overviewStage);
+		if (actFile != null) {
+			if (actFile.exists()) {
+				actFile.delete();
 			}
-			try (final BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(textFile))) {
-				final String tabSeparator = Resources.getString("tab_separator");
-				final String lineSeparator = Resources.getString("line_separator");
-				textFile.createNewFile();
-				bufferedWriter.write(Resources.getString("color_name") + tabSeparator + Resources.getString("red")
-						+ tabSeparator + Resources.getString("green") + tabSeparator + Resources.getString("blue")
-						+ lineSeparator);
+        	try(OutputStream outputStream = new FileOutputStream(actFile)){
+    			actFile.createNewFile();
+    			int totalNumber = 0;
 				for (final StitchColor color : canvasController.getImage().getColorList()) {
-					bufferedWriter.write(color.getName() + tabSeparator + color.getRed() + tabSeparator
-							+ color.getGreen() + tabSeparator + color.getBlue() + lineSeparator);
+                	if(totalNumber == 256) {
+                		break;
+                	}
+                	totalNumber++;
+	                byte red = (byte)(color.getRed()&0xff);
+	                byte green = (byte)(color.getGreen()&0xff);
+	                byte blue = (byte)(color.getBlue()&0xff);
+                	outputStream.write(red);
+                	outputStream.write(green);
+                	outputStream.write(blue);
+
 				}
-				bufferedWriter.flush();
+				for(final StitchColor color : canvasController.getImage().getAlternate()) {
+                	if(totalNumber == 256) {
+                		break;
+                	}
+                	totalNumber++;
+	                byte red = (byte)(color.getRed()&0xff);
+	                byte green = (byte)(color.getGreen()&0xff);
+	                byte blue = (byte)(color.getBlue()&0xff);
+                	outputStream.write(red);
+                	outputStream.write(green);
+                	outputStream.write(blue);
+				}
+				for (;totalNumber<=255;totalNumber++) {
+                	outputStream.write(0x00);
+                	outputStream.write(0x00);
+                	outputStream.write(0x00);
+				}
 			} catch (final IOException e) {
 				LogPrinter.print(e);
 				LogPrinter.print(Resources.getString("save_failed", Resources.getString("txt_file")));

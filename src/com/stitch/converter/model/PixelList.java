@@ -16,10 +16,16 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 	}
 
 	public void add(final int x, final int y) {
+		if(pixelSet.contains(new Pixel(x, y, null))) {
+			pixelSet.remove(new Pixel(x, y, null));
+		}
 		pixelSet.add(new Pixel(x, y, color));
 	}
 
 	public void add(final Pixel pixel) {
+		if(pixelSet.contains(pixel)) {
+			pixelSet.remove(pixel);
+		}
 		pixelSet.add(pixel);
 	}
 

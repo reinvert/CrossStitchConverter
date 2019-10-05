@@ -29,18 +29,18 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	public javafx.scene.paint.Color asFX() {
-		return new javafx.scene.paint.Color((double)(getRed()/255), (double)(getGreen()/255), (double)(getBlue()/255), 1d);
+		return new javafx.scene.paint.Color((double)(getRed()/255d), (double)(getGreen()/255d), (double)(getBlue()/255d), 1d);
 	}
 
-	public double getRed() {
+	public int getRed() {
 		return red;
 	}
 	
-	public double getGreen() {
+	public int getGreen() {
 		return green;
 	}
 
-	public double getBlue() {
+	public int getBlue() {
 		return blue;
 	}
 

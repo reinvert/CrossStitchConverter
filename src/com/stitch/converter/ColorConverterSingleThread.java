@@ -2,16 +2,13 @@ package com.stitch.converter;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.model.Pixel;
-import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
 
 /**
@@ -20,9 +17,9 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  *
  */
-public class ColorConverter extends Thread {
+public class ColorConverterSingleThread extends Thread {
 	/**
-	 * Builder of {@link ColorConverter}
+	 * Builder of {@link ColorConverterSingleThread}
 	 * 
 	 * @author Reinvert
 	 *
@@ -67,12 +64,12 @@ public class ColorConverter extends Thread {
 		}
 
 		/**
-		 * Build and returns {@link ColorConverter} instance.
+		 * Build and returns {@link ColorConverterSingleThread} instance.
 		 * 
 		 * @return this instance.
 		 */
-		public ColorConverter build() {
-			return new ColorConverter(this);
+		public ColorConverterSingleThread build() {
+			return new ColorConverterSingleThread(this);
 		}
 	}
 
@@ -99,8 +96,8 @@ public class ColorConverter extends Thread {
 				for(int y=this.y; y<this.y+height; y++) {
 					final Pixel pixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
 					final StitchColor targetColor = pixel.getColor();
-					double difference = 256 + 256 + 256, alternateDifference = 256 + 256 + 256;
-					StitchColor outputColor = null, alternateColor = null;
+					double difference = 256 + 256 + 256;
+					StitchColor outputColor = null;
 					double calculatedDifference = 0;
 
 					for (final StitchColor listColor : colorList) {
@@ -110,19 +107,9 @@ public class ColorConverter extends Thread {
 							difference = calculatedDifference;
 						}
 					}
-					ArrayList<StitchColor> alternateList = new ArrayList<>();
-					alternateList.addAll(colorList);
-					alternateList.remove(outputColor);
-					for (final StitchColor listColor : alternateList) {
-						calculatedDifference = ImageTools.calculateDifference(listColor, targetColor);
-						if (calculatedDifference < alternateDifference) {
-							alternateColor = listColor;
-							alternateDifference = calculatedDifference;
-						}
-					}
 					pixel.setColor(outputColor);
 					try {
-						outputQueue.put(new AbstractMap.SimpleEntry<>(pixel,alternateColor));
+						outputQueue.put(pixel);
 					} catch (InterruptedException e) {
 						LogPrinter.print(e);
 					}
@@ -143,30 +130,28 @@ public class ColorConverter extends Thread {
 		public void run() {
 			while (true) {
 				try {
-					final Entry<Pixel, StitchColor> pixel = outputQueue.take();
+					final Pixel pixel = outputQueue.take();
 					if (pixel == poisonPill) {
 						return;
 					}
-					image.setRGB(pixel.getKey().getX(), pixel.getKey().getY(), pixel.getKey().getColor().asAWT().getRGB());
-					stitchImage.add(pixel.getKey());
-					stitchImage.addAlternateColor(pixel.getValue());
+					image.setRGB(pixel.getX(), pixel.getY(), pixel.getColor().asAWT().getRGB());
+					stitchImage.add(pixel);
 				} catch (final InterruptedException e) {
 
 				}
 			}
 		}
 	}
-	
 
 	private final Collection<StitchColor> colorList;
 	private final StitchImage stitchImage;
 	private final BufferedImage image;
-	private final BlockingQueue<Entry<Pixel, StitchColor>> outputQueue = new ArrayBlockingQueue<>(16);
-	private final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(-1, -1, null), new StitchColor(0, 0, 0, "poison"));
+	private final BlockingQueue<Pixel> outputQueue = new ArrayBlockingQueue<>(16);
+	private final Pixel poisonPill = new Pixel(-1, -1, null);
 	private final int thread;
 	private final ArrayList<Thread> threadList = new ArrayList<>();
 
-	private ColorConverter() {
+	private ColorConverterSingleThread() {
 		throw new AssertionError();
 	}
 
@@ -182,7 +167,7 @@ public class ColorConverter extends Thread {
 	 * @param thread
 	 *            - the number of threads.
 	 */
-	private ColorConverter(final Builder builder) {
+	private ColorConverterSingleThread(final Builder builder) {
 		this.image = builder.image;
 		this.stitchImage = builder.stitchImage;
 		this.colorList = builder.colorList;
@@ -191,32 +176,58 @@ public class ColorConverter extends Thread {
 
 	@Override
 	public void run() {
-		try {
-			for (int createThread = 0; createThread < thread; createThread++) {
-				final int width=image.getWidth();
-				final int height=image.getHeight();
-				final float dividedWidth = width/thread;
-				if(createThread != thread-1) {
-					threadList.add(new Thread(new Converter((int)(dividedWidth*createThread), 0, (int)(dividedWidth), height)));
-				} else {
-					threadList.add(new Thread(new Converter((int)(dividedWidth*createThread), 0, width-(int)(dividedWidth*createThread), height)));
-				}
-			}
-			for (final Thread colorThread : threadList) {
-				colorThread.start();
-			}
-			final Thread writeThread = new Thread(new ImageWriter());
-			writeThread.start();
-			for (final Thread colorThread : threadList) {
-				colorThread.join();
-			}
-			outputQueue.put(poisonPill);
-			writeThread.join();
-			for(PixelList pixelList : stitchImage.getPixelLists()) {
-				stitchImage.removeAlternate(pixelList.getColor());
-			}
-		} catch (final InterruptedException e) {
+		for(int y=0; y<image.getHeight(); y++) {
+			for(int x=0; x<image.getWidth(); x++) {
+				final Pixel oldPixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
+				final StitchColor targetColor = oldPixel.getColor();
+				double difference = 256 + 256 + 256;
+				StitchColor outputColor = null;
+				double calculatedDifference = 0;
 
+				for (final StitchColor listColor : colorList) {
+					calculatedDifference = ImageTools.calculateDifference(listColor, targetColor);
+					if (calculatedDifference < difference) {
+						outputColor = listColor;
+						difference = calculatedDifference;
+					}
+				}
+				final Pixel newPixel = new Pixel(x, y, outputColor);
+				final double quantErrorRed = oldPixel.getColor().getRed() - newPixel.getColor().getRed();
+				final double quantErrorGreen = oldPixel.getColor().getGreen() - newPixel.getColor().getGreen();
+				final double quantErrorBlue = oldPixel.getColor().getBlue() - newPixel.getColor().getBlue();
+				
+				//System.out.println(quantErrorRed + ", " + quantErrorGreen + ", " + quantErrorBlue);
+				
+				try {
+					Color originalColor = new Color(image.getRGB(x+1, y));
+					Color convertedColor = new Color(originalColor.getRed()+(int)(7d/16d * quantErrorRed), originalColor.getGreen()+(int)(7d/16d * quantErrorGreen), originalColor.getBlue()+(int)(7d/16d * quantErrorBlue));
+					image.setRGB(x+1, y, convertedColor.getRGB());
+				} catch(final Exception e) { 
+					
+				}
+				try {
+					Color originalColor = new Color(image.getRGB(x-1, y+1));
+					Color convertedColor = new Color(originalColor.getRed()+(int)(3d/16d * quantErrorRed), originalColor.getGreen()+(int)(3d/16d * quantErrorGreen), originalColor.getBlue()+(int)(3d/16d * quantErrorBlue));
+					image.setRGB(x-1, y+1, convertedColor.getRGB());
+				} catch(final Exception e) { 
+					
+				}
+				try {
+					Color originalColor = new Color(image.getRGB(x, y+1));
+					Color convertedColor = new Color(originalColor.getRed()+(int)(5d/16d * quantErrorRed), originalColor.getGreen()+(int)(5d/16d * quantErrorGreen), originalColor.getBlue()+(int)(5d/16d * quantErrorBlue));
+					image.setRGB(x, y+1, convertedColor.getRGB());
+				} catch(final Exception e) { 
+					
+				}
+				try {
+					Color originalColor = new Color(image.getRGB(x+1, y+1));
+					Color convertedColor = new Color(originalColor.getRed()+(int)(1d/16d * quantErrorRed), originalColor.getGreen()+(int)(1d/16d * quantErrorGreen), originalColor.getBlue()+(int)(1d/16d * quantErrorBlue));
+					image.setRGB(x+1, y+1, convertedColor.getRGB());
+				} catch(final Exception e) { 
+					
+				}
+				stitchImage.add(newPixel);
+			}
 		}
 	}
 }

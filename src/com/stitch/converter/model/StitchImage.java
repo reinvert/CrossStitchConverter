@@ -4,8 +4,11 @@ import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javafx.scene.image.PixelWriter;
@@ -17,6 +20,7 @@ public class StitchImage implements Serializable{
 	private StitchColor background = new StitchColor(Color.WHITE, "");
 
 	private final SortedSet<PixelList> pixelListSet;
+	private final TreeMap<StitchColor, Integer> alternateColors;
 
 	private double width = -1, height = -1;
 
@@ -28,6 +32,7 @@ public class StitchImage implements Serializable{
 
 	public StitchImage() {
 		pixelListSet = new TreeSet<PixelList>();
+		alternateColors = new TreeMap<StitchColor, Integer>();
 	}
 
 	public void add(final Pixel pixel) {
@@ -38,6 +43,28 @@ public class StitchImage implements Serializable{
 			pixelList.add(pixel);
 			pixelListSet.add(pixelList);
 		}
+	}
+	
+	public void addAlternateColor(final StitchColor color) {
+		if(alternateColors.containsKey(color)) {
+			alternateColors.put(color, alternateColors.get(color)+1);
+		} else {
+			alternateColors.put(color, 1);
+		}
+	}
+	
+	public void removeAlternate(final StitchColor color) {
+		alternateColors.remove(color);
+	}
+	
+	public List<StitchColor> getAlternate() {
+		List<Entry<StitchColor,Integer>> list = new ArrayList<>(alternateColors.entrySet());
+		list.sort(Entry.comparingByValue());
+		List<StitchColor> output = new ArrayList<>();
+		for(int i=list.size()-1; i!=0; i--) {
+			output.add(list.get(i).getKey());
+		}
+		return output;
 	}
 
 	public Collection<PixelList> getPixelLists() {

@@ -189,9 +189,9 @@ public class Preferences {
 
 	private static String colorToString(final StitchColor color) {
 		String colorCode = "#";
-		colorCode += Integer.toHexString((int) color.getRed() * 255);
-		colorCode += Integer.toHexString((int) color.getGreen() * 255);
-		colorCode += Integer.toHexString((int) color.getBlue() * 255);
+		colorCode += Integer.toHexString((int) color.getRed());
+		colorCode += Integer.toHexString((int) color.getGreen());
+		colorCode += Integer.toHexString((int) color.getBlue());
 		return colorCode;
 	}
 }

@@ -132,13 +132,13 @@ class ImageTools {
 	 * @return difference between two {@link java.awt.Color Color}.
 	 */
 	static double calculateDifference(final StitchColor originalColor, final StitchColor targetColor) {
-		final double or = originalColor.getRed();
-		final double og = originalColor.getGreen();
-		final double ob = originalColor.getBlue();
+		final int or = originalColor.getRed();
+		final int og = originalColor.getGreen();
+		final int ob = originalColor.getBlue();
 
-		final double tr = targetColor.getRed();
-		final double tg = targetColor.getGreen();
-		final double tb = targetColor.getBlue();
+		final int tr = targetColor.getRed();
+		final int tg = targetColor.getGreen();
+		final int tb = targetColor.getBlue();
 
 		return Math.sqrt(Math.pow(or - tr, 2) + Math.pow(og - tg, 2) + Math.pow(ob - tb, 2));
 	}
@@ -150,14 +150,14 @@ class ImageTools {
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {
 				final StitchColor originalColor = list.get(i).getColor();
-				final double originalRed = originalColor.getRed();
-				final double originalGreen = originalColor.getGreen();
-				final double originalBlue = originalColor.getBlue();
+				final int originalRed = originalColor.getRed();
+				final int originalGreen = originalColor.getGreen();
+				final int originalBlue = originalColor.getBlue();
 				final StitchColor targetColor = list.get(j).getColor();
-				final double targetRed = targetColor.getRed();
-				final double targetGreen = targetColor.getGreen();
-				final double targetBlue = targetColor.getBlue();
-				final double avgcolor = Math.abs(originalRed - targetRed) + Math.abs(originalGreen - targetGreen)
+				final int targetRed = targetColor.getRed();
+				final int targetGreen = targetColor.getGreen();
+				final int targetBlue = targetColor.getBlue();
+				final int avgcolor = Math.abs(originalRed - targetRed) + Math.abs(originalGreen - targetGreen)
 						+ Math.abs(originalBlue - targetBlue);
 				if (difference > avgcolor) {
 					final int orgcount = usedColorCount.get(list.get(i).getColor().getName());
