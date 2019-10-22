@@ -3,6 +3,7 @@ package com.stitch.converter.view;
 
 import java.util.TreeSet;
 
+import com.stitch.converter.Preferences;
 import com.stitch.converter.model.Pixel;
 import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchImage;
@@ -21,7 +22,7 @@ public class CanvasController {
 	final Canvas canvas;
 	final GraphicsContext context;
 	double scale = 10.0d, margin = scale;
-	boolean showIndex = true, isHighlightExist = false;
+	boolean isHighlightExist = false;
 
 	public CanvasController(final StitchImage image, final Canvas canvas) {
 		this.image = image;
@@ -43,11 +44,6 @@ public class CanvasController {
 		canvas.setHeight(image.getHeight() * scale + 2 * margin);
 	}
 
-	public void setShowIndex(final boolean showIndex) {
-		this.showIndex = showIndex;
-		invalidate();
-	}
-
 	public Canvas getCanvas() {
 		return canvas;
 	}
@@ -67,14 +63,14 @@ public class CanvasController {
 	public void invalidate() {
 		renderImage();
 		drawGrid(0, 0, (int) image.getWidth(), (int) image.getHeight(), isHighlightExist);
-		if (showIndex == true) {
+		if (Preferences.getBoolean("drawGridNumber", true)) {
 			drawIndex();
 		}
 	}
 
 	private void renderImage() {
 		context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-		image.setNumberVisible(showIndex);
+		image.setNumberVisible(Preferences.getBoolean("drawGridNumber", true));
 		isHighlightExist = false;
 		for (final PixelList pixelList : image.getPixelLists()) {
 			final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();

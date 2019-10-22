@@ -38,8 +38,10 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -52,7 +54,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -61,7 +62,7 @@ import javafx.stage.WindowEvent;
 
 public class OverviewController extends Controller {
 	@FXML
-	public BorderPane imageContainer;
+	public SplitPane verticalSplitPane, horizontalSplitPane;
 	@FXML
 	public MenuItem save, saveTo, exportPng, exportCsv, exportBlueprint;
 	@FXML
@@ -80,6 +81,8 @@ public class OverviewController extends Controller {
 	public TextField zoom;
 	@FXML
 	public CheckBox showNumberCheckbox;
+	@FXML
+	public CheckMenuItem toggleColorTableItem, toggleLogItem;
 
 	private Stage overviewStage;
 
@@ -336,6 +339,30 @@ public class OverviewController extends Controller {
 	}
 	
 	@FXML
+	public void toggleWindowLog() {
+		if(toggleLogItem.isSelected() == true) {
+			Preferences.setValue("showLog", "true");
+			verticalSplitPane.getItems().add(1, log);
+			verticalSplitPane.setDividerPositions(0.9);
+		} else {
+			Preferences.setValue("showLog", "false");
+			verticalSplitPane.getItems().remove(1);
+		}
+	}
+	
+	@FXML
+	public void toggleWindowColorTable() {
+		if(toggleColorTableItem.isSelected() == true) {
+			Preferences.setValue("showColorTable", "true");
+			horizontalSplitPane.getItems().add(1, colorTable);
+			horizontalSplitPane.setDividerPositions(0.85);
+		} else {
+			Preferences.setValue("showColorTable", "false");
+			horizontalSplitPane.getItems().remove(1);
+		}
+	}
+	
+	@FXML
 	public void author() {
 		FXMLLoader loader = null;
 		AnchorPane page = null;
@@ -388,7 +415,7 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void onShowNumberCheckboxClicked() {
-		canvasController.setShowIndex(showNumberCheckbox.isSelected());
+		Preferences.setValue("drawGridNumber", Boolean.toString(showNumberCheckbox.isSelected()));
 		canvasController.invalidate();
 	}
 
@@ -514,6 +541,14 @@ public class OverviewController extends Controller {
 				clickCanvas(event.getX(), event.getY());
 			}
 		});
+		if(Preferences.getBoolean("showLog", true) == false) {
+			toggleLogItem.setSelected(false);
+			toggleWindowLog();
+		}
+		if(Preferences.getBoolean("showColorTable", true) == false) {
+			toggleColorTableItem.setSelected(false);
+			toggleWindowColorTable();
+		}
 	}
 	
 	public void setImage(final StitchImage stitchImage) {
@@ -537,7 +572,7 @@ public class OverviewController extends Controller {
 		exportPng.setDisable(false);
 		exportCsv.setDisable(false);
 		exportBlueprint.setDisable(false);
-		showNumberCheckbox.setSelected(stitchImage.isNumberVisible());
+		showNumberCheckbox.setSelected(Preferences.getBoolean("drawGridNumber", true));
 	}
 
 	public void setZoom(double scale) {

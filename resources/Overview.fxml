@@ -2,11 +2,13 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.CheckMenuItem?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
@@ -15,18 +17,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-focus-color: transparent;" xmlns="http://javafx.com/javafx/8.0.102" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
-   <bottom>
-      <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" prefHeight="120.0" prefWidth="1000.0" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS" BorderPane.alignment="CENTER">
-         <content>
-            <TextArea fx:id="log" editable="false" prefHeight="198.0" prefWidth="984.0" style="-fx-background-color: transparent;">
-               <font>
-                  <Font size="11.0" />
-               </font>
-            </TextArea>
-         </content>
-      </ScrollPane>
-   </bottom>
+<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-focus-color: transparent;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
    <top>
       <MenuBar BorderPane.alignment="CENTER">
         <menus>
@@ -48,6 +39,12 @@
                   <MenuItem mnemonicParsing="false" onAction="#setting" text="%setting_menu" />
               </items>
             </Menu>
+            <Menu mnemonicParsing="false" text="%window">
+               <items>
+                  <CheckMenuItem fx:id="toggleColorTableItem" mnemonicParsing="false" onAction="#toggleWindowColorTable" selected="true" text="%color_table" />
+                  <CheckMenuItem fx:id="toggleLogItem" mnemonicParsing="false" onAction="#toggleWindowLog" selected="true" text="%log" />
+               </items>
+            </Menu>
           <Menu mnemonicParsing="false" text="%etc">
             <items>
               <MenuItem mnemonicParsing="false" onAction="#author" text="%about" />
@@ -57,27 +54,42 @@
       </MenuBar>
    </top>
    <center>
-      <ScrollPane hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS" BorderPane.alignment="CENTER">
-         <content>
-            <Canvas fx:id="canvas" disable="true" height="700.0" width="1000.0" />
-         </content>
-      </ScrollPane>
+      <SplitPane fx:id="verticalSplitPane" dividerPositions="0.9" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" orientation="VERTICAL" BorderPane.alignment="CENTER">
+        <items>
+            <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.85">
+              <items>
+                  <ScrollPane hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
+                     <content>
+                        <Canvas fx:id="canvas" disable="true" height="700.0" width="1000.0" />
+                     </content>
+                  </ScrollPane>
+                  <VBox focusTraversable="true">
+                     <children>
+                        <TableView fx:id="colorTable" disable="true" editable="true" prefHeight="800.0" prefWidth="250.0" tableMenuButtonVisible="true">
+                          <columns>
+                            <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
+                            <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
+                              <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
+                              <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
+                              <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
+                          </columns>
+                        </TableView>
+                        <TextField fx:id="zoom" />
+                        <CheckBox fx:id="showNumberCheckbox" disable="true" mnemonicParsing="false" onAction="#onShowNumberCheckboxClicked" text="%button_show_index" />
+                     </children>
+                  </VBox>
+              </items>
+            </SplitPane>
+            <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
+               <content>
+                  <TextArea fx:id="log" editable="false" style="-fx-background-color: transparent;">
+                     <font>
+                        <Font size="11.0" />
+                     </font>
+                  </TextArea>
+               </content>
+            </ScrollPane>
+        </items>
+      </SplitPane>
    </center>
-   <right>
-      <VBox BorderPane.alignment="CENTER">
-         <children>
-            <TableView fx:id="colorTable" disable="true" editable="true" prefHeight="800.0" prefWidth="250.0" tableMenuButtonVisible="true">
-              <columns>
-                <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
-                <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
-                  <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
-                  <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
-                  <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
-              </columns>
-            </TableView>
-            <TextField fx:id="zoom" />
-            <CheckBox fx:id="showNumberCheckbox" disable="true" mnemonicParsing="false" onAction="#onShowNumberCheckboxClicked" text="%button_show_index" />
-         </children>
-      </VBox>
-   </right>
 </BorderPane>
