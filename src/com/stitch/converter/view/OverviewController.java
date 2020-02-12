@@ -54,6 +54,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -68,13 +69,17 @@ public class OverviewController extends Controller {
 	@FXML
 	public TableView<StitchList> colorTable;
 	@FXML
+	public VBox colorTableVbox;
+	@FXML
 	public TableColumn<StitchList, Boolean> highlightColumn, completeColumn;
 	@FXML
-	public TableColumn<StitchList, Integer> indexColumn;
+	public TableColumn<StitchList, Integer> indexColumn, totalNumberColumn;
 	@FXML
 	public TableColumn<StitchList, String> colorColumn, nameColumn;
 	@FXML
 	public Canvas canvas;
+	@FXML
+	public ScrollPane canvasScrollPane;
 	@FXML
 	public TextArea log;
 	@FXML
@@ -354,7 +359,7 @@ public class OverviewController extends Controller {
 	public void toggleWindowColorTable() {
 		if(toggleColorTableItem.isSelected() == true) {
 			Preferences.setValue("showColorTable", "true");
-			horizontalSplitPane.getItems().add(1, colorTable);
+			horizontalSplitPane.getItems().add(1, colorTableVbox);
 			horizontalSplitPane.setDividerPositions(0.85);
 		} else {
 			Preferences.setValue("showColorTable", "false");
@@ -501,6 +506,7 @@ public class OverviewController extends Controller {
 			return property;
 		});
 		indexColumn.setCellValueFactory(cellData -> cellData.getValue().indexProperty().asObject());
+		totalNumberColumn.setCellValueFactory(cellData -> cellData.getValue().totalNumberProperty().asObject());
 		colorColumn.setCellFactory(column -> {
 			return new TableCell<StitchList, String>() {
 				@Override
@@ -553,8 +559,7 @@ public class OverviewController extends Controller {
 	
 	public void setImage(final StitchImage stitchImage) {
 		canvasController = new CanvasController(stitchImage, canvas);
-		double scale = Preferences.getDouble("scale", 15.0d);
-		canvasController.setScale(scale);
+		double scale = Preferences.getDouble("scale", 0d);
 		zoom.setText((scale * 100) + "%");
 		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList();
 		final Collection<PixelList> pixelListCollection = stitchImage.getPixelLists();
@@ -562,6 +567,7 @@ public class OverviewController extends Controller {
 			stitchListArrayList.add(new StitchList(pixelList));
 		}
 		colorTable.setItems(stitchListArrayList);
+		setZoom(scale);
 		invalidate();
 		canvas.setDisable(false);
 		colorTable.setDisable(false);
@@ -576,7 +582,19 @@ public class OverviewController extends Controller {
 	}
 
 	public void setZoom(double scale) {
-		canvasController.setScale(scale);
+		if(scale == 0d) {
+			double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
+			double imageWidth = canvasController.getImage().getWidth();
+			double ratioByWidth = screenWidth / imageWidth;
+			
+			double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
+			double imageHeight = canvasController.getImage().getHeight();
+			double ratioByHeight = screenHeight / imageHeight;
+			
+			canvasController.setScale(Math.min(ratioByWidth, ratioByHeight));
+		} else {
+			canvasController.setScale(scale);
+		}
 		invalidate();
 	}
 

@@ -12,7 +12,7 @@ import javafx.scene.paint.Color;
 
 public class StitchList {
 	private final PixelList pixelList;
-	private final IntegerProperty index;
+	private final IntegerProperty index, totalNumber;
 	private final BooleanProperty isHighlighted, isCompleted;
 	private final ObjectProperty<StitchColor> color;
 	private final StringProperty name, colorString;
@@ -25,6 +25,7 @@ public class StitchList {
 	public StitchList(final PixelList pixelList) {
 		this.pixelList = pixelList;
 		this.index = new SimpleIntegerProperty(pixelList.getIndex());
+		this.totalNumber = new SimpleIntegerProperty(pixelList.getCount());
 		this.color = new SimpleObjectProperty<StitchColor>(pixelList.getColor());
 		isHighlighted = new SimpleBooleanProperty(pixelList.isHighlighted());
 		isCompleted = new SimpleBooleanProperty(pixelList.isCompleted());
@@ -42,6 +43,10 @@ public class StitchList {
 	
 	public IntegerProperty indexProperty() {
 		return index;
+	}
+	
+	public IntegerProperty totalNumberProperty() {
+		return totalNumber;
 	}
 	
 	public StringProperty nameProperty() {

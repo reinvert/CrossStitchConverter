@@ -41,6 +41,10 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 	public TreeSet<Pixel> getPixelSet() {
 		return pixelSet;
 	}
+	
+	public int getCount() {
+		return pixelSet.size();
+	}
 
 	public boolean hasPixel(final Pixel pixel) {
 		return pixelSet.contains(pixel);

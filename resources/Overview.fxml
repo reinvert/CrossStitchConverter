@@ -17,7 +17,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-focus-color: transparent;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
+<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
    <top>
       <MenuBar BorderPane.alignment="CENTER">
         <menus>
@@ -54,22 +54,23 @@
       </MenuBar>
    </top>
    <center>
-      <SplitPane fx:id="verticalSplitPane" dividerPositions="0.9" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" orientation="VERTICAL" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="verticalSplitPane" dividerPositions="0.85" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" orientation="VERTICAL" BorderPane.alignment="CENTER">
         <items>
             <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.85">
               <items>
-                  <ScrollPane hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
+                  <ScrollPane fx:id="canvasScrollPane" hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
                      <content>
                         <Canvas fx:id="canvas" disable="true" height="700.0" width="1000.0" />
                      </content>
                   </ScrollPane>
-                  <VBox focusTraversable="true">
+                  <VBox fx:id="colorTableVbox" focusTraversable="true">
                      <children>
                         <TableView fx:id="colorTable" disable="true" editable="true" prefHeight="800.0" prefWidth="250.0" tableMenuButtonVisible="true">
                           <columns>
                             <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
                             <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
                               <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
+                              <TableColumn fx:id="totalNumberColumn" prefWidth="50.0" text="%totalnumber" />
                               <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
                               <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
                           </columns>
