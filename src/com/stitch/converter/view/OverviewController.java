@@ -592,6 +592,16 @@ public class OverviewController extends Controller {
 			double ratioByHeight = screenHeight / imageHeight;
 			
 			canvasController.setScale(Math.min(ratioByWidth, ratioByHeight));
+		} else if(scale == -1d) {
+			double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
+			double imageWidth = canvasController.getImage().getWidth();
+			double ratioByWidth = screenWidth / imageWidth;
+			
+			double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
+			double imageHeight = canvasController.getImage().getHeight();
+			double ratioByHeight = screenHeight / imageHeight;
+			
+			canvasController.setScale(Math.max(ratioByWidth, ratioByHeight));
 		} else {
 			canvasController.setScale(scale);
 		}
