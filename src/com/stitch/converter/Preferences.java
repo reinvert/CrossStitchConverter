@@ -23,8 +23,8 @@ public class Preferences {
 			}
 			load();
 		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("read_failed", Resources.getString("setting_file")));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
 
@@ -48,8 +48,8 @@ public class Preferences {
 				}
 			}
 		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("read_failed", Resources.getString("setting_file")));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
 
@@ -62,8 +62,8 @@ public class Preferences {
 				bufferedWriter.flush();
 			}
 		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("read_failed", Resources.getString("setting_file")));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
 	

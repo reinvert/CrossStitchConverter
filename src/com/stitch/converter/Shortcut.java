@@ -16,9 +16,7 @@ public class Shortcut {
 			@Override
 			public void handle(KeyEvent event) {
 				KeyCode key = event.getCode();
-				if (key == KeyCode.N) {
-					controller.newfile();
-				} else if (key == KeyCode.L) {
+				if (key == KeyCode.L) {
 					controller.load();
 				} else if (key == KeyCode.S) {
 					controller.save();

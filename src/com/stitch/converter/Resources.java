@@ -7,11 +7,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 public class Resources {
 	private static ResourceBundle bundle;
@@ -28,6 +32,18 @@ public class Resources {
 			}
 		} catch(MissingResourceException e) {
 			bundle = ResourceBundle.getBundle("Languages", Locale.ENGLISH);
+		} catch(Throwable t) {
+			try {
+				writeText("log.txt", t.getMessage());
+			} catch(Throwable t2) {
+				t2.printStackTrace();
+			}
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.setTitle("Error");
+			alert.setContentText("Failed to read resource file.");
+			alert = new Alert(AlertType.ERROR);
+			alert.showAndWait();
+			System.exit(0);
 		}
 	}
 
@@ -51,9 +67,15 @@ public class Resources {
 		try {
 			return String.format(getString(id), args);
 		} catch (final MissingFormatArgumentException e) {
-			LogPrinter.print(e);
-			LogPrinter.print("Exception on read resources from id : " + id + args);
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error("Exception on read resources from id : " + id + args);
 			return null;
+		}
+	}
+	
+	public static void writeText(final String dir, final String text) throws IOException {
+		try(final PrintWriter printWriter = new PrintWriter(dir)) {
+			printWriter.println(text);
 		}
 	}
 	
@@ -69,14 +91,6 @@ public class Resources {
 		try(final FileInputStream fis = new FileInputStream(file)) {
 			try(final ObjectInputStream ois  = new ObjectInputStream(fis);) {
 				return ois.readObject();
-			}
-		}
-	}
-	
-	public static void writeObject(final String dir, final Object object) throws FileNotFoundException, IOException {
-		try (FileOutputStream fos = new FileOutputStream(dir)) {
-			try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(object);
 			}
 		}
 	}

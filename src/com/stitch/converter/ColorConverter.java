@@ -10,6 +10,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import com.stitch.converter.model.StitchImage;
+
 import com.stitch.converter.model.Pixel;
 import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
@@ -124,7 +125,8 @@ public class ColorConverter extends Thread {
 					try {
 						outputQueue.put(new AbstractMap.SimpleEntry<>(pixel,alternateColor));
 					} catch (InterruptedException e) {
-						LogPrinter.print(e);
+						LogPrinter.error(Resources.getString("error_has_occurred"));
+						LogPrinter.print(e.getMessage());
 					}
 				}
 			}

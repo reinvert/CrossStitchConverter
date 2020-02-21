@@ -153,8 +153,6 @@ public class GraphicsEngine implements Runnable {
 	private final int maxColor, thread;
 	private final boolean scaled;
 
-	private long totalTime;
-
 	private final HashMap<String, Integer> usedColorCount = new HashMap<String, Integer>();
 
 	/**
@@ -164,8 +162,6 @@ public class GraphicsEngine implements Runnable {
 	 *            - the {@link Builder} that defines {@link GraphicsEngine}.
 	 */
 	private GraphicsEngine(final Builder builder) {
-		totalTime = System.currentTimeMillis();
-
 		file = builder.file;
 		csv = builder.csv;
 		maxColor = builder.colorLimit;
@@ -229,32 +225,31 @@ public class GraphicsEngine implements Runnable {
 			final ArrayList<ArrayList<String>> csvArray = CSVReader.read(csvInput);
 			colorList = CSVReader.readColorList(csvArray);
 		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("read_failed"));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("read_failed"));
 			return;
 		} catch (final NoSuchElementException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("rgb_missing", e.getMessage()));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("rgb_missing", e.getMessage()));
 			return;
 		} catch (final NumberFormatException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("rgb_not_integer", e.getMessage()));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("rgb_not_integer", e.getMessage()));
 			return;
 		} catch (final IllegalArgumentException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("rgb_out_of_range", e.getMessage()));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("rgb_out_of_range", e.getMessage()));
 			return;
 		}
-		long time = System.currentTimeMillis();
 
 		stitchImage = new StitchImage();
-		LogPrinter.print(Resources.getString("load_file", file.getPath()));
+		stitchImage.setChanged(true);
 		try {
 			int resizeLength = Preferences.getInteger("resizeLength", 200);
 			image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("cant_read_image"));
+		} catch (final NullPointerException | IOException e) {
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("cant_read_image"));
 			return;
 		}
 		boolean onceRunned = false;
@@ -298,16 +293,8 @@ public class GraphicsEngine implements Runnable {
 			onceRunned = true;
 			toRemove = ImageTools.calculateRemoveString(stitchImage, usedColorCount);
 		} while (maxColor != 0 && stitchImage.getPixelLists().size() > maxColor);
+		stitchImage.setChanged(true);
 		onFinished(stitchImage);
-		try {
-			writeFiles(file);
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("save_failed", file.getName()));
-			return;
-		}
-		time = System.currentTimeMillis() - time;
-		LogPrinter.print(Resources.getString("task_completed", file.getName(), time));
 	}
 
 	/**
@@ -320,8 +307,8 @@ public class GraphicsEngine implements Runnable {
 		try {
 			stitchImage = (StitchImage) Resources.readObject(file);
 		} catch (ClassNotFoundException | IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.print(Resources.getString("read_failed", file.getName()));
+			LogPrinter.print(e.getMessage());
+			LogPrinter.error(Resources.getString("read_failed", file.getName()));
 		}
 
 		if (this.loadMode == Mode.NEW_FILE) {
@@ -332,8 +319,6 @@ public class GraphicsEngine implements Runnable {
 			}
 		}
 		onFinished(stitchImage);
-		totalTime = System.currentTimeMillis() - totalTime;
-		LogPrinter.print(Resources.getString("task_completed", Resources.getString("load"), totalTime));
 	}
 
 	/**
@@ -375,28 +360,6 @@ public class GraphicsEngine implements Runnable {
 	public void onFinished(final StitchImage image) {
 		for(Listener listener: listenerList) {
 			listener.onFinished(image);
-		}
-	}
-
-	/**
-	 * Write result image, used thread list on text, blueprint {@link java.io.File
-	 * File}. The name of each {@link java.io.File File} is defined by the language
-	 * xml file.(ex. en-us, ko-kr)
-	 * 
-	 * @param file
-	 *            - original image {@link java.io.File File}.
-	 * @throws IOException
-	 *             occurs when there is a problem writing the {@link java.io.File
-	 *             File}.
-	 */
-	public void writeFiles(final File file) throws IOException {
-		final String fileName = file.getParent() + File.separator
-				+ file.getName().substring(0, file.getName().lastIndexOf(".")) + ".dmc";
-		try {
-			Resources.writeObject(fileName, stitchImage);
-			LogPrinter.print(Resources.getString("file_saved", fileName, Resources.getString("dmc_file")));
-		} catch (final IOException e) {
-			throw new IOException(Resources.getString("save_failed", Resources.getString("dmc_file")));
 		}
 	}
 }

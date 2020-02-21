@@ -111,7 +111,8 @@ public class ColorConverterSingleThread extends Thread {
 					try {
 						outputQueue.put(pixel);
 					} catch (InterruptedException e) {
-						LogPrinter.print(e);
+						LogPrinter.error(Resources.getString("error_has_occurred"));
+						LogPrinter.print(e.getMessage());
 					}
 				}
 			}

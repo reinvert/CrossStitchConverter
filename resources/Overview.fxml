@@ -11,11 +11,9 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
 <BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
    <top>
@@ -23,7 +21,6 @@
         <menus>
           <Menu mnemonicParsing="false" text="%file">
             <items>
-              <MenuItem mnemonicParsing="false" onAction="#newfile" text="%new_file_menu" />
                   <MenuItem mnemonicParsing="false" onAction="#load" text="%file_open_menu" />
                   <SeparatorMenuItem mnemonicParsing="false" />
                   <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#save" text="%save_menu" />
@@ -42,7 +39,6 @@
             <Menu mnemonicParsing="false" text="%window">
                <items>
                   <CheckMenuItem fx:id="toggleColorTableItem" mnemonicParsing="false" onAction="#toggleWindowColorTable" selected="true" text="%color_table" />
-                  <CheckMenuItem fx:id="toggleLogItem" mnemonicParsing="false" onAction="#toggleWindowLog" selected="true" text="%log" />
                </items>
             </Menu>
           <Menu mnemonicParsing="false" text="%etc">
@@ -54,42 +50,35 @@
       </MenuBar>
    </top>
    <center>
-      <SplitPane fx:id="verticalSplitPane" dividerPositions="0.85" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" orientation="VERTICAL" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.8" BorderPane.alignment="CENTER">
         <items>
-            <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.85">
-              <items>
-                  <ScrollPane fx:id="canvasScrollPane" hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
-                     <content>
-                        <Canvas fx:id="canvas" disable="true" height="700.0" width="1000.0" />
-                     </content>
-                  </ScrollPane>
-                  <VBox fx:id="colorTableVbox" focusTraversable="true">
+            <ScrollPane fx:id="canvasScrollPane" hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
+               <content>
+                  <Canvas fx:id="canvas" disable="true" height="700.0" width="1000.0" />
+               </content>
+            </ScrollPane>
+            <BorderPane fx:id="colorTableBorderPane" minWidth="314.0" prefWidth="314.0">
+               <center>
+                  <TableView fx:id="colorTable" disable="true" editable="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
+                    <columns>
+                      <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
+                      <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
+                        <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
+                        <TableColumn fx:id="totalNumberColumn" prefWidth="50.0" text="%totalnumber" />
+                        <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
+                        <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
+                    </columns>
+                  </TableView>
+               </center>
+               <bottom>
+                  <VBox focusTraversable="true" BorderPane.alignment="CENTER">
                      <children>
-                        <TableView fx:id="colorTable" disable="true" editable="true" prefHeight="800.0" prefWidth="250.0" tableMenuButtonVisible="true">
-                          <columns>
-                            <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
-                            <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
-                              <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
-                              <TableColumn fx:id="totalNumberColumn" prefWidth="50.0" text="%totalnumber" />
-                              <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
-                              <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
-                          </columns>
-                        </TableView>
                         <TextField fx:id="zoom" />
                         <CheckBox fx:id="showNumberCheckbox" disable="true" mnemonicParsing="false" onAction="#onShowNumberCheckboxClicked" text="%button_show_index" />
                      </children>
                   </VBox>
-              </items>
-            </SplitPane>
-            <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
-               <content>
-                  <TextArea fx:id="log" editable="false" style="-fx-background-color: transparent;">
-                     <font>
-                        <Font size="11.0" />
-                     </font>
-                  </TextArea>
-               </content>
-            </ScrollPane>
+               </bottom>
+            </BorderPane>
         </items>
       </SplitPane>
    </center>

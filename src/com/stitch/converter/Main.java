@@ -10,6 +10,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -19,8 +20,6 @@ public class Main extends Application {
 	enum FileStatus {
 		ERROR, SIZE_TOO_LARGE, SUCCESS
 	}
-
-	private GraphicsEngine graphicsEngine;
 
 	private OverviewController controller;
 	private Stage primaryStage;
@@ -39,6 +38,7 @@ public class Main extends Application {
 	};
 
 	public static void main(String[] args) {
+		System.setProperty("prism.lcdtext", "false");
 		launch(args);
 	}
 
@@ -55,22 +55,21 @@ public class Main extends Application {
 
 			scene.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
 			primaryStage.setScene(scene);
+			System.out.println(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
+			Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
+			primaryStage.getIcons().add(image);
 			primaryStage.show();
 		} catch (final IOException e) {
-			e.printStackTrace();
+			LogPrinter.print(e.getMessage());
 		}
 	}
 
 	public void load(final GraphicsEngine.Builder builder) {
-		graphicsEngine = builder.setMode(GraphicsEngine.Mode.LOAD).setListener(listener).build();
-		final Thread engineThread = new Thread(graphicsEngine);
-		engineThread.start();
+		Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.LOAD).setListener(listener).build()));
 	}
 
-	public void startConversion(GraphicsEngine.Builder builder) {
-		graphicsEngine = builder.setMode(GraphicsEngine.Mode.NEW_FILE).setListener(listener).build();
-		final Thread engineThread = new Thread(graphicsEngine);
-		engineThread.start();
+	public void startConversion(final GraphicsEngine.Builder builder) {
+		Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.NEW_FILE).setListener(listener).build()));
 	}
 
 	@Override
