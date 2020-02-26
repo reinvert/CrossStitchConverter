@@ -55,7 +55,6 @@ public class Main extends Application {
 
 			scene.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
 			primaryStage.setScene(scene);
-			System.out.println(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
 			Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
 			primaryStage.getIcons().add(image);
 			primaryStage.show();

@@ -100,11 +100,17 @@ public class OverviewController extends Controller {
 			setDividerPosition();
 		});
 		
+		
+		
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
 				setDividerPosition();
 				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, (event) -> closeWindowEvent(event));
+				
+				if(Preferences.getBoolean("autoLoad", false)) {
+					loadDmc(new File(Preferences.getString("autoLoadFile")));
+				}
 			}
 		});
 	}
@@ -142,6 +148,8 @@ public class OverviewController extends Controller {
 				fileName = dmcFile.getName();
 				overviewStage.setTitle(dmcFile.getName());
 				main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
+				System.out.println(file.getPath()+file.getName());
+				Preferences.setValue("autoLoadFile", file.getPath());
 			} else {
 				final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
 						new File(Preferences.getString("csvFile", "resources/dmc.csv")), file);
@@ -164,6 +172,13 @@ public class OverviewController extends Controller {
 			}
 		}
 	}
+	
+	public void loadDmc(File file) {
+			dmcFile = file;
+			fileName = dmcFile.getName();
+			overviewStage.setTitle(dmcFile.getName());
+			main.load(new GraphicsEngine.Builder(new File(Preferences.getString("csvFile", "resources/dmc.csv")), dmcFile));
+	}
 
 	@FXML
 	public void save() {
@@ -174,6 +189,7 @@ public class OverviewController extends Controller {
 		try {
 			Resources.writeObject(dmcFile, canvasController.getImage());
 			LogPrinter.alert(Resources.getString("file_saved", dmcFile.getName(), Resources.getString("dmc_file")));
+			Preferences.setValue("autoLoadFile", dmcFile.getPath());
 		} catch (IOException e) {
 			LogPrinter.print(e.getMessage());
 			LogPrinter.error(Resources.getString("save_failed", Resources.getString("dmc_file")));
