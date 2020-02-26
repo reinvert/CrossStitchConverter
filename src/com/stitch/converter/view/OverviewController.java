@@ -144,7 +144,7 @@ public class OverviewController extends Controller {
 				main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
 			} else {
 				final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
-						new File(Preferences.getString("csvFile", "dmc.csv")), file);
+						new File(Preferences.getString("csvFile", "resources/dmc.csv")), file);
 				builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
 				builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
 				builder.setThread(Preferences.getInteger("workingThread", 0));

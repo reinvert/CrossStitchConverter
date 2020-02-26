@@ -283,7 +283,7 @@ public class GraphicsEngine implements Runnable {
 			}*/
 			stitchImage.setBackground(backgroundColor);
 			pixelLists = stitchImage.getPixelLists();
-
+			
 			for (final PixelList pixelList : pixelLists) {
 				final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
 				for (final Pixel pixel : pixelSet) {
