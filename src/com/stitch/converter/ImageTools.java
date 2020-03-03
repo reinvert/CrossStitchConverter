@@ -145,7 +145,7 @@ class ImageTools {
 
 	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {
 		StitchColor uselessColor = null;
-		double difference = 255 + 255 + 255;
+		double difference = 256 + 256 + 256;
 		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {

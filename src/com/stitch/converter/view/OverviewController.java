@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -89,6 +90,9 @@ public class OverviewController extends Controller {
 	private File dmcFile;
 
 	private CanvasController canvasController;
+	
+	private Thread scrollbarObserver;
+	private boolean scrollbarActive = false;
 
 	public void setStage(final Stage overviewStage) {
 		this.overviewStage = overviewStage;
@@ -100,8 +104,6 @@ public class OverviewController extends Controller {
 			setDividerPosition();
 		});
 		
-		
-		
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
@@ -109,7 +111,11 @@ public class OverviewController extends Controller {
 				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, (event) -> closeWindowEvent(event));
 				
 				if(Preferences.getBoolean("autoLoad", false)) {
-					loadDmc(new File(Preferences.getString("autoLoadFile")));
+					try {
+						loadDmc(new File(Preferences.getString("autoLoadFile")));
+					} catch(final NoSuchElementException e) {
+						Preferences.setValue("autoLoad", "false");
+					}
 				}
 			}
 		});
@@ -395,6 +401,8 @@ public class OverviewController extends Controller {
 	private void closeWindowEvent(WindowEvent event) {
 		if(confirmExit() == false) {
 			event.consume();
+		} else {
+			scrollbarActive = false;
 		}
 	}
 	
@@ -511,6 +519,7 @@ public class OverviewController extends Controller {
 			toggleColorTableItem.setSelected(false);
 			toggleWindowColorTable();
 		}
+		
 	}
 	
 	public void setImage(final StitchImage stitchImage) {
@@ -536,6 +545,24 @@ public class OverviewController extends Controller {
 		exportBlueprint.setDisable(false);
 		showNumberCheckbox.setSelected(Preferences.getBoolean("drawGridNumber", true));
 		invalidate();
+		canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
+		canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
+		scrollbarActive = true;
+		scrollbarObserver = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while(scrollbarActive == true) {
+					Preferences.setValue("scrollX", String.valueOf(canvasScrollPane.getHvalue()));
+					Preferences.setValue("scrollY", String.valueOf(canvasScrollPane.getVvalue()));
+					System.out.println("scrollbarObserver running...");
+					try {
+						Thread.sleep(1000);
+					} catch (final InterruptedException e) {
+					}
+				}
+			}
+		});
+		scrollbarObserver.start();
 	}
 
 	public boolean setZoom(String scale) {
