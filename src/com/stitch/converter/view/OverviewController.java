@@ -90,30 +90,28 @@ public class OverviewController extends Controller {
 	private File dmcFile;
 
 	private CanvasController canvasController;
-	
-	private Thread scrollbarObserver;
-	private boolean scrollbarActive = false;
 
 	public void setStage(final Stage overviewStage) {
 		this.overviewStage = overviewStage;
 		this.overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
 			setDividerPosition();
 		});
-		
+
 		this.overviewStage.heightProperty().addListener((obs, oldVal, newVal) -> {
 			setDividerPosition();
 		});
-		
+
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
 				setDividerPosition();
-				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST, (event) -> closeWindowEvent(event));
-				
-				if(Preferences.getBoolean("autoLoad", false)) {
+				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
+						(event) -> closeWindowEvent(event));
+
+				if (Preferences.getBoolean("autoLoad", false)) {
 					try {
 						loadDmc(new File(Preferences.getString("autoLoadFile")));
-					} catch(final NoSuchElementException e) {
+					} catch (final NoSuchElementException e) {
 						Preferences.setValue("autoLoad", "false");
 					}
 				}
@@ -128,8 +126,8 @@ public class OverviewController extends Controller {
 		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-		final FileChooser.ExtensionFilter dmcFilter = new FileChooser.ExtensionFilter(
-				Resources.getString("filter_dmc"), "*.dmc");
+		final FileChooser.ExtensionFilter dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"),
+				"*.dmc");
 		final FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(
 				Resources.getString("filter_all"), "*.*");
 		final FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
@@ -141,20 +139,20 @@ public class OverviewController extends Controller {
 		if (file != null) {
 			String extension = "";
 			{
-			    String name = file.getName();
-			    int lastIndexOf = name.lastIndexOf(".");
-			    if (lastIndexOf == -1) {
-			    	LogPrinter.error(Resources.getString("cant_read_image"));
-			    	return;
-			    }
-			    extension = name.substring(lastIndexOf);
+				String name = file.getName();
+				int lastIndexOf = name.lastIndexOf(".");
+				if (lastIndexOf == -1) {
+					LogPrinter.error(Resources.getString("cant_read_image"));
+					return;
+				}
+				extension = name.substring(lastIndexOf);
 			}
-			if(extension.equals(".dmc")) {
+			if (extension.equals(".dmc")) {
 				dmcFile = file;
 				fileName = dmcFile.getName();
 				overviewStage.setTitle(dmcFile.getName());
 				main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
-				System.out.println(file.getPath()+file.getName());
+				System.out.println(file.getPath() + file.getName());
 				Preferences.setValue("autoLoadFile", file.getPath());
 			} else {
 				final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
@@ -163,7 +161,7 @@ public class OverviewController extends Controller {
 				builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
 				builder.setThread(Preferences.getInteger("workingThread", 0));
 				builder.setResize(Preferences.getBoolean("resizeImage", true));
-				
+
 				try {
 					dmcFile = new File(file.getParent() + File.separator
 							+ file.getName().substring(0, file.getName().lastIndexOf(".")) + ".dmc");
@@ -178,17 +176,17 @@ public class OverviewController extends Controller {
 			}
 		}
 	}
-	
+
 	public void loadDmc(File file) {
-			dmcFile = file;
-			fileName = dmcFile.getName();
-			overviewStage.setTitle(dmcFile.getName());
-			main.load(new GraphicsEngine.Builder(new File(Preferences.getString("csvFile", "resources/dmc.csv")), dmcFile));
+		dmcFile = file;
+		fileName = dmcFile.getName();
+		overviewStage.setTitle(dmcFile.getName());
+		main.load(new GraphicsEngine.Builder(new File(Preferences.getString("csvFile", "resources/dmc.csv")), dmcFile));
 	}
 
 	@FXML
 	public void save() {
-		if(save.isDisable() == true) {
+		if (save.isDisable() == true) {
 			return;
 		}
 		setTitleChanged(false);
@@ -204,7 +202,7 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void saveTo() {
-		if(saveTo.isDisable() == true) {
+		if (saveTo.isDisable() == true) {
 			return;
 		}
 		final FileChooser fileChooser = new FileChooser();
@@ -221,7 +219,7 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void exportImage() {
-		if(exportPng.isDisable() == true) {
+		if (exportPng.isDisable() == true) {
 			return;
 		}
 		final FileChooser fileChooser = new FileChooser();
@@ -236,17 +234,19 @@ public class OverviewController extends Controller {
 					null);
 			try {
 				ImageIO.write(bufferedImage, "png", imageFile);
-				LogPrinter.alert(Resources.getString("file_saved", Resources.getString("image_file"), imageFile.getName()));
+				LogPrinter.alert(
+						Resources.getString("file_saved", Resources.getString("image_file"), imageFile.getName()));
 			} catch (final IOException e) {
 				LogPrinter.print(e.getMessage());
-				LogPrinter.error(Resources.getString("save_failed", Resources.getString("image_file"), imageFile.getName()));
+				LogPrinter.error(
+						Resources.getString("save_failed", Resources.getString("image_file"), imageFile.getName()));
 			}
 		}
 	}
 
 	@FXML
 	public void exportColor() {
-		if(exportCsv.isDisable() == true) {
+		if (exportCsv.isDisable() == true) {
 			return;
 		}
 		final FileChooser fileChooser = new FileChooser();
@@ -260,38 +260,38 @@ public class OverviewController extends Controller {
 			if (actFile.exists()) {
 				actFile.delete();
 			}
-        	try(OutputStream outputStream = new FileOutputStream(actFile)){
-    			actFile.createNewFile();
-    			int totalNumber = 0;
+			try (OutputStream outputStream = new FileOutputStream(actFile)) {
+				actFile.createNewFile();
+				int totalNumber = 0;
 				for (final StitchColor color : canvasController.getImage().getColorList()) {
-                	if(totalNumber == 256) {
-                		break;
-                	}
-                	totalNumber++;
-	                byte red = (byte)(color.getRed()&0xff);
-	                byte green = (byte)(color.getGreen()&0xff);
-	                byte blue = (byte)(color.getBlue()&0xff);
-                	outputStream.write(red);
-                	outputStream.write(green);
-                	outputStream.write(blue);
+					if (totalNumber == 256) {
+						break;
+					}
+					totalNumber++;
+					byte red = (byte) (color.getRed() & 0xff);
+					byte green = (byte) (color.getGreen() & 0xff);
+					byte blue = (byte) (color.getBlue() & 0xff);
+					outputStream.write(red);
+					outputStream.write(green);
+					outputStream.write(blue);
 
 				}
-				for(final StitchColor color : canvasController.getImage().getAlternate()) {
-                	if(totalNumber == 256) {
-                		break;
-                	}
-                	totalNumber++;
-	                byte red = (byte)(color.getRed()&0xff);
-	                byte green = (byte)(color.getGreen()&0xff);
-	                byte blue = (byte)(color.getBlue()&0xff);
-                	outputStream.write(red);
-                	outputStream.write(green);
-                	outputStream.write(blue);
+				for (final StitchColor color : canvasController.getImage().getAlternate()) {
+					if (totalNumber == 256) {
+						break;
+					}
+					totalNumber++;
+					byte red = (byte) (color.getRed() & 0xff);
+					byte green = (byte) (color.getGreen() & 0xff);
+					byte blue = (byte) (color.getBlue() & 0xff);
+					outputStream.write(red);
+					outputStream.write(green);
+					outputStream.write(blue);
 				}
-				for (;totalNumber<=255;totalNumber++) {
-                	outputStream.write(0x00);
-                	outputStream.write(0x00);
-                	outputStream.write(0x00);
+				for (; totalNumber <= 255; totalNumber++) {
+					outputStream.write(0x00);
+					outputStream.write(0x00);
+					outputStream.write(0x00);
 				}
 			} catch (final IOException e) {
 				LogPrinter.print(e.getMessage());
@@ -302,7 +302,7 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void exportBlueprint() {
-		if(exportBlueprint.isDisable() == true) {
+		if (exportBlueprint.isDisable() == true) {
 			return;
 		}
 		final FileChooser fileChooser = new FileChooser();
@@ -334,7 +334,7 @@ public class OverviewController extends Controller {
 			LogPrinter.error(Resources.getString("save_failed", Resources.getString("blueprint_file")));
 		}
 	}
-	
+
 	@FXML
 	public void setting() {
 		ScrollPane page = null;
@@ -356,10 +356,10 @@ public class OverviewController extends Controller {
 		settingStage.setScene(scene);
 		settingStage.showAndWait();
 	}
-	
+
 	@FXML
 	public void toggleWindowColorTable() {
-		if(toggleColorTableItem.isSelected() == true) {
+		if (toggleColorTableItem.isSelected() == true) {
 			Preferences.setValue("showColorTable", "true");
 			horizontalSplitPane.getItems().add(1, colorTableBorderPane);
 			setDividerPosition();
@@ -368,18 +368,17 @@ public class OverviewController extends Controller {
 			horizontalSplitPane.getItems().remove(1);
 		}
 	}
-	
+
 	public void setDividerPosition() {
-		horizontalSplitPane.setDividerPositions((double)(1-314/borderPane.getWidth()));
+		horizontalSplitPane.setDividerPositions((double) (1 - 314 / borderPane.getWidth()));
 	}
-	
+
 	@FXML
 	public void author() {
 		FXMLLoader loader = null;
 		AnchorPane page = null;
 		try {
-			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(),
-					Resources.getBundle());
+			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(), Resources.getBundle());
 			page = (AnchorPane) loader.load();
 		} catch (final IOException e) {
 			LogPrinter.print(e.getMessage());
@@ -397,15 +396,16 @@ public class OverviewController extends Controller {
 		controller.setApp(main);
 		authorStage.showAndWait();
 	}
-	
+
 	private void closeWindowEvent(WindowEvent event) {
-		if(confirmExit() == false) {
+		if (confirmExit() == false) {
 			event.consume();
 		} else {
-			scrollbarActive = false;
+			Preferences.setValue("scrollX", String.valueOf(canvasScrollPane.getHvalue()));
+			Preferences.setValue("scrollY", String.valueOf(canvasScrollPane.getVvalue()));
 		}
 	}
-	
+
 	private boolean confirmExit() {
 		if (canvasController != null && canvasController.getImage().isChanged() == true) {
 			final ButtonType save = new ButtonType(Resources.getString("save"), ButtonData.YES);
@@ -515,13 +515,13 @@ public class OverviewController extends Controller {
 				clickCanvas(event.getX(), event.getY());
 			}
 		});
-		if(Preferences.getBoolean("showColorTable", true) == false) {
+		if (Preferences.getBoolean("showColorTable", true) == false) {
 			toggleColorTableItem.setSelected(false);
 			toggleWindowColorTable();
 		}
-		
+
 	}
-	
+
 	public void setImage(final StitchImage stitchImage) {
 		canvasController = new CanvasController(stitchImage, canvas);
 		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList();
@@ -530,7 +530,7 @@ public class OverviewController extends Controller {
 			stitchListArrayList.add(new StitchList(pixelList));
 		}
 		colorTable.setItems(stitchListArrayList);
-		if(setZoom(Preferences.getValue("scale", "MATCH_WIDTH")) == false) {
+		if (setZoom(Preferences.getValue("scale", "MATCH_WIDTH")) == false) {
 			Preferences.setValue("scale", "MATCH_WIDTH");
 			setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
 		}
@@ -547,43 +547,27 @@ public class OverviewController extends Controller {
 		invalidate();
 		canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
 		canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
-		scrollbarActive = true;
-		scrollbarObserver = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while(scrollbarActive == true) {
-					Preferences.setValue("scrollX", String.valueOf(canvasScrollPane.getHvalue()));
-					Preferences.setValue("scrollY", String.valueOf(canvasScrollPane.getVvalue()));
-					System.out.println("scrollbarObserver running...");
-					try {
-						Thread.sleep(1000);
-					} catch (final InterruptedException e) {
-					}
-				}
-			}
-		});
-		scrollbarObserver.start();
 	}
 
 	public boolean setZoom(String scale) {
 		double scaleRatio = 0d;
-		
-		if(scale.equals("MATCH_WIDTH")) {
+
+		if (scale.equals("MATCH_WIDTH")) {
 			double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
 			double imageWidth = canvasController.getImage().getWidth();
 			double ratioByWidth = screenWidth / imageWidth;
-			
+
 			canvasController.setScale(ratioByWidth);
 			zoom.setText(scale);
-		} else if(scale.equals("MATCH_SCREEN")) {
+		} else if (scale.equals("MATCH_SCREEN")) {
 			double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
 			double imageWidth = canvasController.getImage().getWidth();
 			double ratioByWidth = screenWidth / imageWidth;
-			
+
 			double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
 			double imageHeight = canvasController.getImage().getHeight();
 			double ratioByHeight = screenHeight / imageHeight;
-			
+
 			canvasController.setScale(Math.min(ratioByWidth, ratioByHeight));
 			zoom.setText(scale);
 		} else {
@@ -646,7 +630,7 @@ public class OverviewController extends Controller {
 								public void run() {
 									colorTable.requestFocus();
 									colorTable.getSelectionModel().select(stitchList);
-									//colorTable.getFocusModel().fo
+									// colorTable.getFocusModel().fo
 									colorTable.scrollTo(stitchList);
 								}
 							});

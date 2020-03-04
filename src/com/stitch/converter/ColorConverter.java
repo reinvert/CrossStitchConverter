@@ -58,9 +58,16 @@ public class ColorConverter extends Thread {
 		public Builder setThread(final int thread) {
 			if (thread == 0) {
 				this.thread = Runtime.getRuntime().availableProcessors() + 1;
+			} else if (thread < 0) {
+				throw new AssertionError("Thread should be at least 0.");
 			} else {
 				this.thread = thread;
 			}
+			return this;
+		}
+		
+		public Builder setConvertedImage(final BufferedImage image) {
+			
 			return this;
 		}
 
@@ -97,7 +104,7 @@ public class ColorConverter extends Thread {
 				for (int y = this.y; y < this.y + height; y++) {
 					final Pixel pixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
 					final StitchColor targetColor = pixel.getColor();
-					double difference = 256 + 256 + 256, alternateDifference = 256 + 256 + 256;
+					double difference = 256, alternateDifference = 256;
 					StitchColor outputColor = null, alternateColor = null;
 					double calculatedDifference = 0;
 
@@ -211,7 +218,7 @@ public class ColorConverter extends Thread {
 			}
 			outputQueue.put(poisonPill);
 			writeThread.join();
-			for (PixelList pixelList : stitchImage.getPixelLists()) {
+			for (final PixelList pixelList : stitchImage.getPixelLists()) {
 				stitchImage.removeAlternate(pixelList.getColor());
 			}
 		} catch (final InterruptedException e) {

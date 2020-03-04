@@ -26,19 +26,16 @@ import com.stitch.converter.model.StitchColor;
  */
 class ImageTools {
 	private ImageTools() {
-		throw new AssertionError();
+		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}
 
 	/**
 	 * Converts the size of the image to read or just read.
 	 * 
-	 * @param file
-	 *            - the image {@link java.io.File file}.
-	 * @param scaled
-	 *            - true if converts the size of the image.
+	 * @param file   - the image {@link java.io.File file}.
+	 * @param scaled - true if converts the size of the image.
 	 * @return {@link java.awt.BufferedImage BufferedImage} file.
-	 * @throws IOException
-	 *             occurs when the image file can't read.
+	 * @throws IOException occurs when the image file can't read.
 	 */
 	static BufferedImage readImage(final File file, final boolean scaled, final int width, final int height)
 			throws IOException {
@@ -65,8 +62,7 @@ class ImageTools {
 	 * {@link java.util.ArrayList ArrayList}<{@link java.util.ArrayList
 	 * ArrayList}<{@link java.awt.Color Color}>>.
 	 * 
-	 * @param image
-	 *            - the {@link java.awt.BufferedImage BufferedImage} to convert.
+	 * @param image - the {@link java.awt.BufferedImage BufferedImage} to convert.
 	 * @return the {@link java.util.ArrayList ArrayList}<{@link java.util.ArrayList
 	 *         ArrayList}<{@link java.awt.Color Color}>> array.
 	 */
@@ -86,10 +82,8 @@ class ImageTools {
 	/**
 	 * Gets the scale between two size. Always same or lower than 1.0.
 	 * 
-	 * @param iMasterSize
-	 *            - the master size.
-	 * @param iTargetSize
-	 *            - the target size.
+	 * @param iMasterSize - the master size.
+	 * @param iTargetSize - the target size.
 	 * @return the scale of two size.
 	 */
 	static double getScaleFactor(final int iMasterSize, final int iTargetSize) {
@@ -106,10 +100,8 @@ class ImageTools {
 	 * Gets the scale between two {@link java.awt.Dimension Dimension}. Always same
 	 * or lower than 1.0.
 	 * 
-	 * @param original
-	 *            - the original {@link java.awt.Dimension Dimension}.
-	 * @param toFit
-	 *            - the target {@link java.awt.Dimension Dimension}.
+	 * @param original - the original {@link java.awt.Dimension Dimension}.
+	 * @param toFit    - the target {@link java.awt.Dimension Dimension}.
 	 * @return the scale of two {@link java.awt.Dimension Dimension}.
 	 */
 	static double getScaleFactorToFit(final Dimension original, final Dimension toFit) {
@@ -125,10 +117,8 @@ class ImageTools {
 	/**
 	 * Calculate difference between two {@link java.awt.Color Color}.
 	 * 
-	 * @param originalColor
-	 *            - the original {@link java.awt.Color Color}.
-	 * @param targetColor
-	 *            - the target {@link java.awt.Color Color}.
+	 * @param originalColor - the original {@link java.awt.Color Color}.
+	 * @param targetColor   - the target {@link java.awt.Color Color}.
 	 * @return difference between two {@link java.awt.Color Color}.
 	 */
 	static double calculateDifference(final StitchColor originalColor, final StitchColor targetColor) {
@@ -143,9 +133,10 @@ class ImageTools {
 		return Math.sqrt(Math.pow(or - tr, 2) + Math.pow(og - tg, 2) + Math.pow(ob - tb, 2));
 	}
 
-	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {
+	static StitchColor calculateRemoveString(final StitchImage stitchImage,
+			final HashMap<String, Integer> usedColorCount) {
 		StitchColor uselessColor = null;
-		double difference = 256 + 256 + 256;
+		double difference = 256;
 		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {

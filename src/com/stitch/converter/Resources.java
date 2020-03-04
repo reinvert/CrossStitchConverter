@@ -20,7 +20,7 @@ import javafx.scene.control.Alert.AlertType;
 public class Resources {
 	private static ResourceBundle bundle;
 	private static final ArrayList<Locale> supportedLocales = new ArrayList<Locale>();
-	
+
 	static {
 		supportedLocales.add(Locale.KOREAN);
 		supportedLocales.add(Locale.ENGLISH);
@@ -30,12 +30,12 @@ public class Resources {
 					bundle = ResourceBundle.getBundle("Languages", locale);
 				}
 			}
-		} catch(MissingResourceException e) {
+		} catch (MissingResourceException e) {
 			bundle = ResourceBundle.getBundle("Languages", Locale.ENGLISH);
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			try {
 				writeText("log.txt", t.getMessage());
-			} catch(Throwable t2) {
+			} catch (Throwable t2) {
 				t2.printStackTrace();
 			}
 			Alert alert = new Alert(AlertType.INFORMATION);
@@ -55,10 +55,10 @@ public class Resources {
 		return bundle;
 	}
 
-	public static String getString(final String id) throws MissingResourceException{
+	public static String getString(final String id) throws MissingResourceException {
 		try {
 			return bundle.getString(id);
-		} catch(final MissingResourceException e) {
+		} catch (final MissingResourceException e) {
 			throw e;
 		}
 	}
@@ -72,29 +72,29 @@ public class Resources {
 			return null;
 		}
 	}
-	
+
 	public static void writeText(final String dir, final String text) throws IOException {
-		try(final PrintWriter printWriter = new PrintWriter(dir)) {
+		try (final PrintWriter printWriter = new PrintWriter(dir)) {
 			printWriter.println(text);
 		}
 	}
-	
+
 	public static Object readObject(final String dir) throws IOException, ClassNotFoundException {
-		try(final FileInputStream fis = new FileInputStream(dir)) {
-			try(final ObjectInputStream ois  = new ObjectInputStream(fis);) {
+		try (final FileInputStream fis = new FileInputStream(dir)) {
+			try (final ObjectInputStream ois = new ObjectInputStream(fis);) {
 				return ois.readObject();
 			}
 		}
 	}
-	
+
 	public static Object readObject(final File file) throws IOException, ClassNotFoundException {
-		try(final FileInputStream fis = new FileInputStream(file)) {
-			try(final ObjectInputStream ois  = new ObjectInputStream(fis);) {
+		try (final FileInputStream fis = new FileInputStream(file)) {
+			try (final ObjectInputStream ois = new ObjectInputStream(fis);) {
 				return ois.readObject();
 			}
 		}
 	}
-	
+
 	public static void writeObject(final File file, final Object object) throws FileNotFoundException, IOException {
 		try (FileOutputStream fos = new FileOutputStream(file)) {
 			try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {

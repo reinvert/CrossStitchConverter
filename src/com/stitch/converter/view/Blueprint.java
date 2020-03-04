@@ -68,15 +68,15 @@ public class Blueprint extends CanvasController {
 				y = listZeroY + yCount * listScale;
 			}
 			yCount++;
-			
+
 			context.setFill(color);
 			context.fillRect(x, y, listScale * 5, listScale * 0.9);
-			
+
 			context.setFill(Color.BLACK);
 			final String index = Integer.toString(pixelList.getIndex());
 			context.setTextAlign(TextAlignment.RIGHT);
 			context.fillText(index, x + listScale * 6.5, y);
-			
+
 			final double red = color.getRed();
 			final double green = color.getGreen();
 			final double blue = color.getBlue();
@@ -85,7 +85,7 @@ public class Blueprint extends CanvasController {
 				final double textHeight = getTextHeight(context.getFont(), pixelList.getColor().getName());
 				context.fillRect(x + listScale * 7.5, y, textWidth, textHeight);
 			}
-			
+
 			context.setFill(color);
 			context.setTextAlign(TextAlignment.LEFT);
 			context.fillText(pixelList.getColor().getName(), x + listScale * 7.5, y);

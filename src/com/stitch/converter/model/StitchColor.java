@@ -6,7 +6,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	private static final long serialVersionUID = 1L;
 
 	private final int red, green, blue;
-	
+
 	private final String name;
 
 	public StitchColor(final int red, final int green, final int blue, final String name) {
@@ -15,13 +15,13 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 		this.blue = blue;
 		this.name = name;
 	}
-	
+
 	public StitchColor(final java.awt.Color color, final String name) {
 		this(color.getRed(), color.getGreen(), color.getBlue(), name);
 	}
-	
+
 	public StitchColor(final javafx.scene.paint.Color color, final String name) {
-		this((int)color.getRed()*255, (int)color.getGreen()*255, (int)color.getBlue()*255, name);
+		this((int) color.getRed() * 255, (int) color.getGreen() * 255, (int) color.getBlue() * 255, name);
 	}
 
 	public java.awt.Color asAWT() {
@@ -29,13 +29,14 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	public javafx.scene.paint.Color asFX() {
-		return new javafx.scene.paint.Color((double)(getRed()/255d), (double)(getGreen()/255d), (double)(getBlue()/255d), 1d);
+		return new javafx.scene.paint.Color((double) (getRed() / 255d), (double) (getGreen() / 255d),
+				(double) (getBlue() / 255d), 1d);
 	}
 
 	public int getRed() {
 		return red;
 	}
-	
+
 	public int getGreen() {
 		return green;
 	}
@@ -47,11 +48,11 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	public String getName() {
 		return name;
 	}
-	
+
 	public String getColorString() {
-		return "#"+String.format("%02X", red)+String.format("%02X", green)+String.format("%02X", blue);
+		return "#" + String.format("%02X", red) + String.format("%02X", green) + String.format("%02X", blue);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -88,7 +89,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 
 	@Override
 	public Object clone() {
-	    try {
+		try {
 			return super.clone();
 		} catch (CloneNotSupportedException e) {
 			throw new AssertionError();
@@ -101,7 +102,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 			int integerName = Integer.parseInt(this.getName());
 			int targetIntegerName = Integer.parseInt(target.getName());
 			return Integer.compare(integerName, targetIntegerName);
-		} catch(final NumberFormatException e) {
+		} catch (final NumberFormatException e) {
 			return this.getName().compareTo(target.getName());
 		}
 	}

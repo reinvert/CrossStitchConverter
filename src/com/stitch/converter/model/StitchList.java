@@ -16,12 +16,12 @@ public class StitchList {
 	private final BooleanProperty isHighlighted, isCompleted;
 	private final ObjectProperty<StitchColor> color;
 	private final StringProperty name, colorString;
-	
+
 	@SuppressWarnings("unused")
 	private StitchList() {
 		throw new AssertionError();
 	}
-	
+
 	public StitchList(final PixelList pixelList) {
 		this.pixelList = pixelList;
 		this.index = new SimpleIntegerProperty(pixelList.getIndex());
@@ -32,39 +32,39 @@ public class StitchList {
 		this.name = new SimpleStringProperty(pixelList.getColor().getName());
 		colorString = new SimpleStringProperty(pixelList.getColor().getColorString());
 	}
-	
+
 	public BooleanProperty highlightProperty() {
 		return isHighlighted;
 	}
-	
+
 	public BooleanProperty completeProperty() {
 		return isCompleted;
 	}
-	
+
 	public IntegerProperty indexProperty() {
 		return index;
 	}
-	
+
 	public IntegerProperty totalNumberProperty() {
 		return totalNumber;
 	}
-	
+
 	public StringProperty nameProperty() {
 		return name;
 	}
-	
+
 	public StringProperty colorStringProperty() {
 		return colorString;
 	}
-	
+
 	public String getName() {
 		return color.get().getName();
 	}
-	
+
 	public int getIndex() {
 		return index.get();
 	}
-	
+
 	public PixelList getPixelList() {
 		return pixelList;
 	}
@@ -72,27 +72,27 @@ public class StitchList {
 	public Color getColor() {
 		return color.get().asFX();
 	}
-	
+
 	public String getColorString() {
 		return color.get().getColorString();
 	}
-	
+
 	public boolean isHighlighted() {
 		return isHighlighted.get();
 	}
-	
+
 	public boolean isCompleted() {
 		return isCompleted.get();
 	}
-	
+
 	public void setHighlight(boolean highlight) {
 		pixelList.setHighlighted(highlight);
 		isHighlighted.set(highlight);
 	}
-	
+
 	public void setCompleted(boolean completed) {
 		pixelList.setCompleted(completed);
 		isCompleted.set(completed);
 	}
-	
+
 }

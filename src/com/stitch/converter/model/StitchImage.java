@@ -14,7 +14,7 @@ import java.util.TreeSet;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 
-public class StitchImage implements Serializable{
+public class StitchImage implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private StitchColor background = new StitchColor(Color.WHITE, "");
@@ -44,24 +44,24 @@ public class StitchImage implements Serializable{
 			pixelListSet.add(pixelList);
 		}
 	}
-	
+
 	public void addAlternateColor(final StitchColor color) {
-		if(alternateColors.containsKey(color)) {
-			alternateColors.put(color, alternateColors.get(color)+1);
+		if (alternateColors.containsKey(color)) {
+			alternateColors.put(color, alternateColors.get(color) + 1);
 		} else {
 			alternateColors.put(color, 1);
 		}
 	}
-	
+
 	public void removeAlternate(final StitchColor color) {
 		alternateColors.remove(color);
 	}
-	
+
 	public List<StitchColor> getAlternate() {
-		List<Entry<StitchColor,Integer>> list = new ArrayList<>(alternateColors.entrySet());
+		List<Entry<StitchColor, Integer>> list = new ArrayList<>(alternateColors.entrySet());
 		list.sort(Entry.comparingByValue());
 		List<StitchColor> output = new ArrayList<>();
-		for(int i=list.size()-1; i!=0; i--) {
+		for (int i = list.size() - 1; i != 0; i--) {
 			output.add(list.get(i).getKey());
 		}
 		return output;
@@ -96,13 +96,13 @@ public class StitchImage implements Serializable{
 	public StitchColor getBackground() {
 		return background;
 	}
-	
+
 	public WritableImage getFXImage() {
-		if(fxImage == null) {
-			if(width==-1||height==-1) {
+		if (fxImage == null) {
+			if (width == -1 || height == -1) {
 				calculateSize();
 			}
-			fxImage = new WritableImage((int)width, (int)height);
+			fxImage = new WritableImage((int) width, (int) height);
 			final PixelWriter pixelWriter = fxImage.getPixelWriter();
 			for (final PixelList pixelList : pixelListSet) {
 				for (final Pixel pixel : pixelList.getPixelSet()) {
@@ -112,11 +112,11 @@ public class StitchImage implements Serializable{
 		}
 		return fxImage;
 	}
-	
+
 	public ArrayList<StitchColor> getColorList() {
-		if(colorList == null) {
+		if (colorList == null) {
 			colorList = new ArrayList<>();
-			for(final PixelList pixelList : pixelListSet) {
+			for (final PixelList pixelList : pixelListSet) {
 				colorList.add(pixelList.getColor());
 			}
 		}
@@ -124,14 +124,14 @@ public class StitchImage implements Serializable{
 	}
 
 	public double getWidth() {
-		if(width==-1 || height==-1) {
+		if (width == -1 || height == -1) {
 			calculateSize();
 		}
 		return width;
 	}
 
 	public double getHeight() {
-		if(width==-1 || height==-1) {
+		if (width == -1 || height == -1) {
 			calculateSize();
 		}
 		return height;
@@ -182,7 +182,7 @@ public class StitchImage implements Serializable{
 
 	@Override
 	public String toString() {
-		return "StitchImage [background=" + background + ", pixelListSet=" + pixelListSet + ", width=" + width + ", height="
-				+ height + ", numberVisible=" + numberVisible + "]";
+		return "StitchImage [background=" + background + ", pixelListSet=" + pixelListSet + ", width=" + width
+				+ ", height=" + height + ", numberVisible=" + numberVisible + "]";
 	}
 }

@@ -66,12 +66,12 @@ public class Preferences {
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static HashMap<String, String> getKeyStore() {
 		return (HashMap<String, String>) keyStore.clone();
 	}
-	
+
 	public static void setValue(final String key, final String value) {
 		keyStore.put(key, value);
 		store();
@@ -174,7 +174,7 @@ public class Preferences {
 			return defaultValue;
 		}
 	}
-	
+
 	private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
 		int red, green, blue;
 		try {
