@@ -27,7 +27,7 @@ public class Main extends Application {
 
 	private Listener listener = new Listener() {
 		@Override
-		public void onFinished(StitchImage image) {
+		public void onFinished(final StitchImage image) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
@@ -59,7 +59,7 @@ public class Main extends Application {
 			primaryStage.getIcons().add(image);
 			primaryStage.show();
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 		}
 	}
 

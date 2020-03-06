@@ -1,6 +1,8 @@
 package com.stitch.converter;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -15,7 +17,19 @@ public class LogPrinter {
 		public void print(final String str) {
 			try {
 				Resources.writeText(logFile, str);
-			} catch (IOException e) {
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		@Override
+		public void print(final Throwable throwable) {
+			try(final StringWriter stringWriter = new StringWriter()) {
+				try(final PrintWriter printWriter = new PrintWriter(stringWriter)) {
+					throwable.printStackTrace(printWriter);
+					Resources.writeText(logFile, stringWriter.toString());
+				}
+			} catch (final IOException e) {
 				e.printStackTrace();
 			}
 		}
@@ -44,8 +58,9 @@ public class LogPrinter {
 					alert.showAndWait();
 				}
 			});
-			
+
 		}
+
 	};
 
 	private LogPrinter() {
@@ -63,6 +78,10 @@ public class LogPrinter {
 	public static void print(String str) {
 		logger.print(str);
 	}
+	
+	public static void print(Throwable throwable) {
+		logger.print(throwable);
+	}
 
 	public static void alert(final String content) {
 		logger.alert(content);
@@ -74,6 +93,8 @@ public class LogPrinter {
 
 	public interface Logger {
 		public void print(final String str);
+
+		public void print(final Throwable throwable);
 
 		public void alert(final String str);
 

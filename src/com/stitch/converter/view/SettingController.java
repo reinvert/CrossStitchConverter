@@ -39,7 +39,7 @@ public class SettingController extends Controller {
 	@FXML
 	public void initialize() {
 		settingTable.setOnKeyPressed(event -> {
-			TablePosition<SimpleEntry<String, String>, ?> pos = settingTable.getFocusModel().getFocusedCell();
+			final TablePosition<SimpleEntry<String, String>, ?> pos = settingTable.getFocusModel().getFocusedCell();
 			if (pos != null && event.getCode().isLetterKey()) {
 				settingTable.edit(pos.getRow(), pos.getTableColumn());
 			}

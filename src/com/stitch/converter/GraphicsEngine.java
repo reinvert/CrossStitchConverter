@@ -25,13 +25,13 @@ import com.stitch.converter.model.StitchColor;
  * 
  * @author Reinvert
  */
-public class GraphicsEngine implements Runnable {
+public final class GraphicsEngine implements Runnable {
 	/**
 	 * Builder of {@link GraphicsEngine}.
 	 * 
 	 * @author Reinvert
 	 */
-	public static class Builder {
+	public final static class Builder {
 		private final File csv;
 		private final File file;
 
@@ -39,7 +39,7 @@ public class GraphicsEngine implements Runnable {
 		private int colorLimit = -1, thread;
 		private boolean resize = false;
 		private StitchColor backgroundColor = new StitchColor(Color.WHITE, "");
-		private List<Listener> listenerList = new ArrayList<>();
+		private final List<Listener> listenerList = new ArrayList<>();
 
 		/**
 		 * Constructor of the {@link Builder}.
@@ -204,19 +204,19 @@ public class GraphicsEngine implements Runnable {
 			final ArrayList<ArrayList<String>> csvArray = CSVReader.read(csvInput);
 			colorList = CSVReader.readColorList(csvArray);
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed"));
 			return;
 		} catch (final NoSuchElementException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("rgb_missing", e.getMessage()));
 			return;
 		} catch (final NumberFormatException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("rgb_not_integer", e.getMessage()));
 			return;
 		} catch (final IllegalArgumentException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("rgb_out_of_range", e.getMessage()));
 			return;
 		}
@@ -227,7 +227,7 @@ public class GraphicsEngine implements Runnable {
 			int resizeLength = Preferences.getInteger("resizeLength", 200);
 			image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
 		} catch (final NullPointerException | IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("cant_read_image"));
 			return;
 		}
@@ -285,7 +285,7 @@ public class GraphicsEngine implements Runnable {
 		try {
 			stitchImage = (StitchImage) Resources.readObject(file);
 		} catch (final ClassNotFoundException | IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", file.getName()));
 			return;
 		}

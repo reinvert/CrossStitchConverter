@@ -11,7 +11,7 @@ import com.stitch.converter.model.StitchColor;
  * 
  * @author Reinvert
  */
-class CSVReader {
+final class CSVReader {
 	private CSVReader() {
 		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}

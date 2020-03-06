@@ -21,7 +21,7 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  *
  */
-public class ColorConverter extends Thread {
+public final class ColorConverter extends Thread {
 	/**
 	 * Builder of {@link ColorConverter}
 	 * 
@@ -63,11 +63,6 @@ public class ColorConverter extends Thread {
 			} else {
 				this.thread = thread;
 			}
-			return this;
-		}
-		
-		public Builder setConvertedImage(final BufferedImage image) {
-			
 			return this;
 		}
 
@@ -130,7 +125,7 @@ public class ColorConverter extends Thread {
 						outputQueue.put(new AbstractMap.SimpleEntry<>(pixel, alternateColor));
 					} catch (final InterruptedException e) {
 						LogPrinter.error(Resources.getString("error_has_occurred"));
-						LogPrinter.print(e.getMessage());
+						LogPrinter.print(e);
 					}
 				}
 			}
@@ -144,7 +139,7 @@ public class ColorConverter extends Thread {
 	 * @author Reinvert
 	 *
 	 */
-	private class ImageWriter implements Runnable {
+	private final class ImageWriter implements Runnable {
 		@Override
 		public void run() {
 			while (true) {

@@ -14,22 +14,34 @@ public class Shortcut {
 	public static EventHandler<KeyEvent> get(final OverviewController controller) {
 		return new EventHandler<KeyEvent>() {
 			@Override
-			public void handle(KeyEvent event) {
-				KeyCode key = event.getCode();
-				if (key == KeyCode.L) {
-					controller.load();
-				} else if (key == KeyCode.S) {
-					controller.save();
-				} else if (key == KeyCode.A) {
-					controller.saveTo();
-				} else if (key == KeyCode.I) {
-					controller.exportImage();
-				} else if (key == KeyCode.C) {
-					controller.exportColor();
-				} else if (key == KeyCode.B) {
-					controller.exportBlueprint();
-				} else if (key == KeyCode.O) {
-					controller.setting();
+			public void handle(final KeyEvent event) {
+				if(event.isControlDown() == true) {
+					final KeyCode key = event.getCode();
+					switch(key) {
+					case L: 
+						controller.load();
+						return;
+					case S:
+						controller.save();
+						return;
+					case A:
+						controller.saveTo();
+						return;
+					case I:
+						controller.exportImage();
+						return;
+					case C:
+						controller.exportImage();
+						return;
+					case B:
+						controller.exportBlueprint();
+						return;
+					case O:
+						controller.setting();
+						return;
+					default:
+						return;
+					}
 				}
 			}
 		};

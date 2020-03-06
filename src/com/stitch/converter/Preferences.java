@@ -23,7 +23,7 @@ public class Preferences {
 			}
 			load();
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
@@ -48,7 +48,7 @@ public class Preferences {
 				}
 			}
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
@@ -62,7 +62,7 @@ public class Preferences {
 				bufferedWriter.flush();
 			}
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
@@ -114,7 +114,7 @@ public class Preferences {
 	public static int getInteger(final String key, final int defaultValue) {
 		try {
 			return getInteger(key);
-		} catch (final NoSuchElementException | ClassCastException e) {
+		} catch (final NoSuchElementException | NumberFormatException e) {
 			keyStore.put(key, Integer.toString(defaultValue));
 			store();
 			return defaultValue;
@@ -132,7 +132,7 @@ public class Preferences {
 	public static double getDouble(final String key, final double defaultValue) {
 		try {
 			return getDouble(key);
-		} catch (final NoSuchElementException | ClassCastException e) {
+		} catch (final NoSuchElementException | NumberFormatException e) {
 			keyStore.put(key, Double.toString(defaultValue));
 			store();
 			return defaultValue;

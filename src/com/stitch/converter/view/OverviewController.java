@@ -8,9 +8,6 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
@@ -108,7 +105,7 @@ public class OverviewController extends Controller {
 				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
 						(event) -> closeWindowEvent(event));
 
-				if (Preferences.getBoolean("autoLoad", false)) {
+				if (Preferences.getBoolean("autoLoad", false) == true) {
 					try {
 						loadDmc(new File(Preferences.getString("autoLoadFile")));
 					} catch (final NoSuchElementException e) {
@@ -155,6 +152,8 @@ public class OverviewController extends Controller {
 				System.out.println(file.getPath() + file.getName());
 				Preferences.setValue("autoLoadFile", file.getPath());
 			} else {
+				Preferences.setValue("scrollX", "0");
+				Preferences.setValue("scrollY", "0");
 				final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
 						new File(Preferences.getString("csvFile", "resources/dmc.csv")), file);
 				builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
@@ -169,7 +168,7 @@ public class OverviewController extends Controller {
 					overviewStage.setTitle(fileName + "(*)");
 					main.startConversion(builder);
 				} catch (final IllegalArgumentException | NullPointerException e) {
-					LogPrinter.print(e.getMessage());
+					LogPrinter.print(e);
 					LogPrinter.error(Resources.getString("cant_read_image"));
 					return;
 				}
@@ -195,7 +194,7 @@ public class OverviewController extends Controller {
 			LogPrinter.alert(Resources.getString("file_saved", dmcFile.getName(), Resources.getString("dmc_file")));
 			Preferences.setValue("autoLoadFile", dmcFile.getPath());
 		} catch (IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("save_failed", Resources.getString("dmc_file")));
 		}
 	}
@@ -237,7 +236,7 @@ public class OverviewController extends Controller {
 				LogPrinter.alert(
 						Resources.getString("file_saved", Resources.getString("image_file"), imageFile.getName()));
 			} catch (final IOException e) {
-				LogPrinter.print(e.getMessage());
+				LogPrinter.print(e);
 				LogPrinter.error(
 						Resources.getString("save_failed", Resources.getString("image_file"), imageFile.getName()));
 			}
@@ -294,7 +293,7 @@ public class OverviewController extends Controller {
 					outputStream.write(0x00);
 				}
 			} catch (final IOException e) {
-				LogPrinter.print(e.getMessage());
+				LogPrinter.print(e);
 				LogPrinter.error(Resources.getString("save_failed", Resources.getString("txt_file")));
 			}
 		}
@@ -330,7 +329,7 @@ public class OverviewController extends Controller {
 		try {
 			ImageIO.write(bufferedImage, "png", blueprintFile);
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("save_failed", Resources.getString("blueprint_file")));
 		}
 	}
@@ -343,7 +342,7 @@ public class OverviewController extends Controller {
 					Resources.getBundle());
 			page = (ScrollPane) loader.load();
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
 			return;
 		}
@@ -381,7 +380,7 @@ public class OverviewController extends Controller {
 			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(), Resources.getBundle());
 			page = (AnchorPane) loader.load();
 		} catch (final IOException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
 			return;
 		}
@@ -401,8 +400,10 @@ public class OverviewController extends Controller {
 		if (confirmExit() == false) {
 			event.consume();
 		} else {
-			Preferences.setValue("scrollX", String.valueOf(canvasScrollPane.getHvalue()));
-			Preferences.setValue("scrollY", String.valueOf(canvasScrollPane.getVvalue()));
+			if(Preferences.getBoolean("autoLoad", false) == true) {
+				Preferences.setValue("scrollX", String.valueOf(canvasScrollPane.getHvalue()));
+				Preferences.setValue("scrollY", String.valueOf(canvasScrollPane.getVvalue()));
+			}
 		}
 	}
 
@@ -504,12 +505,15 @@ public class OverviewController extends Controller {
 		zoom.setOnKeyPressed(event -> {
 			if (event.getCode() == KeyCode.ENTER) {
 				event.consume();
-				setZoom(zoom.getText().replace("%", ""));
+				final String zoomScale = zoom.getText().replace("%", "");
+				if(setZoom(zoomScale) == true) {
+					Preferences.setValue("scale", zoomScale);
+				}
 				invalidate();
 			}
 		});
 
-		canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
+		canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(final MouseEvent event) {
 				clickCanvas(event.getX(), event.getY());
@@ -545,8 +549,10 @@ public class OverviewController extends Controller {
 		exportBlueprint.setDisable(false);
 		showNumberCheckbox.setSelected(Preferences.getBoolean("drawGridNumber", true));
 		invalidate();
-		canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
-		canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
+		if(Preferences.getBoolean("autoLoad", false) == true) {
+			canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
+			canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
+		}
 	}
 
 	public boolean setZoom(String scale) {
@@ -592,6 +598,19 @@ public class OverviewController extends Controller {
 		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
 		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
 		final Pixel pixel = new Pixel(x, y, null);
+		for (final StitchList stitchList : colorTable.getItems()) {
+			if (stitchList.getPixelList().hasPixel(pixel)) {
+				Platform.runLater(new Runnable() {
+					@Override
+					public void run() {
+						colorTable.requestFocus();
+						colorTable.getSelectionModel().select(stitchList);
+						colorTable.scrollTo(stitchList);
+					}
+				});
+			}
+		}
+		/*
 		final ExecutorService executorService = Executors
 				.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
 		final ArrayBlockingQueue<Runnable> blockingQueue = new ArrayBlockingQueue<>(16);
@@ -630,7 +649,6 @@ public class OverviewController extends Controller {
 								public void run() {
 									colorTable.requestFocus();
 									colorTable.getSelectionModel().select(stitchList);
-									// colorTable.getFocusModel().fo
 									colorTable.scrollTo(stitchList);
 								}
 							});
@@ -641,6 +659,6 @@ public class OverviewController extends Controller {
 			blockingQueue.put(poisonPill);
 		} catch (final InterruptedException e) {
 
-		}
+		}*/
 	}
 }

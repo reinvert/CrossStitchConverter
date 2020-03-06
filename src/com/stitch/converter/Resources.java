@@ -67,7 +67,7 @@ public class Resources {
 		try {
 			return String.format(getString(id), args);
 		} catch (final MissingFormatArgumentException e) {
-			LogPrinter.print(e.getMessage());
+			LogPrinter.print(e);
 			LogPrinter.error("Exception on read resources from id : " + id + args);
 			return null;
 		}
