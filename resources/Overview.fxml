@@ -21,14 +21,14 @@
         <menus>
           <Menu mnemonicParsing="false" text="%file">
             <items>
-                  <MenuItem mnemonicParsing="false" onAction="#load" text="%file_open_menu" />
+                  <MenuItem mnemonicParsing="false" onAction="#loadMenu" text="%load_menu" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#save" text="%save_menu" />
-                  <MenuItem fx:id="saveTo" disable="true" mnemonicParsing="false" onAction="#saveTo" text="%save_to_menu" />
+                  <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#saveMenu" text="%save_menu" />
+                  <MenuItem fx:id="saveTo" disable="true" mnemonicParsing="false" onAction="#saveToMenu" text="%save_to_menu" />
                   <SeparatorMenuItem mnemonicParsing="false" />
-                  <MenuItem fx:id="exportPng" disable="true" mnemonicParsing="false" onAction="#exportImage" text="%export_converted_image_menu" />
-                  <MenuItem fx:id="exportCsv" disable="true" mnemonicParsing="false" onAction="#exportColor" text="%export_stitch_list_menu" />
-                  <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprint" text="%export_blueprint_menu" />
+                  <MenuItem fx:id="exportConvertedImage" disable="true" mnemonicParsing="false" onAction="#exportConvertedImageMenu" text="%export_converted_image_menu" />
+                  <MenuItem fx:id="exportCsv" disable="true" mnemonicParsing="false" onAction="#exportStitchListMenu" text="%export_stitch_list_menu" />
+                  <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprintMenu" text="%export_blueprint_menu" />
             </items>
           </Menu>
             <Menu mnemonicParsing="false" text="%setting">
@@ -64,7 +64,7 @@
                       <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
                       <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
                         <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
-                        <TableColumn fx:id="totalNumberColumn" prefWidth="50.0" text="%totalnumber" />
+                        <TableColumn fx:id="totalNumberColumn" prefWidth="50.0" text="%total_number" />
                         <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
                         <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
                     </columns>

@@ -8,12 +8,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
@@ -30,25 +32,30 @@ public class Resources {
 					bundle = ResourceBundle.getBundle("Languages", locale);
 				}
 			}
-		} catch (MissingResourceException e) {
+		} catch (final MissingResourceException e) {
 			bundle = ResourceBundle.getBundle("Languages", Locale.ENGLISH);
-		} catch (Throwable t) {
+		} catch (final Throwable t) {
 			try {
-				writeText("log.txt", t.getMessage());
+				try(final StringWriter stringWriter = new StringWriter()) {
+					try(final PrintWriter printWriter = new PrintWriter(stringWriter)) {
+						t.printStackTrace(printWriter);
+						Resources.writeText("log.txt", stringWriter.toString());
+					}
+				}
 			} catch (Throwable t2) {
 				t2.printStackTrace();
 			}
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.setTitle("Error");
-			alert.setContentText("Failed to read resource file.");
-			alert = new Alert(AlertType.ERROR);
-			alert.showAndWait();
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					final Alert alert = new Alert(AlertType.ERROR);
+					alert.setTitle("Error");
+					alert.setContentText("Failed to read resource file.");
+					alert.show();
+				}
+			});
 			System.exit(0);
 		}
-	}
-
-	private Resources() {
-		throw new AssertionError();
 	}
 
 	public static ResourceBundle getBundle() {
@@ -73,22 +80,16 @@ public class Resources {
 		}
 	}
 
-	public static void writeText(final String dir, final String text) throws IOException {
-		try (final PrintWriter printWriter = new PrintWriter(dir)) {
-			printWriter.println(text);
-		}
-	}
-
-	public static Object readObject(final String dir) throws IOException, ClassNotFoundException {
-		try (final FileInputStream fis = new FileInputStream(dir)) {
+	public static Object readObject(final File file) throws IOException, ClassNotFoundException {
+		try (final FileInputStream fis = new FileInputStream(file)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis);) {
 				return ois.readObject();
 			}
 		}
 	}
 
-	public static Object readObject(final File file) throws IOException, ClassNotFoundException {
-		try (final FileInputStream fis = new FileInputStream(file)) {
+	public static Object readObject(final String dir) throws IOException, ClassNotFoundException {
+		try (final FileInputStream fis = new FileInputStream(dir)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis);) {
 				return ois.readObject();
 			}
@@ -101,5 +102,15 @@ public class Resources {
 				oos.writeObject(object);
 			}
 		}
+	}
+
+	public static void writeText(final String dir, final String text) throws IOException {
+		try (final PrintWriter printWriter = new PrintWriter(dir)) {
+			printWriter.println(text);
+		}
+	}
+
+	private Resources() {
+		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}
 }

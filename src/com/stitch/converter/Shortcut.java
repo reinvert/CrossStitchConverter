@@ -7,10 +7,6 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
 public class Shortcut {
-	private Shortcut() {
-		throw new AssertionError();
-	}
-
 	public static EventHandler<KeyEvent> get(final OverviewController controller) {
 		return new EventHandler<KeyEvent>() {
 			@Override
@@ -19,22 +15,22 @@ public class Shortcut {
 					final KeyCode key = event.getCode();
 					switch(key) {
 					case L: 
-						controller.load();
+						controller.loadMenu();
 						return;
 					case S:
-						controller.save();
+						controller.saveMenu();
 						return;
 					case A:
-						controller.saveTo();
+						controller.saveToMenu();
 						return;
 					case I:
-						controller.exportImage();
+						controller.exportConvertedImageMenu();
 						return;
 					case C:
-						controller.exportImage();
+						controller.exportStitchListMenu();
 						return;
 					case B:
-						controller.exportBlueprint();
+						controller.exportBlueprintMenu();
 						return;
 					case O:
 						controller.setting();
@@ -45,5 +41,9 @@ public class Shortcut {
 				}
 			}
 		};
+	}
+
+	private Shortcut() {
+		throw new AssertionError();
 	}
 }

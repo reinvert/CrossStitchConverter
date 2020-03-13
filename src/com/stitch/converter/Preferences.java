@@ -6,14 +6,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 
 import com.stitch.converter.model.StitchColor;
 
 public class Preferences {
-	private static HashMap<String, String> keyStore = new HashMap<>();
 	private final static String directory = "config.properties";
+	private static HashMap<String, String> keyStore = new HashMap<>();
 
 	static {
 		try {
@@ -28,11 +29,95 @@ public class Preferences {
 		}
 	}
 
-	private Preferences() {
-		throw new AssertionError();
+	private static String colorToString(final StitchColor color) {
+		return new StringBuilder("#").append(Integer.toHexString((int) color.getRed()))
+				.append(Integer.toHexString((int) color.getGreen())).append(Integer.toHexString((int) color.getBlue()))
+				.toString();
 	}
 
-	private static void load() {
+	public static boolean getBoolean(final String key) throws NoSuchElementException {
+		return Boolean.parseBoolean(getValue(key));
+	}
+
+	public static boolean getBoolean(final String key, final boolean defaultValue) {
+		try {
+			return getBoolean(key);
+		} catch (final NoSuchElementException e) {
+			setValue(key, defaultValue);
+			return defaultValue;
+		}
+	}
+
+	public static StitchColor getColor(final String key) throws NoSuchElementException, ClassCastException {
+		return stringToColor(getValue(key));
+	}
+
+	public static StitchColor getColor(final String key, final StitchColor defaultValue) {
+		try {
+			return getColor(key);
+		} catch (final NoSuchElementException | ClassCastException e) {
+			setValue(key, defaultValue);
+			return defaultValue;
+		}
+	}
+
+	public static double getDouble(final String key) throws NoSuchElementException, NumberFormatException {
+		return Double.parseDouble(getValue(key));
+	}
+
+	public static double getDouble(final String key, final double defaultValue) {
+		try {
+			return getDouble(key);
+		} catch (final NoSuchElementException | NumberFormatException e) {
+			setValue(key, defaultValue);
+			return defaultValue;
+		}
+	}
+
+	public static int getInteger(final String key) throws NoSuchElementException, NumberFormatException {
+		return Integer.parseInt(getValue(key));
+	}
+
+	public static int getInteger(final String key, final int defaultValue) {
+		try {
+			return getInteger(key);
+		} catch (final NoSuchElementException | NumberFormatException e) {
+			setValue(key, defaultValue);
+			return defaultValue;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static HashMap<String, String> getKeyStore() {
+		return (HashMap<String, String>) keyStore.clone();
+	}
+
+	public static String getString(final String key) throws NoSuchElementException {
+		return getValue(key);
+	}
+
+	public static String getString(final String key, final String defaultValue) {
+		return getValue(key, defaultValue);
+	}
+
+	public static String getValue(final String key) throws NoSuchElementException {
+		final String value = keyStore.get(key);
+		if (value == null) {
+			throw new NoSuchElementException();
+		}
+		return value;
+	}
+
+	public static String getValue(final String key, final String defaultValue) {
+		try {
+			return getValue(key);
+		} catch (final NoSuchElementException e) {
+			setValue(key, defaultValue);
+			return defaultValue;
+		}
+	}
+
+	private static boolean load() throws IOException {
 		try (final FileReader fileReader = new FileReader(directory)) {
 			try (final BufferedReader bufferedReader = new BufferedReader(fileReader)) {
 				String line = null;
@@ -48,9 +133,34 @@ public class Preferences {
 				}
 			}
 		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
+			throw e;
 		}
+		return true;
+	}
+
+	public static void setValue(final String key, final boolean value) {
+		keyStore.put(key, Boolean.toString(value));
+		store();
+	}
+
+	public static void setValue(final String key, final double value) {
+		keyStore.put(key, new DecimalFormat("#.####").format(value));
+		store();
+	}
+
+	public static void setValue(final String key, final int value) {
+		keyStore.put(key, Integer.toString(value));
+		store();
+	}
+
+	public static void setValue(final String key, final StitchColor value) {
+		keyStore.put(key, colorToString(value));
+		store();
+	}
+
+	public static void setValue(final String key, final String value) {
+		keyStore.put(key, value);
+		store();
 	}
 
 	private static void store() {
@@ -67,116 +177,8 @@ public class Preferences {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public static HashMap<String, String> getKeyStore() {
-		return (HashMap<String, String>) keyStore.clone();
-	}
-
-	public static void setValue(final String key, final String value) {
-		keyStore.put(key, value);
-		store();
-	}
-
-	public static String getValue(final String key) throws NoSuchElementException {
-		final String value = keyStore.get(key);
-		if (value == null) {
-			throw new NoSuchElementException();
-		}
-		return value;
-	}
-
-	public static String getValue(final String key, final String defaultValue) {
-		try {
-			return getValue(key);
-		} catch (final NoSuchElementException e) {
-			keyStore.put(key, defaultValue);
-			store();
-			return defaultValue;
-		}
-	}
-
-	public static String getString(final String key) throws NoSuchElementException {
-		return getValue(key);
-	}
-
-	public static String getString(final String key, final String defaultValue) {
-		return getValue(key, defaultValue);
-	}
-
-	public static int getInteger(final String key) throws NoSuchElementException, NumberFormatException {
-		final String value = keyStore.get(key);
-		if (value == null) {
-			throw new NoSuchElementException();
-		}
-		return Integer.parseInt(value);
-	}
-
-	public static int getInteger(final String key, final int defaultValue) {
-		try {
-			return getInteger(key);
-		} catch (final NoSuchElementException | NumberFormatException e) {
-			keyStore.put(key, Integer.toString(defaultValue));
-			store();
-			return defaultValue;
-		}
-	}
-
-	public static double getDouble(final String key) throws NoSuchElementException, NumberFormatException {
-		final String value = keyStore.get(key);
-		if (value == null) {
-			throw new NoSuchElementException();
-		}
-		return Double.parseDouble(value);
-	}
-
-	public static double getDouble(final String key, final double defaultValue) {
-		try {
-			return getDouble(key);
-		} catch (final NoSuchElementException | NumberFormatException e) {
-			keyStore.put(key, Double.toString(defaultValue));
-			store();
-			return defaultValue;
-		}
-	}
-
-	public static boolean getBoolean(final String key) throws NoSuchElementException {
-		final String value = keyStore.get(key);
-		if (value == null) {
-			throw new NoSuchElementException();
-		}
-		return Boolean.parseBoolean(value);
-	}
-
-	public static boolean getBoolean(final String key, final boolean defaultValue) {
-		try {
-			return getBoolean(key);
-		} catch (final NoSuchElementException e) {
-			keyStore.put(key, Boolean.toString(defaultValue));
-			store();
-			return defaultValue;
-		}
-	}
-
-	public static StitchColor getColor(final String key) throws NoSuchElementException, ClassCastException {
-		final String value = keyStore.get(key);
-		if (value == null) {
-			throw new NoSuchElementException();
-		}
-		return stringToColor(value);
-	}
-
-	public static StitchColor getColor(final String key, final StitchColor defaultValue) {
-		try {
-			return getColor(key);
-		} catch (final NoSuchElementException | ClassCastException e) {
-			keyStore.put(key, colorToString(defaultValue));
-			store();
-			return defaultValue;
-		}
-	}
-
 	private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
-		int red, green, blue;
+		final int red, green, blue;
 		try {
 			red = Integer.valueOf(colorCode.substring(1, 3), 16);
 			green = Integer.valueOf(colorCode.substring(3, 5), 16);
@@ -187,11 +189,7 @@ public class Preferences {
 		return new StitchColor(red, green, blue, colorCode);
 	}
 
-	private static String colorToString(final StitchColor color) {
-		String colorCode = "#";
-		colorCode += Integer.toHexString((int) color.getRed());
-		colorCode += Integer.toHexString((int) color.getGreen());
-		colorCode += Integer.toHexString((int) color.getBlue());
-		return colorCode;
+	private Preferences() {
+		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}
 }

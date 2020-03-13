@@ -5,9 +5,9 @@ import java.io.Serializable;
 public class StitchColor implements Serializable, Cloneable, Comparable<StitchColor> {
 	private static final long serialVersionUID = 1L;
 
-	private final int red, green, blue;
-
 	private final String name;
+
+	private final int red, green, blue;
 
 	public StitchColor(final int red, final int green, final int blue, final String name) {
 		this.red = red;
@@ -33,35 +33,24 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 				(double) (getBlue() / 255d), 1d);
 	}
 
-	public int getRed() {
-		return red;
-	}
-
-	public int getGreen() {
-		return green;
-	}
-
-	public int getBlue() {
-		return blue;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public String getColorString() {
-		return "#" + String.format("%02X", red) + String.format("%02X", green) + String.format("%02X", blue);
+	@Override
+	public Object clone() {
+		try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			throw new AssertionError();
+		}
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + blue;
-		result = prime * result + green;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + red;
-		return result;
+	public int compareTo(final StitchColor target) {
+		try {
+			int integerName = Integer.parseInt(this.getName());
+			int targetIntegerName = Integer.parseInt(target.getName());
+			return Integer.compare(integerName, targetIntegerName);
+		} catch (final NumberFormatException e) {
+			return this.getName().compareTo(target.getName());
+		}
 	}
 
 	@Override
@@ -82,28 +71,39 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 		return true;
 	}
 
+	public int getBlue() {
+		return blue;
+	}
+
+	public String getColorString() {
+		return "#" + String.format("%02X", red) + String.format("%02X", green) + String.format("%02X", blue);
+	}
+
+	public int getGreen() {
+		return green;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public int getRed() {
+		return red;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + blue;
+		result = prime * result + green;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + red;
+		return result;
+	}
+
 	@Override
 	public String toString() {
 		return "StitchColor [red=" + red + ", green=" + green + ", blue=" + blue + ", name=" + name + "]";
-	}
-
-	@Override
-	public Object clone() {
-		try {
-			return super.clone();
-		} catch (CloneNotSupportedException e) {
-			throw new AssertionError();
-		}
-	}
-
-	@Override
-	public int compareTo(final StitchColor target) {
-		try {
-			int integerName = Integer.parseInt(this.getName());
-			int targetIntegerName = Integer.parseInt(target.getName());
-			return Integer.compare(integerName, targetIntegerName);
-		} catch (final NumberFormatException e) {
-			return this.getName().compareTo(target.getName());
-		}
 	}
 }

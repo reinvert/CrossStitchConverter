@@ -10,13 +10,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.TreeSet;
 
 import com.stitch.converter.model.StitchImage;
 
 import javafx.scene.paint.Color;
 
-import com.stitch.converter.model.Pixel;
 import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
 
@@ -32,14 +30,14 @@ public final class GraphicsEngine implements Runnable {
 	 * @author Reinvert
 	 */
 	public final static class Builder {
+		private StitchColor backgroundColor = new StitchColor(Color.WHITE, "");
+		private int colorLimit = -1, thread;
+
 		private final File csv;
 		private final File file;
-
-		private Mode loadMode = Mode.NEW_FILE;
-		private int colorLimit = -1, thread;
-		private boolean resize = false;
-		private StitchColor backgroundColor = new StitchColor(Color.WHITE, "");
 		private final List<Listener> listenerList = new ArrayList<>();
+		private Mode loadMode = Mode.NEW_FILE;
+		private boolean scaled = false;
 
 		/**
 		 * Constructor of the {@link Builder}.
@@ -54,14 +52,12 @@ public final class GraphicsEngine implements Runnable {
 		}
 
 		/**
-		 * Set whether or not to resize the image.
+		 * Build and returns {@link GraphicsEngine} instance.
 		 * 
-		 * @param resize - the boolean whether or not to resize the images.
-		 * @return this instance.
+		 * @return the {@link GraphicsEngine} instance.
 		 */
-		public Builder setResize(final boolean resize) {
-			this.resize = resize;
-			return this;
+		public GraphicsEngine build() {
+			return new GraphicsEngine(this);
 		}
 
 		/**
@@ -86,6 +82,11 @@ public final class GraphicsEngine implements Runnable {
 			return this;
 		}
 
+		public Builder setListener(final Listener listener) {
+			listenerList.add(listener);
+			return this;
+		}
+
 		/**
 		 * Set whether it is a new file or an existing one.
 		 * 
@@ -95,6 +96,17 @@ public final class GraphicsEngine implements Runnable {
 		 */
 		public Builder setMode(final Mode loadMode) {
 			this.loadMode = loadMode;
+			return this;
+		}
+
+		/**
+		 * Set whether or not to resize the image.
+		 * 
+		 * @param resize - the boolean whether or not to resize the images.
+		 * @return this instance.
+		 */
+		public Builder setScaled(final boolean scaled) {
+			this.scaled = scaled;
 			return this;
 		}
 
@@ -109,20 +121,6 @@ public final class GraphicsEngine implements Runnable {
 			return this;
 		}
 
-		public Builder setListener(final Listener listener) {
-			listenerList.add(listener);
-			return this;
-		}
-
-		/**
-		 * Build and returns {@link GraphicsEngine} instance.
-		 * 
-		 * @return the {@link GraphicsEngine} instance.
-		 */
-		public GraphicsEngine build() {
-			return new GraphicsEngine(this);
-		}
-
 	}
 
 	/**
@@ -135,17 +133,14 @@ public final class GraphicsEngine implements Runnable {
 		LOAD, NEW_FILE
 	}
 
+	private final StitchColor backgroundColor;
+	private final int colorLimit, thread;
 	private final File csv;
 	private final File file;
-	private BufferedImage image;
-	private final StitchColor backgroundColor;
-	private final Mode loadMode;
 	private final List<Listener> listenerList;
 
-	private final int colorLimit, thread;
+	private final Mode loadMode;
 	private final boolean scaled;
-
-	private final HashMap<String, Integer> usedColorCount = new HashMap<String, Integer>();
 
 	/**
 	 * Construct {@link GraphicsEngine} defined by {@link Builder}.
@@ -156,39 +151,11 @@ public final class GraphicsEngine implements Runnable {
 		file = builder.file;
 		csv = builder.csv;
 		colorLimit = builder.colorLimit;
-		scaled = builder.resize;
+		scaled = builder.scaled;
 		backgroundColor = builder.backgroundColor;
 		loadMode = builder.loadMode;
 		thread = builder.thread;
 		listenerList = builder.listenerList;
-	}
-
-	/**
-	 * Add count to {@link java.util.HashMap HashMap}. It is used to determine which
-	 * {@link java.awt.Color Color} is used the most.
-	 * 
-	 * @param key - the name of used {@link java.awt.Color Color}.
-	 */
-	private void addCount(final String key) {
-		try {
-			usedColorCount.put(key, usedColorCount.get(key) + 1);
-		} catch (final NullPointerException e) {
-			usedColorCount.put(key, 1);
-		}
-	}
-
-	/**
-	 * Draw converted pixel to image.
-	 * 
-	 * @param pixel          - the {@link Pixel} contains x, y, color value.
-	 * @param convertedImage - the {@link StitchImage} contains name of
-	 *                       {@link java.awt.Color Color}.
-	 */
-	private void drawPixelToImage(final Pixel pixel, final StitchImage convertedImage) {
-		final StitchColor targetColor = pixel.getColor();
-		final int x = pixel.getX(), y = pixel.getY();
-		image.setRGB(x, y, targetColor.asAWT().getRGB());
-		addCount(targetColor.getName());
 	}
 
 	/**
@@ -198,7 +165,7 @@ public final class GraphicsEngine implements Runnable {
 	 * @param file - the list of image files.
 	 */
 	private void makeNewFile(final File file) {
-		ArrayList<StitchColor> colorList;
+		final ArrayList<StitchColor> colorList;
 		try {
 			final String csvInput = new String(Files.readAllBytes(csv.toPath()));
 			final ArrayList<ArrayList<String>> csvArray = CSVReader.read(csvInput);
@@ -223,6 +190,7 @@ public final class GraphicsEngine implements Runnable {
 
 		final StitchImage stitchImage = new StitchImage();
 		stitchImage.setChanged(true);
+		final BufferedImage image;
 		try {
 			int resizeLength = Preferences.getInteger("resizeLength", 200);
 			image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
@@ -233,7 +201,7 @@ public final class GraphicsEngine implements Runnable {
 		}
 		boolean onceRunned = false;
 		StitchColor toRemove = null;
-		Collection<PixelList> pixelLists = null;
+		final HashMap<String, Integer> usedColorCount = new HashMap<String, Integer>();
 		do {
 			stitchImage.setSize(image.getWidth(), image.getHeight());
 			if (onceRunned == true) {
@@ -248,7 +216,9 @@ public final class GraphicsEngine implements Runnable {
 			try {
 				converter.join();
 			} catch (final InterruptedException e) {
-
+				LogPrinter.print(e);
+				LogPrinter.error(Resources.getString("error_has_occurred"));
+				return;
 			}
 
 			/*
@@ -260,19 +230,21 @@ public final class GraphicsEngine implements Runnable {
 			 * }
 			 */
 			stitchImage.setBackground(backgroundColor);
-			pixelLists = stitchImage.getPixelLists();
 
-			for (final PixelList pixelList : pixelLists) {
-				final TreeSet<Pixel> pixelSet = pixelList.getPixelSet();
-				for (final Pixel pixel : pixelSet) {
-					drawPixelToImage(pixel, stitchImage);
-				}
+			for (final PixelList pixelList : stitchImage.getPixelLists()) {
+				usedColorCount.put(pixelList.getColor().getName(), pixelList.getCount());
 			}
 			onceRunned = true;
 			toRemove = ImageTools.calculateRemoveString(stitchImage, usedColorCount);
 		} while (colorLimit != 0 && stitchImage.getPixelLists().size() > colorLimit);
 		stitchImage.setChanged(true);
 		onFinished(stitchImage);
+	}
+
+	public void onFinished(final StitchImage image) {
+		for (final Listener listener : listenerList) {
+			listener.onFinished(image);
+		}
 	}
 
 	/**
@@ -290,13 +262,6 @@ public final class GraphicsEngine implements Runnable {
 			return;
 		}
 
-		if (this.loadMode == Mode.NEW_FILE) {
-			for (final PixelList pixelList : stitchImage.getPixelLists()) {
-				for (final Pixel pixel : pixelList.getPixelSet()) {
-					drawPixelToImage(pixel, stitchImage);
-				}
-			}
-		}
 		onFinished(stitchImage);
 	}
 
@@ -330,12 +295,6 @@ public final class GraphicsEngine implements Runnable {
 			makeNewFile(file);
 		} else if (loadMode.equals(Mode.LOAD)) {
 			readFromSavedFile(file);
-		}
-	}
-
-	public void onFinished(final StitchImage image) {
-		for (final Listener listener : listenerList) {
-			listener.onFinished(image);
 		}
 	}
 }

@@ -12,10 +12,6 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  */
 final class CSVReader {
-	private CSVReader() {
-		throw new AssertionError("Singleton class should not be accessed by constructor.");
-	}
-
 	/**
 	 * Convert CSV {@link java.lang.String String} to a 2nd-dimensional
 	 * {@link ArrayList}.
@@ -23,9 +19,8 @@ final class CSVReader {
 	 * @param str - CSV {@link java.lang.String String}.
 	 * @return 2nd-dimensional {@link ArrayList}.
 	 */
-	static ArrayList<ArrayList<String>> read(String str) {
-		str = str.replace("\r", "");
-		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.split("\n")));
+	public static ArrayList<ArrayList<String>> read(final String str) {
+		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.replace("\r", "").split("\n")));
 		int maxRowSize = 0;
 		for (int i = 0; i < splitByRow.size(); i++) {
 			final ArrayList<String> row = new ArrayList<String>(Arrays.asList(splitByRow.get(0).split(",")));
@@ -58,7 +53,7 @@ final class CSVReader {
 	 * @throws IllegalArgumentException occurs when one or more of the R, G, or B
 	 *                                  values is not a value between 0 and 255.
 	 */
-	static ArrayList<StitchColor> readColorList(final ArrayList<ArrayList<String>> csv)
+	public static ArrayList<StitchColor> readColorList(final ArrayList<ArrayList<String>> csv)
 			throws NoSuchElementException, NumberFormatException, IllegalArgumentException {
 		final ArrayList<StitchColor> output = new ArrayList<StitchColor>();
 		int i = 0;
@@ -75,5 +70,9 @@ final class CSVReader {
 			throw new IllegalArgumentException(Integer.toString(i + 1));
 		}
 		return output;
+	}
+
+	private CSVReader() {
+		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}
 }

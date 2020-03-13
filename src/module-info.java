@@ -5,7 +5,7 @@
  * @author reinv
  *
  */
-module DMCColor_JavaFX {
+module CrossStitchConverter {
 	exports com.stitch.converter.model;
 	exports com.stitch.converter.view;
 	exports com.stitch.converter;
@@ -16,4 +16,5 @@ module DMCColor_JavaFX {
 	requires transitive javafx.graphics;
 	requires transitive javafx.fxml;
 	requires transitive javafx.swing;
+	requires json.simple;
 }

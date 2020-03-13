@@ -24,9 +24,94 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  *
  */
-class ImageTools {
-	private ImageTools() {
-		throw new AssertionError("Singleton class should not be accessed by constructor.");
+final class ImageTools {
+	/**
+	 * Calculate difference between two {@link java.awt.Color Color}.
+	 * 
+	 * @param originalColor - the original {@link java.awt.Color Color}.
+	 * @param targetColor   - the target {@link java.awt.Color Color}.
+	 * @return difference between two {@link java.awt.Color Color}.
+	 */
+	static double calculateDifference(final StitchColor originalColor, final StitchColor targetColor) {
+		final int originalRed = originalColor.getRed();
+		final int originalGreen = originalColor.getGreen();
+		final int originalBlue = originalColor.getBlue();
+
+		final int targetRed = targetColor.getRed();
+		final int targetGreen = targetColor.getGreen();
+		final int targetBlue = targetColor.getBlue();
+
+		return Math.sqrt(Math.pow(originalRed - targetRed, 2) + Math.pow(originalGreen - targetGreen, 2)
+				+ Math.pow(originalBlue - targetBlue, 2));
+	}
+
+	static StitchColor calculateRemoveString(final StitchImage stitchImage,
+			final HashMap<String, Integer> usedColorCount) {
+		StitchColor uselessColor = null;
+		double difference = 256;
+		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
+		for (int i = 0; i < list.size(); i++) {
+			for (int j = i + 1; j < list.size(); j++) {
+				final StitchColor originalColor = list.get(i).getColor();
+				final int originalRed = originalColor.getRed();
+				final int originalGreen = originalColor.getGreen();
+				final int originalBlue = originalColor.getBlue();
+
+				final StitchColor targetColor = list.get(j).getColor();
+				final int targetRed = targetColor.getRed();
+				final int targetGreen = targetColor.getGreen();
+				final int targetBlue = targetColor.getBlue();
+
+				final double avgcolor = Math.sqrt(Math.pow(originalRed - targetRed, 2)
+						+ Math.pow(originalGreen - targetGreen, 2) + Math.pow(originalBlue - targetBlue, 2));
+				if (difference > avgcolor) {
+					final int orgcount = usedColorCount.get(list.get(i).getColor().getName());
+					final int tarcount = usedColorCount.get(list.get(j).getColor().getName());
+					difference = avgcolor;
+					if (orgcount >= tarcount) {
+						uselessColor = list.get(j).getColor();
+					} else {
+						uselessColor = list.get(i).getColor();
+					}
+				}
+			}
+		}
+		return uselessColor;
+	}
+
+	/**
+	 * Gets the scale between two size. Always same or lower than 1.0.
+	 * 
+	 * @param iMasterSize - the master size.
+	 * @param iTargetSize - the target size.
+	 * @return the scale of two size.
+	 */
+	static double getScaleFactor(final int iMasterSize, final int iTargetSize) {
+		double dScale = 1;
+		if (iMasterSize > iTargetSize) {
+			dScale = (double) iTargetSize / (double) iMasterSize;
+		} else {
+			dScale = (double) iTargetSize / (double) iMasterSize;
+		}
+		return dScale;
+	}
+
+	/**
+	 * Gets the scale between two {@link java.awt.Dimension Dimension}. Always same
+	 * or lower than 1.0.
+	 * 
+	 * @param original - the original {@link java.awt.Dimension Dimension}.
+	 * @param toFit    - the target {@link java.awt.Dimension Dimension}.
+	 * @return the scale of two {@link java.awt.Dimension Dimension}.
+	 */
+	static double getScaleFactorToFit(final Dimension original, final Dimension toFit) {
+		double dScale = 1d;
+		if (original != null && toFit != null) {
+			final double dScaleWidth = getScaleFactor(original.width, toFit.width);
+			final double dScaleHeight = getScaleFactor(original.height, toFit.height);
+			dScale = Math.min(dScaleHeight, dScaleWidth);
+		}
+		return dScale;
 	}
 
 	/**
@@ -79,92 +164,6 @@ class ImageTools {
 		return output;
 	}
 
-	/**
-	 * Gets the scale between two size. Always same or lower than 1.0.
-	 * 
-	 * @param iMasterSize - the master size.
-	 * @param iTargetSize - the target size.
-	 * @return the scale of two size.
-	 */
-	static double getScaleFactor(final int iMasterSize, final int iTargetSize) {
-		double dScale = 1;
-		if (iMasterSize > iTargetSize) {
-			dScale = (double) iTargetSize / (double) iMasterSize;
-		} else {
-			dScale = (double) iTargetSize / (double) iMasterSize;
-		}
-		return dScale;
-	}
-
-	/**
-	 * Gets the scale between two {@link java.awt.Dimension Dimension}. Always same
-	 * or lower than 1.0.
-	 * 
-	 * @param original - the original {@link java.awt.Dimension Dimension}.
-	 * @param toFit    - the target {@link java.awt.Dimension Dimension}.
-	 * @return the scale of two {@link java.awt.Dimension Dimension}.
-	 */
-	static double getScaleFactorToFit(final Dimension original, final Dimension toFit) {
-		double dScale = 1d;
-		if (original != null && toFit != null) {
-			final double dScaleWidth = getScaleFactor(original.width, toFit.width);
-			final double dScaleHeight = getScaleFactor(original.height, toFit.height);
-			dScale = Math.min(dScaleHeight, dScaleWidth);
-		}
-		return dScale;
-	}
-
-	/**
-	 * Calculate difference between two {@link java.awt.Color Color}.
-	 * 
-	 * @param originalColor - the original {@link java.awt.Color Color}.
-	 * @param targetColor   - the target {@link java.awt.Color Color}.
-	 * @return difference between two {@link java.awt.Color Color}.
-	 */
-	static double calculateDifference(final StitchColor originalColor, final StitchColor targetColor) {
-		final int or = originalColor.getRed();
-		final int og = originalColor.getGreen();
-		final int ob = originalColor.getBlue();
-
-		final int tr = targetColor.getRed();
-		final int tg = targetColor.getGreen();
-		final int tb = targetColor.getBlue();
-
-		return Math.sqrt(Math.pow(or - tr, 2) + Math.pow(og - tg, 2) + Math.pow(ob - tb, 2));
-	}
-
-	static StitchColor calculateRemoveString(final StitchImage stitchImage,
-			final HashMap<String, Integer> usedColorCount) {
-		StitchColor uselessColor = null;
-		double difference = 256;
-		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
-		for (int i = 0; i < list.size(); i++) {
-			for (int j = i + 1; j < list.size(); j++) {
-				final StitchColor originalColor = list.get(i).getColor();
-				final int originalRed = originalColor.getRed();
-				final int originalGreen = originalColor.getGreen();
-				final int originalBlue = originalColor.getBlue();
-				final StitchColor targetColor = list.get(j).getColor();
-				final int targetRed = targetColor.getRed();
-				final int targetGreen = targetColor.getGreen();
-				final int targetBlue = targetColor.getBlue();
-				final int avgcolor = Math.abs(originalRed - targetRed) + Math.abs(originalGreen - targetGreen)
-						+ Math.abs(originalBlue - targetBlue);
-				if (difference > avgcolor) {
-					final int orgcount = usedColorCount.get(list.get(i).getColor().getName());
-					final int tarcount = usedColorCount.get(list.get(j).getColor().getName());
-					difference = avgcolor;
-					if (orgcount >= tarcount) {
-						uselessColor = list.get(j).getColor();
-					} else {
-						uselessColor = list.get(i).getColor();
-					}
-				}
-			}
-		}
-		return uselessColor;
-	}
-
 	static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
 		final java.awt.Image originalImage = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
 		final BufferedImage outputImage = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
@@ -174,5 +173,9 @@ class ImageTools {
 		g2d.dispose();
 
 		return outputImage;
+	}
+
+	private ImageTools() {
+		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}
 }

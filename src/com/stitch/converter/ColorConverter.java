@@ -30,8 +30,8 @@ public final class ColorConverter extends Thread {
 	 */
 	public static class Builder {
 		private final Collection<StitchColor> colorList;
-		private final StitchImage stitchImage;
 		private final BufferedImage image;
+		private final StitchImage stitchImage;
 		private int thread = Runtime.getRuntime().availableProcessors() + 1;
 
 		/**
@@ -50,6 +50,15 @@ public final class ColorConverter extends Thread {
 		}
 
 		/**
+		 * Build and returns {@link ColorConverter} instance.
+		 * 
+		 * @return this instance.
+		 */
+		public ColorConverter build() {
+			return new ColorConverter(this);
+		}
+
+		/**
 		 * Sets the number of threads to be used for the operation.
 		 * 
 		 * @param thread - the number of threads.
@@ -64,15 +73,6 @@ public final class ColorConverter extends Thread {
 				this.thread = thread;
 			}
 			return this;
-		}
-
-		/**
-		 * Build and returns {@link ColorConverter} instance.
-		 * 
-		 * @return this instance.
-		 */
-		public ColorConverter build() {
-			return new ColorConverter(this);
 		}
 	}
 
@@ -153,18 +153,20 @@ public final class ColorConverter extends Thread {
 					stitchImage.add(pixel.getKey());
 					stitchImage.addAlternateColor(pixel.getValue());
 				} catch (final InterruptedException e) {
-
+					LogPrinter.print(e);
+					LogPrinter.error(Resources.getString("error_has_occurred"));
+					return;
 				}
 			}
 		}
 	}
 
 	private final Collection<StitchColor> colorList;
-	private final StitchImage stitchImage;
 	private final BufferedImage image;
 	private final BlockingQueue<Entry<Pixel, StitchColor>> outputQueue = new ArrayBlockingQueue<>(16);
 	private final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(-1, -1, null),
 			new StitchColor(0, 0, 0, "poison"));
+	private final StitchImage stitchImage;
 	private final int thread;
 	private final ArrayList<Thread> threadList = new ArrayList<>();
 

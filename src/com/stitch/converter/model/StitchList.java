@@ -11,11 +11,11 @@ import javafx.beans.property.StringProperty;
 import javafx.scene.paint.Color;
 
 public class StitchList {
-	private final PixelList pixelList;
+	private final ObjectProperty<StitchColor> color;
 	private final IntegerProperty index, totalNumber;
 	private final BooleanProperty isHighlighted, isCompleted;
-	private final ObjectProperty<StitchColor> color;
 	private final StringProperty name, colorString;
+	private final PixelList pixelList;
 
 	@SuppressWarnings("unused")
 	private StitchList() {
@@ -33,40 +33,12 @@ public class StitchList {
 		colorString = new SimpleStringProperty(pixelList.getColor().getColorString());
 	}
 
-	public BooleanProperty highlightProperty() {
-		return isHighlighted;
-	}
-
-	public BooleanProperty completeProperty() {
-		return isCompleted;
-	}
-
-	public IntegerProperty indexProperty() {
-		return index;
-	}
-
-	public IntegerProperty totalNumberProperty() {
-		return totalNumber;
-	}
-
-	public StringProperty nameProperty() {
-		return name;
-	}
-
 	public StringProperty colorStringProperty() {
 		return colorString;
 	}
 
-	public String getName() {
-		return color.get().getName();
-	}
-
-	public int getIndex() {
-		return index.get();
-	}
-
-	public PixelList getPixelList() {
-		return pixelList;
+	public BooleanProperty completeProperty() {
+		return isCompleted;
 	}
 
 	public Color getColor() {
@@ -77,12 +49,41 @@ public class StitchList {
 		return color.get().getColorString();
 	}
 
-	public boolean isHighlighted() {
-		return isHighlighted.get();
+	public int getIndex() {
+		return index.get();
+	}
+
+	public String getName() {
+		return color.get().getName();
+	}
+
+	public PixelList getPixelList() {
+		return pixelList;
+	}
+
+	public BooleanProperty highlightProperty() {
+		return isHighlighted;
+	}
+
+	public IntegerProperty indexProperty() {
+		return index;
 	}
 
 	public boolean isCompleted() {
 		return isCompleted.get();
+	}
+
+	public boolean isHighlighted() {
+		return isHighlighted.get();
+	}
+
+	public StringProperty nameProperty() {
+		return name;
+	}
+
+	public void setCompleted(boolean completed) {
+		pixelList.setCompleted(completed);
+		isCompleted.set(completed);
 	}
 
 	public void setHighlight(boolean highlight) {
@@ -90,9 +91,8 @@ public class StitchList {
 		isHighlighted.set(highlight);
 	}
 
-	public void setCompleted(boolean completed) {
-		pixelList.setCompleted(completed);
-		isCompleted.set(completed);
+	public IntegerProperty totalNumberProperty() {
+		return totalNumber;
 	}
 
 }

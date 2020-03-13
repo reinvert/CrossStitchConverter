@@ -17,18 +17,18 @@ import javafx.scene.image.WritableImage;
 public class StitchImage implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private StitchColor background = new StitchColor(Color.WHITE, "");
-
-	private final SortedSet<PixelList> pixelListSet;
 	private final TreeMap<StitchColor, Integer> alternateColors;
 
-	private double width = -1, height = -1;
+	private StitchColor background = new StitchColor(Color.WHITE, "");
+	private transient ArrayList<StitchColor> colorList = null;
 
-	private boolean numberVisible = true;
+	private transient WritableImage fxImage = null;
 
 	private transient boolean isChanged = false;
-	private transient WritableImage fxImage = null;
-	private transient ArrayList<StitchColor> colorList = null;
+
+	private boolean numberVisible = true;
+	private final SortedSet<PixelList> pixelListSet;
+	private double width = -1, height = -1;
 
 	public StitchImage() {
 		pixelListSet = new TreeSet<PixelList>();
@@ -53,90 +53,6 @@ public class StitchImage implements Serializable {
 		}
 	}
 
-	public void removeAlternate(final StitchColor color) {
-		alternateColors.remove(color);
-	}
-
-	public List<StitchColor> getAlternate() {
-		List<Entry<StitchColor, Integer>> list = new ArrayList<>(alternateColors.entrySet());
-		list.sort(Entry.comparingByValue());
-		List<StitchColor> output = new ArrayList<>();
-		for (int i = list.size() - 1; i != 0; i--) {
-			output.add(list.get(i).getKey());
-		}
-		return output;
-	}
-
-	public Collection<PixelList> getPixelLists() {
-		int index = 0;
-		for (final PixelList pixelList : pixelListSet) {
-			pixelList.setIndex(index++);
-		}
-		return pixelListSet;
-	}
-
-	public PixelList getPixelListByName(final String name) {
-		for (final PixelList pixelList : pixelListSet) {
-			if (pixelList.getColor().getName().equals(name)) {
-				return pixelList;
-			}
-		}
-		throw new NoSuchElementException("No Such PixelList : " + name);
-	}
-
-	public PixelList getPixelListByColor(final StitchColor color) {
-		for (final PixelList pixelList : pixelListSet) {
-			if (pixelList.getColor().equals(color)) {
-				return pixelList;
-			}
-		}
-		throw new NoSuchElementException("No Such PixelList : " + color);
-	}
-
-	public StitchColor getBackground() {
-		return background;
-	}
-
-	public WritableImage getFXImage() {
-		if (fxImage == null) {
-			if (width == -1 || height == -1) {
-				calculateSize();
-			}
-			fxImage = new WritableImage((int) width, (int) height);
-			final PixelWriter pixelWriter = fxImage.getPixelWriter();
-			for (final PixelList pixelList : pixelListSet) {
-				for (final Pixel pixel : pixelList.getPixelSet()) {
-					pixelWriter.setColor(pixel.getX(), pixel.getY(), pixel.getColor().asFX());
-				}
-			}
-		}
-		return fxImage;
-	}
-
-	public ArrayList<StitchColor> getColorList() {
-		if (colorList == null) {
-			colorList = new ArrayList<>();
-			for (final PixelList pixelList : pixelListSet) {
-				colorList.add(pixelList.getColor());
-			}
-		}
-		return colorList;
-	}
-
-	public double getWidth() {
-		if (width == -1 || height == -1) {
-			calculateSize();
-		}
-		return width;
-	}
-
-	public double getHeight() {
-		if (width == -1 || height == -1) {
-			calculateSize();
-		}
-		return height;
-	}
-
 	public void calculateSize() {
 		double width = -1, height = -1;
 		for (final PixelList pixelList : pixelListSet) {
@@ -155,6 +71,86 @@ public class StitchImage implements Serializable {
 		this.height = height;
 	}
 
+	public List<StitchColor> getAlternate() {
+		List<Entry<StitchColor, Integer>> list = new ArrayList<>(alternateColors.entrySet());
+		list.sort(Entry.comparingByValue());
+		List<StitchColor> output = new ArrayList<>();
+		for (int i = list.size() - 1; i != 0; i--) {
+			output.add(list.get(i).getKey());
+		}
+		return output;
+	}
+
+	public StitchColor getBackground() {
+		return background;
+	}
+
+	public ArrayList<StitchColor> getColorList() {
+		if (colorList == null) {
+			colorList = new ArrayList<>();
+			for (final PixelList pixelList : pixelListSet) {
+				colorList.add(pixelList.getColor());
+			}
+		}
+		return colorList;
+	}
+
+	public WritableImage getFXImage() {
+		if (fxImage == null) {
+			if (width == -1 || height == -1) {
+				calculateSize();
+			}
+			fxImage = new WritableImage((int) width, (int) height);
+			final PixelWriter pixelWriter = fxImage.getPixelWriter();
+			for (final PixelList pixelList : pixelListSet) {
+				for (final Pixel pixel : pixelList.getPixelSet()) {
+					pixelWriter.setColor(pixel.getX(), pixel.getY(), pixel.getColor().asFX());
+				}
+			}
+		}
+		return fxImage;
+	}
+
+	public double getHeight() {
+		if (width == -1 || height == -1) {
+			calculateSize();
+		}
+		return height;
+	}
+
+	public PixelList getPixelListByColor(final StitchColor color) {
+		for (final PixelList pixelList : pixelListSet) {
+			if (pixelList.getColor().equals(color)) {
+				return pixelList;
+			}
+		}
+		throw new NoSuchElementException("No Such PixelList : " + color);
+	}
+
+	public PixelList getPixelListByName(final String name) {
+		for (final PixelList pixelList : pixelListSet) {
+			if (pixelList.getColor().getName().equals(name)) {
+				return pixelList;
+			}
+		}
+		throw new NoSuchElementException("No Such PixelList : " + name);
+	}
+
+	public Collection<PixelList> getPixelLists() {
+		int index = 0;
+		for (final PixelList pixelList : pixelListSet) {
+			pixelList.setIndex(index++);
+		}
+		return pixelListSet;
+	}
+
+	public double getWidth() {
+		if (width == -1 || height == -1) {
+			calculateSize();
+		}
+		return width;
+	}
+
 	public boolean isChanged() {
 		return isChanged;
 	}
@@ -163,21 +159,25 @@ public class StitchImage implements Serializable {
 		return numberVisible;
 	}
 
+	public void removeAlternate(final StitchColor color) {
+		alternateColors.remove(color);
+	}
+
 	public void setBackground(final StitchColor background) {
 		this.background = background;
 	}
 
-	public void setSize(final double width, final double height) {
-		this.width = width;
-		this.height = height;
+	public void setChanged(final boolean changeStatus) {
+		isChanged = changeStatus;
 	}
 
 	public void setNumberVisible(final boolean numberVisible) {
 		this.numberVisible = numberVisible;
 	}
 
-	public void setChanged(final boolean changeStatus) {
-		isChanged = changeStatus;
+	public void setSize(final double width, final double height) {
+		this.width = width;
+		this.height = height;
 	}
 
 	@Override

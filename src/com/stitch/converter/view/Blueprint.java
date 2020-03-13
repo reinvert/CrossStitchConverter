@@ -25,32 +25,32 @@ public class Blueprint extends CanvasController {
 		canvas.setWidth(canvas.getWidth() + column * listScale * 10 + margin);
 	}
 
+	public double getListScale() {
+		return listScale;
+	}
+
+	private double getTextHeight(final Font font, final String input) {
+		final Text text = new Text();
+		text.setFont(font);
+		text.setText(input);
+		text.setWrappingWidth(0);
+		text.setLineSpacing(0);
+		return Math.ceil(text.getLayoutBounds().getHeight());
+	}
+
+	private double getTextWidth(final Font font, final String input) {
+		final Text text = new Text();
+		text.setFont(font);
+		text.setText(input);
+		text.setWrappingWidth(0);
+		text.setLineSpacing(0);
+		return Math.ceil(text.getLayoutBounds().getWidth());
+	}
+
 	@Override
 	public void invalidate() {
 		super.invalidate();
 		renderLists();
-	}
-
-	@Override
-	public void setScale(final double scale) {
-		super.setScale(scale);
-		final int listSize = image.getPixelLists().size();
-		final int row = (int) (image.getHeight() * scale / listScale);
-		final int column = Integer.max((int) (listSize / row) + 1, 1);
-		listZeroX = image.getWidth() * scale + 2 * margin;
-		canvas.setWidth(listZeroX + column * listScale * 10 + margin);
-	}
-
-	public void setListScale(final double listScale) {
-		this.listScale = listScale;
-		final int listSize = image.getPixelLists().size();
-		final int row = (int) (image.getHeight() * scale / listScale);
-		final int column = Integer.max((int) (listSize / row) + 1, 1);
-		canvas.setWidth(listZeroX + column * listScale * 10 + margin);
-	}
-
-	public double getListScale() {
-		return listScale;
 	}
 
 	private void renderLists() {
@@ -92,21 +92,21 @@ public class Blueprint extends CanvasController {
 		}
 	}
 
-	private double getTextWidth(final Font font, final String input) {
-		final Text text = new Text();
-		text.setFont(font);
-		text.setText(input);
-		text.setWrappingWidth(0);
-		text.setLineSpacing(0);
-		return Math.ceil(text.getLayoutBounds().getWidth());
+	public void setListScale(final double listScale) {
+		this.listScale = listScale;
+		final int listSize = image.getPixelLists().size();
+		final int row = (int) (image.getHeight() * scale / listScale);
+		final int column = Integer.max((int) (listSize / row) + 1, 1);
+		canvas.setWidth(listZeroX + column * listScale * 10 + margin);
 	}
 
-	private double getTextHeight(final Font font, final String input) {
-		final Text text = new Text();
-		text.setFont(font);
-		text.setText(input);
-		text.setWrappingWidth(0);
-		text.setLineSpacing(0);
-		return Math.ceil(text.getLayoutBounds().getHeight());
+	@Override
+	public void setScale(final double scale) {
+		super.setScale(scale);
+		final int listSize = image.getPixelLists().size();
+		final int row = (int) (image.getHeight() * scale / listScale);
+		final int column = Integer.max((int) (listSize / row) + 1, 1);
+		listZeroX = image.getWidth() * scale + 2 * margin;
+		canvas.setWidth(listZeroX + column * listScale * 10 + margin);
 	}
 }

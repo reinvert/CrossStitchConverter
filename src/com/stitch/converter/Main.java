@@ -21,10 +21,11 @@ public class Main extends Application {
 		ERROR, SIZE_TOO_LARGE, SUCCESS
 	}
 
+	public static void main(String[] args) {
+		System.setProperty("prism.lcdtext", "false");
+		launch(args);
+	}
 	private OverviewController controller;
-	private Stage primaryStage;
-	public BorderPane rootLayout;
-
 	private Listener listener = new Listener() {
 		@Override
 		public void onFinished(final StitchImage image) {
@@ -37,15 +38,20 @@ public class Main extends Application {
 		}
 	};
 
-	public static void main(String[] args) {
-		System.setProperty("prism.lcdtext", "false");
-		launch(args);
-	}
+	private Stage primaryStage;
+
+	public BorderPane rootLayout;
 
 	public void initRootLayout() {
 		try {
-			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(), Resources.getBundle());
+			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(),
+					Resources.getBundle());
 			rootLayout = (BorderPane) loader.load();
+			final StringBuilder style = new StringBuilder();
+			style.append("-fx-font: ");
+			style.append(Preferences.getString("fontSize", "11")).append("px ");
+			style.append(Preferences.getString("fontType", "Dotum")).append(";");
+			rootLayout.setStyle(style.toString());
 
 			final Scene scene = new Scene(rootLayout);
 
@@ -55,11 +61,13 @@ public class Main extends Application {
 
 			scene.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
 			primaryStage.setScene(scene);
-			Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
+
+			final Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
 			primaryStage.getIcons().add(image);
 			primaryStage.show();
 		} catch (final IOException e) {
 			LogPrinter.print(e);
+			LogPrinter.error(Resources.getString("error_has_occurred"));
 		}
 	}
 
@@ -67,16 +75,16 @@ public class Main extends Application {
 		Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.LOAD).setListener(listener).build()));
 	}
 
-	public void startConversion(final GraphicsEngine.Builder builder) {
-		Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.NEW_FILE).setListener(listener).build()));
-	}
-
 	@Override
-	public void start(Stage primaryStage) {
+	public void start(final Stage primaryStage) {
 		this.primaryStage = primaryStage;
 		this.primaryStage.setTitle(Resources.getString("title"));
 		this.primaryStage.setMaximized(true);
 		initRootLayout();
+	}
+
+	public void startConversion(final GraphicsEngine.Builder builder) {
+		Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.NEW_FILE).setListener(listener).build()));
 	}
 
 }

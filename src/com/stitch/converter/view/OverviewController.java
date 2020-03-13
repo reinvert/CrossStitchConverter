@@ -1,15 +1,21 @@
 package com.stitch.converter.view;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Collection;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import javax.imageio.ImageIO;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import com.stitch.converter.GraphicsEngine;
 import com.stitch.converter.LogPrinter;
@@ -58,167 +64,157 @@ import javafx.stage.WindowEvent;
 
 public class OverviewController extends Controller {
 	@FXML
-	public SplitPane verticalSplitPane, horizontalSplitPane;
+	public BorderPane borderPane, colorTableBorderPane;
 	@FXML
-	public MenuItem save, saveTo, exportPng, exportCsv, exportBlueprint;
+	public Canvas canvas;
+	private CanvasController canvasController;
+	@FXML
+	public ScrollPane canvasScrollPane;
+	@FXML
+	public TableColumn<StitchList, String> colorColumn, nameColumn;
 	@FXML
 	public TableView<StitchList> colorTable;
-	@FXML
-	public BorderPane borderPane, colorTableBorderPane;
+	private File dmcFile;
 	@FXML
 	public TableColumn<StitchList, Boolean> highlightColumn, completeColumn;
 	@FXML
 	public TableColumn<StitchList, Integer> indexColumn, totalNumberColumn;
+	private Stage overviewStage;
 	@FXML
-	public TableColumn<StitchList, String> colorColumn, nameColumn;
-	@FXML
-	public Canvas canvas;
-	@FXML
-	public ScrollPane canvasScrollPane;
-	@FXML
-	public TextField zoom;
+	public MenuItem save, saveTo, exportConvertedImage, exportCsv, exportBlueprint;
 	@FXML
 	public CheckBox showNumberCheckbox;
 	@FXML
 	public CheckMenuItem toggleColorTableItem, toggleLogItem;
-
-	private Stage overviewStage;
-
-	private File dmcFile;
-
-	private CanvasController canvasController;
-
-	public void setStage(final Stage overviewStage) {
-		this.overviewStage = overviewStage;
-		this.overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
-			setDividerPosition();
-		});
-
-		this.overviewStage.heightProperty().addListener((obs, oldVal, newVal) -> {
-			setDividerPosition();
-		});
-
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				setDividerPosition();
-				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
-						(event) -> closeWindowEvent(event));
-
-				if (Preferences.getBoolean("autoLoad", false) == true) {
-					try {
-						loadDmc(new File(Preferences.getString("autoLoadFile")));
-					} catch (final NoSuchElementException e) {
-						Preferences.setValue("autoLoad", "false");
-					}
-				}
-			}
-		});
-	}
+	@FXML
+	public SplitPane verticalSplitPane, horizontalSplitPane;
+	@FXML
+	public TextField zoom;
 
 	@FXML
-	public void load() {
-		if (confirmExit() == false) {
-			return;
-		}
-		final FileChooser fileChooser = new FileChooser();
-		fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-		final FileChooser.ExtensionFilter dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"),
-				"*.dmc");
-		final FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(
-				Resources.getString("filter_all"), "*.*");
-		final FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
-				Resources.getString("filter_image"), "*.bmp", "*.jpg", "*.jpeg", "*.gif", "*.png", "*.apng");
-		fileChooser.getExtensionFilters().add(allFileFilter);
-		fileChooser.getExtensionFilters().add(dmcFilter);
-		fileChooser.getExtensionFilters().add(imageFilter);
-		File file = fileChooser.showOpenDialog(overviewStage);
-		if (file != null) {
-			String extension = "";
-			{
-				String name = file.getName();
-				int lastIndexOf = name.lastIndexOf(".");
-				if (lastIndexOf == -1) {
-					LogPrinter.error(Resources.getString("cant_read_image"));
-					return;
-				}
-				extension = name.substring(lastIndexOf);
-			}
-			if (extension.equals(".dmc")) {
-				dmcFile = file;
-				fileName = dmcFile.getName();
-				overviewStage.setTitle(dmcFile.getName());
-				main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
-				System.out.println(file.getPath() + file.getName());
-				Preferences.setValue("autoLoadFile", file.getPath());
-			} else {
-				Preferences.setValue("scrollX", "0");
-				Preferences.setValue("scrollY", "0");
-				final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
-						new File(Preferences.getString("csvFile", "resources/dmc.csv")), file);
-				builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
-				builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
-				builder.setThread(Preferences.getInteger("workingThread", 0));
-				builder.setResize(Preferences.getBoolean("resizeImage", true));
-
-				try {
-					dmcFile = new File(file.getParent() + File.separator
-							+ file.getName().substring(0, file.getName().lastIndexOf(".")) + ".dmc");
-					fileName = dmcFile.getName();
-					overviewStage.setTitle(fileName + "(*)");
-					main.startConversion(builder);
-				} catch (final IllegalArgumentException | NullPointerException e) {
-					LogPrinter.print(e);
-					LogPrinter.error(Resources.getString("cant_read_image"));
-					return;
-				}
-			}
-		}
-	}
-
-	public void loadDmc(File file) {
-		dmcFile = file;
-		fileName = dmcFile.getName();
-		overviewStage.setTitle(dmcFile.getName());
-		main.load(new GraphicsEngine.Builder(new File(Preferences.getString("csvFile", "resources/dmc.csv")), dmcFile));
-	}
-
-	@FXML
-	public void save() {
-		if (save.isDisable() == true) {
-			return;
-		}
-		setTitleChanged(false);
+	public void author() {
+		final FXMLLoader loader;
+		final AnchorPane page;
 		try {
-			Resources.writeObject(dmcFile, canvasController.getImage());
-			LogPrinter.alert(Resources.getString("file_saved", dmcFile.getName(), Resources.getString("dmc_file")));
-			Preferences.setValue("autoLoadFile", dmcFile.getPath());
-		} catch (IOException e) {
+			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(), Resources.getBundle());
+			page = (AnchorPane) loader.load();
+			final StringBuilder style = new StringBuilder();
+			style.append("-fx-font: ");
+			style.append(Preferences.getString("fontSize", "11")).append("px ");
+			style.append(Preferences.getString("fontType", "Dotum")).append(";");
+			page.setStyle(style.toString());
+		} catch (final IOException e) {
 			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("save_failed", Resources.getString("dmc_file")));
+			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
+			return;
+		}
+		final Stage authorStage = new Stage();
+		authorStage.setTitle(Resources.getString("about"));
+		authorStage.initModality(Modality.WINDOW_MODAL);
+		authorStage.initOwner(overviewStage);
+		authorStage.setResizable(false);
+		final Scene scene = new Scene(page);
+		authorStage.setScene(scene);
+		final AuthorController controller = loader.getController();
+		controller.setApp(main);
+		authorStage.showAndWait();
+	}
+
+	private void clickCanvas(final double originalX, final double originalY) {
+		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
+		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
+		final Pixel pixel = new Pixel(x, y, null);
+		for (final StitchList stitchList : colorTable.getItems()) {
+			if (stitchList.getPixelList().hasPixel(pixel)) {
+				Platform.runLater(new Runnable() {
+					@Override
+					public void run() {
+						colorTable.requestFocus();
+						colorTable.getSelectionModel().select(stitchList);
+						colorTable.scrollTo(stitchList);
+					}
+				});
+			}
 		}
 	}
 
+	private void closeWindowEvent(final WindowEvent event) {
+		if (confirmExit() == false) {
+			event.consume();
+		} else {
+			if (Preferences.getBoolean("autoLoad", false) == true) {
+				Preferences.setValue("scrollX", canvasScrollPane.getHvalue());
+				Preferences.setValue("scrollY", canvasScrollPane.getVvalue());
+			}
+		}
+	}
+
+	private boolean confirmExit() {
+		if (canvasController != null && canvasController.getImage().isChanged() == true) {
+			final ButtonType save = new ButtonType(Resources.getString("save"), ButtonData.YES);
+			final ButtonType notSave = new ButtonType(Resources.getString("save_no"), ButtonData.NO);
+			final ButtonType cancel = new ButtonType(Resources.getString("cancel_button"), ButtonData.CANCEL_CLOSE);
+			final Alert alert = new Alert(AlertType.CONFIRMATION);
+			alert.setTitle(Resources.getString("warning"));
+			alert.setHeaderText(Resources.getString("file_changed_header"));
+			alert.setContentText(Resources.getString("file_changed"));
+			alert.getButtonTypes().setAll(save, notSave, cancel);
+			final Optional<ButtonType> result = alert.showAndWait();
+			if (result.get() == save) {
+				try {
+					save(dmcFile, canvasController.getImage());
+					return true;
+				} catch (final IOException e) {
+					LogPrinter.print(e);
+					return false;
+				}
+			} else if (result.get() == notSave) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@FXML
-	public void saveTo() {
-		if (saveTo.isDisable() == true) {
+	public void exportBlueprintMenu() {
+		if (exportBlueprint.isDisable() == true) {
 			return;
 		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
+		fileChooser.setInitialFileName(
+				dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + "_blueprint.png");
 		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
-				Resources.getString("dmc_file"), "*.dmc");
-		fileChooser.getExtensionFilters().add(extensionFilter);
-		final File saveFile = fileChooser.showSaveDialog(overviewStage);
-		if (saveFile != null) {
-			dmcFile = saveFile;
-			save();
+				Resources.getString("png_file"), "*.png");
+		fileChooser.setSelectedExtensionFilter(extensionFilter);
+		final File blueprintFile = fileChooser.showSaveDialog(overviewStage);
+
+		final StitchImage image = canvasController.getImage();
+		final Canvas canvas = new Canvas(canvasController.getCanvas().getWidth(),
+				canvasController.getCanvas().getHeight());
+		final CanvasController blueprintController = new CanvasController(image, canvas);
+		blueprintController.invalidate();
+		final Blueprint blueprint = new Blueprint(canvasController.getImage(), canvas);
+		blueprint.setScale(Preferences.getDouble("blueprintScale", 20d));
+		blueprint.setListScale(Preferences.getDouble("blueprintListScale", 20d));
+		blueprint.invalidate();
+		final WritableImage writableImage = new WritableImage((int) blueprint.getCanvas().getWidth(),
+				(int) blueprint.getCanvas().getHeight());
+		blueprint.getCanvas().snapshot(null, writableImage);
+		final BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
+		try {
+			ImageIO.write(bufferedImage, "png", blueprintFile);
+		} catch (final IOException e) {
+			LogPrinter.print(e);
+			LogPrinter.error(Resources.getString("save_failed", Resources.getString("blueprint_file")));
 		}
 	}
 
 	@FXML
-	public void exportImage() {
-		if (exportPng.isDisable() == true) {
+	public void exportConvertedImageMenu() {
+		if (exportConvertedImage.isDisable() == true) {
 			return;
 		}
 		final FileChooser fileChooser = new FileChooser();
@@ -244,7 +240,7 @@ public class OverviewController extends Controller {
 	}
 
 	@FXML
-	public void exportColor() {
+	public void exportStitchListMenu() {
 		if (exportCsv.isDisable() == true) {
 			return;
 		}
@@ -259,7 +255,7 @@ public class OverviewController extends Controller {
 			if (actFile.exists()) {
 				actFile.delete();
 			}
-			try (OutputStream outputStream = new FileOutputStream(actFile)) {
+			try (final OutputStream outputStream = new FileOutputStream(actFile)) {
 				actFile.createNewFile();
 				int totalNumber = 0;
 				for (final StitchColor color : canvasController.getImage().getColorList()) {
@@ -299,157 +295,29 @@ public class OverviewController extends Controller {
 		}
 	}
 
-	@FXML
-	public void exportBlueprint() {
-		if (exportBlueprint.isDisable() == true) {
-			return;
-		}
-		final FileChooser fileChooser = new FileChooser();
-		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-		fileChooser.setInitialFileName(
-				dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + "_blueprint.png");
-		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
-				Resources.getString("png_file"), "*.png");
-		fileChooser.setSelectedExtensionFilter(extensionFilter);
-		final File blueprintFile = fileChooser.showSaveDialog(overviewStage);
-
-		final StitchImage image = canvasController.getImage();
-		final Canvas canvas = new Canvas(canvasController.getCanvas().getWidth(),
-				canvasController.getCanvas().getHeight());
-		final CanvasController blueprintController = new CanvasController(image, canvas);
-		blueprintController.invalidate();
-		final Blueprint blueprint = new Blueprint(canvasController.getImage(), canvas);
-		blueprint.setScale(Preferences.getDouble("blueprintScale", 20d));
-		blueprint.setListScale(Preferences.getDouble("blueprintListScale", 20d));
-		blueprint.invalidate();
-		final WritableImage writableImage = new WritableImage((int) blueprint.getCanvas().getWidth(),
-				(int) blueprint.getCanvas().getHeight());
-		blueprint.getCanvas().snapshot(null, writableImage);
-		final BufferedImage bufferedImage = SwingFXUtils.fromFXImage(writableImage, null);
+	private boolean hasUpdates() throws Exception {
 		try {
-			ImageIO.write(bufferedImage, "png", blueprintFile);
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("save_failed", Resources.getString("blueprint_file")));
-		}
-	}
-
-	@FXML
-	public void setting() {
-		ScrollPane page = null;
-		try {
-			final FXMLLoader loader = new FXMLLoader(new File("resources/Setting.fxml").toURI().toURL(),
-					Resources.getBundle());
-			page = (ScrollPane) loader.load();
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
-			return;
-		}
-		final Stage settingStage = new Stage();
-		settingStage.setTitle(Resources.getString("setting"));
-		settingStage.initModality(Modality.WINDOW_MODAL);
-		settingStage.initOwner(overviewStage);
-		settingStage.setResizable(false);
-		final Scene scene = new Scene(page);
-		settingStage.setScene(scene);
-		settingStage.showAndWait();
-	}
-
-	@FXML
-	public void toggleWindowColorTable() {
-		if (toggleColorTableItem.isSelected() == true) {
-			Preferences.setValue("showColorTable", "true");
-			horizontalSplitPane.getItems().add(1, colorTableBorderPane);
-			setDividerPosition();
-		} else {
-			Preferences.setValue("showColorTable", "false");
-			horizontalSplitPane.getItems().remove(1);
-		}
-	}
-
-	public void setDividerPosition() {
-		horizontalSplitPane.setDividerPositions((double) (1 - 314 / borderPane.getWidth()));
-	}
-
-	@FXML
-	public void author() {
-		FXMLLoader loader = null;
-		AnchorPane page = null;
-		try {
-			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(), Resources.getBundle());
-			page = (AnchorPane) loader.load();
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
-			return;
-		}
-		final Stage authorStage = new Stage();
-		authorStage.setTitle(Resources.getString("about"));
-		authorStage.initModality(Modality.WINDOW_MODAL);
-		authorStage.initOwner(overviewStage);
-		authorStage.setResizable(false);
-		final Scene scene = new Scene(page);
-		authorStage.setScene(scene);
-		final AuthorController controller = loader.getController();
-		controller.setApp(main);
-		authorStage.showAndWait();
-	}
-
-	private void closeWindowEvent(WindowEvent event) {
-		if (confirmExit() == false) {
-			event.consume();
-		} else {
-			if(Preferences.getBoolean("autoLoad", false) == true) {
-				Preferences.setValue("scrollX", String.valueOf(canvasScrollPane.getHvalue()));
-				Preferences.setValue("scrollY", String.valueOf(canvasScrollPane.getVvalue()));
-			}
-		}
-	}
-
-	private boolean confirmExit() {
-		if (canvasController != null && canvasController.getImage().isChanged() == true) {
-			final ButtonType save = new ButtonType(Resources.getString("save"), ButtonData.YES);
-			final ButtonType notSave = new ButtonType(Resources.getString("save_no"), ButtonData.NO);
-			final ButtonType cancel = new ButtonType(Resources.getString("cancel_button"), ButtonData.CANCEL_CLOSE);
-			final Alert alert = new Alert(AlertType.CONFIRMATION);
-			alert.setTitle(Resources.getString("warning"));
-			alert.setHeaderText(Resources.getString("file_changed_header"));
-			alert.setContentText(Resources.getString("file_changed"));
-			alert.getButtonTypes().setAll(save, notSave, cancel);
-			Optional<ButtonType> result = alert.showAndWait();
-			if (result.get() == save) {
-				save();
-				return true;
-			} else if (result.get() == notSave) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	@FXML
-	public void onShowNumberCheckboxClicked() {
-		Preferences.setValue("drawGridNumber", Boolean.toString(showNumberCheckbox.isSelected()));
-		canvasController.invalidate();
-	}
-
-	private String fileName = "";
-
-	public void setTitleChanged(final boolean changed) {
-		canvasController.getImage().setChanged(changed);
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				if (changed == true) {
-					overviewStage.setTitle(fileName + " (*)");
-				} else {
-					overviewStage.setTitle(fileName);
+			final URL url = new URL(Resources.getString("update_url"));
+			final HttpURLConnection httpUrlConnection = (HttpURLConnection) url.openConnection();
+			try (final InputStreamReader inputStreamReader = new InputStreamReader(
+					httpUrlConnection.getInputStream())) {
+				try (final BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+					final StringBuilder stringBuilder = new StringBuilder();
+					String temp;
+					while ((temp = bufferedReader.readLine()) != null) {
+						stringBuilder.append(temp);
+					}
+					final JSONParser jsonParser = new JSONParser();
+					final JSONObject jsonObject = (JSONObject) jsonParser.parse(stringBuilder.toString());
+					final int version = Integer.parseInt(jsonObject.get("tag_name").toString());
+					return version > Integer.parseInt(Resources.getString("version"));
 				}
+			} finally {
+				httpUrlConnection.disconnect();
 			}
-		});
+		} catch (final Exception e) {
+			throw e;
+		}
 	}
 
 	@FXML
@@ -505,8 +373,8 @@ public class OverviewController extends Controller {
 		zoom.setOnKeyPressed(event -> {
 			if (event.getCode() == KeyCode.ENTER) {
 				event.consume();
-				final String zoomScale = zoom.getText().replace("%", "");
-				if(setZoom(zoomScale) == true) {
+				final String zoomScale = zoom.getText();
+				if (setZoom(zoomScale) == true) {
 					Preferences.setValue("scale", zoomScale);
 				}
 				invalidate();
@@ -519,18 +387,134 @@ public class OverviewController extends Controller {
 				clickCanvas(event.getX(), event.getY());
 			}
 		});
-		if (Preferences.getBoolean("showColorTable", true) == false) {
-			toggleColorTableItem.setSelected(false);
-			toggleWindowColorTable();
-		}
+	}
 
+	public void invalidate() {
+		canvasController.invalidate();
+	}
+
+	public void loadDmc(File file) {
+		dmcFile = file;
+		overviewStage.setTitle(dmcFile.getName());
+		main.load(new GraphicsEngine.Builder(new File(Preferences.getString("csvFile", "resources/dmc.csv")), dmcFile));
+	}
+
+	@FXML
+	public void loadMenu() {
+		if (confirmExit() == false) {
+			return;
+		}
+		final FileChooser fileChooser = new FileChooser();
+		fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+		final FileChooser.ExtensionFilter dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"),
+				"*.dmc");
+		final FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(
+				Resources.getString("filter_all"), "*.*");
+		final FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
+				Resources.getString("filter_image"), "*.bmp", "*.jpg", "*.jpeg", "*.gif", "*.png", "*.apng");
+		fileChooser.getExtensionFilters().add(allFileFilter);
+		fileChooser.getExtensionFilters().add(dmcFilter);
+		fileChooser.getExtensionFilters().add(imageFilter);
+		File file = fileChooser.showOpenDialog(overviewStage);
+		if (file != null) {
+			String extension = "";
+			{
+				String name = file.getName();
+				int lastIndexOf = name.lastIndexOf(".");
+				if (lastIndexOf == -1) {
+					LogPrinter.error(Resources.getString("cant_read_image"));
+					return;
+				}
+				extension = name.substring(lastIndexOf);
+			}
+			if (extension.equals(".dmc")) {
+				dmcFile = file;
+				overviewStage.setTitle(dmcFile.getName());
+				main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
+				System.out.println(file.getPath() + file.getName());
+				Preferences.setValue("autoLoadFile", file.getPath());
+			} else {
+				Preferences.setValue("scrollX", "0");
+				Preferences.setValue("scrollY", "0");
+				final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(
+						new File(Preferences.getString("csvFile", "resources/dmc.csv")), file);
+				builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
+				builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
+				builder.setThread(Preferences.getInteger("workingThread", 0));
+				builder.setScaled(Preferences.getBoolean("resizeImage", true));
+
+				try {
+					dmcFile = new File(file.getParent() + File.separator
+							+ file.getName().substring(0, file.getName().lastIndexOf(".")) + ".dmc");
+					overviewStage.setTitle(dmcFile.getName() + "(*)");
+					main.startConversion(builder);
+				} catch (final IllegalArgumentException | NullPointerException e) {
+					LogPrinter.print(e);
+					LogPrinter.error(Resources.getString("cant_read_image"));
+					return;
+				}
+			}
+		}
+	}
+
+	@FXML
+	public void onShowNumberCheckboxClicked() {
+		Preferences.setValue("drawGridNumber", Boolean.toString(showNumberCheckbox.isSelected()));
+		canvasController.invalidate();
+	}
+
+	public boolean save(File file, StitchImage image) throws IOException {
+		try {
+			Resources.writeObject(file, image);
+			return true;
+		} catch (final IOException e) {
+			throw e;
+		}
+	}
+
+	@FXML
+	public boolean saveMenu() {
+		if (save.isDisable() == true) {
+			return false;
+		}
+		setTitleChanged(false);
+		try {
+			save(dmcFile, canvasController.getImage());
+			Preferences.setValue("autoLoadFile", dmcFile.getPath());
+			LogPrinter.alert(Resources.getString("file_saved", dmcFile.getName(), Resources.getString("dmc_file")));
+			return true;
+		} catch (final IOException e) {
+			LogPrinter.print(e);
+			LogPrinter.error(Resources.getString("save_failed", Resources.getString("dmc_file")));
+			return false;
+		}
+	}
+
+	@FXML
+	public void saveToMenu() {
+		if (saveTo.isDisable() == true) {
+			return;
+		}
+		final FileChooser fileChooser = new FileChooser();
+		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
+		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
+				Resources.getString("dmc_file"), "*.dmc");
+		fileChooser.getExtensionFilters().add(extensionFilter);
+		final File saveFile = fileChooser.showSaveDialog(overviewStage);
+		if (saveFile != null) {
+			dmcFile = saveFile;
+			saveMenu();
+		}
+	}
+
+	public void setDividerPosition() {
+		horizontalSplitPane.setDividerPositions((double) (1 - 314 / borderPane.getWidth()));
 	}
 
 	public void setImage(final StitchImage stitchImage) {
 		canvasController = new CanvasController(stitchImage, canvas);
 		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList();
-		final Collection<PixelList> pixelListCollection = stitchImage.getPixelLists();
-		for (final PixelList pixelList : pixelListCollection) {
+		for (final PixelList pixelList : stitchImage.getPixelLists()) {
 			stitchListArrayList.add(new StitchList(pixelList));
 		}
 		colorTable.setItems(stitchListArrayList);
@@ -544,41 +528,126 @@ public class OverviewController extends Controller {
 		showNumberCheckbox.setDisable(false);
 		save.setDisable(false);
 		saveTo.setDisable(false);
-		exportPng.setDisable(false);
+		exportConvertedImage.setDisable(false);
 		exportCsv.setDisable(false);
 		exportBlueprint.setDisable(false);
 		showNumberCheckbox.setSelected(Preferences.getBoolean("drawGridNumber", true));
 		invalidate();
-		if(Preferences.getBoolean("autoLoad", false) == true) {
+		if (Preferences.getBoolean("autoLoad", false) == true) {
 			canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
 			canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
 		}
 	}
 
-	public boolean setZoom(String scale) {
+	public void setStage(final Stage overviewStage) {
+		this.overviewStage = overviewStage;
+		this.overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
+			setDividerPosition();
+		});
+
+		this.overviewStage.heightProperty().addListener((obs, oldVal, newVal) -> {
+			setDividerPosition();
+		});
+
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				setDividerPosition();
+				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
+						(event) -> closeWindowEvent(event));
+				if (Preferences.getBoolean("autoLoad", false) == true) {
+					try {
+						loadDmc(new File(Preferences.getString("autoLoadFile")));
+					} catch (final NoSuchElementException e) {
+						Preferences.setValue("autoLoad", "false");
+					}
+				}
+				try {
+					if (hasUpdates() == true) {
+						final ButtonType update = new ButtonType(Resources.getString("update"), ButtonData.YES);
+						final ButtonType notUpdate = new ButtonType(Resources.getString("update_no"), ButtonData.NO);
+						final Alert alert = new Alert(AlertType.INFORMATION);
+						alert.setTitle(Resources.getString("information"));
+						alert.setHeaderText(Resources.getString("update_header"));
+						alert.setContentText(Resources.getString("update_content"));
+						alert.getButtonTypes().setAll(update, notUpdate);
+						final Optional<ButtonType> result = alert.showAndWait();
+						if (result.get() == update) {
+							main.getHostServices().showDocument(Resources.getString("url") + "/releases");
+						}
+					}
+				} catch (final Exception e) {
+					e.printStackTrace();
+					LogPrinter.print(e);
+					LogPrinter.error(Resources.getString("error_has_occurred"));
+				}
+			}
+		});
+	}
+
+	@FXML
+	public void setting() {
+		ScrollPane page = null;
+		try {
+			final FXMLLoader loader = new FXMLLoader(new File("resources/Setting.fxml").toURI().toURL(),
+					Resources.getBundle());
+			page = (ScrollPane) loader.load();
+			final StringBuilder style = new StringBuilder();
+			style.append("-fx-font: ");
+			style.append(Preferences.getString("fontSize", "11")).append("px ");
+			style.append(Preferences.getString("fontType", "Dotum")).append(";");
+			page.setStyle(style.toString());
+		} catch (final IOException e) {
+			LogPrinter.print(e);
+			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
+			return;
+		}
+		final Stage settingStage = new Stage();
+		settingStage.setTitle(Resources.getString("setting"));
+		settingStage.initModality(Modality.WINDOW_MODAL);
+		settingStage.initOwner(overviewStage);
+		settingStage.setResizable(false);
+		final Scene scene = new Scene(page);
+		settingStage.setScene(scene);
+		settingStage.showAndWait();
+	}
+
+	public void setTitleChanged(final boolean changed) {
+		canvasController.getImage().setChanged(changed);
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+				if (changed == true) {
+					overviewStage.setTitle(dmcFile.getName() + " (*)");
+				} else {
+					overviewStage.setTitle(dmcFile.getName());
+				}
+			}
+		});
+	}
+
+	public boolean setZoom(final String scale) {
 		double scaleRatio = 0d;
 
-		if (scale.equals("MATCH_WIDTH")) {
-			double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
-			double imageWidth = canvasController.getImage().getWidth();
-			double ratioByWidth = screenWidth / imageWidth;
+		final double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
+		final double imageWidth = canvasController.getImage().getWidth();
+		final double ratioByWidth = screenWidth / imageWidth;
+		final double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
+		final double imageHeight = canvasController.getImage().getHeight();
+		final double ratioByHeight = screenHeight / imageHeight;
 
+		if (scale.equals("MATCH_WIDTH")) {
 			canvasController.setScale(ratioByWidth);
 			zoom.setText(scale);
+		} else if (scale.equals("MATCH_HEIGHT")) {
+			canvasController.setScale(ratioByHeight);
+			zoom.setText(scale);
 		} else if (scale.equals("MATCH_SCREEN")) {
-			double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
-			double imageWidth = canvasController.getImage().getWidth();
-			double ratioByWidth = screenWidth / imageWidth;
-
-			double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
-			double imageHeight = canvasController.getImage().getHeight();
-			double ratioByHeight = screenHeight / imageHeight;
-
 			canvasController.setScale(Math.min(ratioByWidth, ratioByHeight));
 			zoom.setText(scale);
 		} else {
 			try {
-				scaleRatio = Double.parseDouble(scale);
+				scaleRatio = Double.parseDouble(scale.replace("x", ""));
 				canvasController.setScale(Double.parseDouble(scale));
 			} catch (final NumberFormatException e) {
 				LogPrinter.alert(Resources.getString("zoom_number_cant_read"));
@@ -590,75 +659,22 @@ public class OverviewController extends Controller {
 		return true;
 	}
 
-	public void invalidate() {
-		canvasController.invalidate();
-	}
-
-	private void clickCanvas(final double originalX, final double originalY) {
-		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
-		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
-		final Pixel pixel = new Pixel(x, y, null);
-		for (final StitchList stitchList : colorTable.getItems()) {
-			if (stitchList.getPixelList().hasPixel(pixel)) {
-				Platform.runLater(new Runnable() {
-					@Override
-					public void run() {
-						colorTable.requestFocus();
-						colorTable.getSelectionModel().select(stitchList);
-						colorTable.scrollTo(stitchList);
-					}
-				});
-			}
+	@FXML
+	public void toggleWindowColorTable() {
+		if (toggleColorTableItem.isSelected() == true) {
+			Preferences.setValue("showColorTable", "true");
+			horizontalSplitPane.getItems().add(1, colorTableBorderPane);
+			setDividerPosition();
+		} else {
+			Preferences.setValue("showColorTable", "false");
+			horizontalSplitPane.getItems().remove(1);
 		}
-		/*
-		final ExecutorService executorService = Executors
-				.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
-		final ArrayBlockingQueue<Runnable> blockingQueue = new ArrayBlockingQueue<>(16);
-		final Runnable poisonPill = new Runnable() {
+		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
-
-			}
-		};
-		final Thread thread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (true) {
-					try {
-						final Runnable runnable = blockingQueue.take();
-						if (runnable == poisonPill) {
-							executorService.shutdown();
-							return;
-						}
-						executorService.submit(runnable);
-					} catch (final InterruptedException e) {
-
-					}
-				}
+				setZoom(Preferences.getString("scale"));
+				invalidate();
 			}
 		});
-		thread.start();
-		try {
-			for (StitchList stitchList : colorTable.getItems()) {
-				blockingQueue.put(new Runnable() {
-					@Override
-					public void run() {
-						if (stitchList.getPixelList().hasPixel(pixel)) {
-							Platform.runLater(new Runnable() {
-								@Override
-								public void run() {
-									colorTable.requestFocus();
-									colorTable.getSelectionModel().select(stitchList);
-									colorTable.scrollTo(stitchList);
-								}
-							});
-						}
-					}
-				});
-			}
-			blockingQueue.put(poisonPill);
-		} catch (final InterruptedException e) {
-
-		}*/
 	}
 }

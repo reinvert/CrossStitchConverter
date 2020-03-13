@@ -2,7 +2,7 @@ package com.stitch.converter.model;
 
 import java.io.Serializable;
 
-public class Pixel implements Serializable, Comparable<Pixel> {
+public final class Pixel implements Serializable, Comparable<Pixel> {
 	private static final long serialVersionUID = 1L;
 	private StitchColor color;
 	private final int x, y;
@@ -11,6 +11,17 @@ public class Pixel implements Serializable, Comparable<Pixel> {
 		this.x = x;
 		this.y = y;
 		this.color = color;
+	}
+
+	@Override
+	public int compareTo(Pixel other) {
+		if (other == null)
+			throw new NullPointerException();
+		int comparison = x - other.getX();
+		if (comparison == 0) {
+			comparison = y - other.getY();
+		}
+		return comparison;
 	}
 
 	@Override
@@ -57,16 +68,5 @@ public class Pixel implements Serializable, Comparable<Pixel> {
 	@Override
 	public String toString() {
 		return "Pixel [color=" + color + ", x=" + x + ", y=" + y + "]";
-	}
-
-	@Override
-	public int compareTo(Pixel other) {
-		if (other == null)
-			throw new NullPointerException();
-		int comparison = x - other.getX();
-		if (comparison == 0) {
-			comparison = y - other.getY();
-		}
-		return comparison;
 	}
 }

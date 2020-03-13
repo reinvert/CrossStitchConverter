@@ -8,6 +8,6 @@
    <children>
       <Hyperlink fx:id="hyperlink" text="%url" />
       <Hyperlink fx:id="iconlink" layoutY="20.0" text="%icon_author" />
-      <Label layoutY="40.0" prefWidth="600.0" text="%copyright" wrapText="true" />
+      <Label fx:id="copyright" layoutY="40.0" prefWidth="600.0" text="%copyright" wrapText="true" />
    </children>
 </AnchorPane>
