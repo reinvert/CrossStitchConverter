@@ -1,6 +1,5 @@
 package com.stitch.converter;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -97,7 +96,7 @@ public final class ColorConverter extends Thread {
 		public void run() {
 			for (int x = this.x; x < this.x + width; x++) {
 				for (int y = this.y; y < this.y + height; y++) {
-					final Pixel pixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
+					final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), ""));
 					final StitchColor targetColor = pixel.getColor();
 					double difference = 256, alternateDifference = 256;
 					StitchColor outputColor = null, alternateColor = null;
@@ -149,7 +148,7 @@ public final class ColorConverter extends Thread {
 						return;
 					}
 					image.setRGB(pixel.getKey().getX(), pixel.getKey().getY(),
-							pixel.getKey().getColor().asAWT().getRGB());
+							pixel.getKey().getColor().getRGB());
 					stitchImage.add(pixel.getKey());
 					stitchImage.addAlternateColor(pixel.getValue());
 				} catch (final InterruptedException e) {

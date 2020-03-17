@@ -28,8 +28,10 @@ import com.stitch.converter.model.StitchColor;
 import com.stitch.converter.model.StitchList;
 
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
@@ -328,14 +330,16 @@ public class OverviewController extends Controller {
 			final BooleanProperty property = cellValue.highlightProperty();
 			cellValue.setHighlight(property.get());
 			property.addListener((observable, oldValue, newValue) -> {
-				cellValue.setHighlight(newValue);
-				cellValue.getPixelList().setHighlighted(newValue);
-				if (newValue == true && cellValue.isCompleted() == true) {
-					cellValue.setCompleted(false);
+				if (newValue == cellValue.isHighlighted()) {
+					cellValue.setHighlight(newValue);
+					cellValue.getPixelList().setHighlighted(newValue);
+					if (newValue == true && cellValue.isCompleted() == true) {
+						cellValue.setCompleted(false);
+					}
+					setTitleChanged(true);
 				}
-				setTitleChanged(true);
-				invalidate();
 			});
+
 			return property;
 		});
 		completeColumn.setCellFactory(column -> new CheckBoxTableCell<>());
@@ -350,7 +354,6 @@ public class OverviewController extends Controller {
 					cellValue.setHighlight(false);
 				}
 				setTitleChanged(true);
-				invalidate();
 			});
 			return property;
 		});
@@ -431,7 +434,6 @@ public class OverviewController extends Controller {
 				dmcFile = file;
 				overviewStage.setTitle(dmcFile.getName());
 				main.load(new GraphicsEngine.Builder(new File("dmc.csv"), dmcFile));
-				System.out.println(file.getPath() + file.getName());
 				Preferences.setValue("autoLoadFile", file.getPath());
 			} else {
 				Preferences.setValue("scrollX", "0");
@@ -513,10 +515,26 @@ public class OverviewController extends Controller {
 
 	public void setImage(final StitchImage stitchImage) {
 		canvasController = new CanvasController(stitchImage, canvas);
-		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList();
+		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList(
+				stitchList -> new Observable[] { stitchList.highlightProperty(), stitchList.completeProperty() });
 		for (final PixelList pixelList : stitchImage.getPixelLists()) {
 			stitchListArrayList.add(new StitchList(pixelList));
 		}
+		stitchListArrayList.addListener(new ListChangeListener<StitchList>() {
+			@Override
+			public void onChanged(Change<? extends StitchList> c) {
+				while (c.next()) {
+					if (c.wasUpdated()) {
+						Platform.runLater(new Runnable() {
+							@Override
+							public void run() {
+								invalidate();
+							}
+						});
+					}
+				}
+			}
+		});
 		colorTable.setItems(stitchListArrayList);
 		if (setZoom(Preferences.getValue("scale", "MATCH_WIDTH")) == false) {
 			Preferences.setValue("scale", "MATCH_WIDTH");
@@ -669,12 +687,14 @@ public class OverviewController extends Controller {
 			Preferences.setValue("showColorTable", "false");
 			horizontalSplitPane.getItems().remove(1);
 		}
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				setZoom(Preferences.getString("scale"));
-				invalidate();
-			}
-		});
+		if (Preferences.getString("scale").contains("MATCH")) {
+			Platform.runLater(new Runnable() {
+				@Override
+				public void run() {
+					setZoom(Preferences.getString("scale"));
+					invalidate();
+				}
+			});
+		}
 	}
 }

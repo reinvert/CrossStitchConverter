@@ -2,12 +2,21 @@ package com.stitch.converter.model;
 
 import java.io.Serializable;
 
+import javafx.scene.paint.Color;
+
 public class StitchColor implements Serializable, Cloneable, Comparable<StitchColor> {
 	private static final long serialVersionUID = 1L;
 
 	private final String name;
-
 	private final int red, green, blue;
+	private Color fxColor = null;
+	
+	public StitchColor(final int rgb, final String name) {
+		red = (rgb >> 16) & 0xFF;
+		green = (rgb >> 8) & 0xFF;
+		blue = (rgb >> 0) & 0xFF;
+		this.name = name;
+	}
 
 	public StitchColor(final int red, final int green, final int blue, final String name) {
 		this.red = red;
@@ -16,21 +25,17 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 		this.name = name;
 	}
 
-	public StitchColor(final java.awt.Color color, final String name) {
-		this(color.getRed(), color.getGreen(), color.getBlue(), name);
-	}
-
-	public StitchColor(final javafx.scene.paint.Color color, final String name) {
+	public StitchColor(final Color color, final String name) {
 		this((int) color.getRed() * 255, (int) color.getGreen() * 255, (int) color.getBlue() * 255, name);
+		fxColor = color;
 	}
 
-	public java.awt.Color asAWT() {
-		return new java.awt.Color(red, green, blue);
-	}
-
-	public javafx.scene.paint.Color asFX() {
-		return new javafx.scene.paint.Color((double) (getRed() / 255d), (double) (getGreen() / 255d),
-				(double) (getBlue() / 255d), 1d);
+	public Color asFX() {
+		if(fxColor == null) {
+			fxColor = new Color((double) (getRed() / 255d), (double) (getGreen() / 255d),
+					(double) (getBlue() / 255d), 1d);
+		}
+		return fxColor;
 	}
 
 	@Override
@@ -69,6 +74,10 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 		if (green != other.green)
 			return false;
 		return true;
+	}
+	
+	public int getRGB() {
+		return red<<16 + green<<8 + blue;
 	}
 
 	public int getBlue() {

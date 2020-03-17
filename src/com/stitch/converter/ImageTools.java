@@ -158,7 +158,7 @@ final class ImageTools {
 			output.add(new ArrayList<StitchColor>());
 			final ArrayList<StitchColor> x = output.get(i);
 			for (int j = 0; j < h; j++) {
-				x.add(new StitchColor(new java.awt.Color(image.getRGB(i, j)), ""));
+				x.add(new StitchColor(image.getRGB(i, j), ""));
 			}
 		}
 		return output;

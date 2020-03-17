@@ -94,7 +94,7 @@ public class ColorConverterSingleThread extends Thread {
 		public void run() {
 			for(int x=this.x; x<this.x+width; x++) {
 				for(int y=this.y; y<this.y+height; y++) {
-					final Pixel pixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
+					final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), ""));
 					final StitchColor targetColor = pixel.getColor();
 					double difference = 256 + 256 + 256;
 					StitchColor outputColor = null;
@@ -135,7 +135,7 @@ public class ColorConverterSingleThread extends Thread {
 					if (pixel == poisonPill) {
 						return;
 					}
-					image.setRGB(pixel.getX(), pixel.getY(), pixel.getColor().asAWT().getRGB());
+					image.setRGB(pixel.getX(), pixel.getY(), pixel.getColor().getRGB());
 					stitchImage.add(pixel);
 				} catch (final InterruptedException e) {
 
@@ -179,7 +179,7 @@ public class ColorConverterSingleThread extends Thread {
 	public void run() {
 		for(int y=0; y<image.getHeight(); y++) {
 			for(int x=0; x<image.getWidth(); x++) {
-				final Pixel oldPixel = new Pixel(x, y, new StitchColor(new Color(image.getRGB(x, y)), ""));
+				final Pixel oldPixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), ""));
 				final StitchColor targetColor = oldPixel.getColor();
 				double difference = 256 + 256 + 256;
 				StitchColor outputColor = null;

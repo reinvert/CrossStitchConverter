@@ -1,6 +1,5 @@
 package com.stitch.converter.model;
 
-import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,7 +18,7 @@ public class StitchImage implements Serializable {
 
 	private final TreeMap<StitchColor, Integer> alternateColors;
 
-	private StitchColor background = new StitchColor(Color.WHITE, "");
+	private StitchColor background = new StitchColor(0xFFFFFF, "");
 	private transient ArrayList<StitchColor> colorList = null;
 
 	private transient WritableImage fxImage = null;
