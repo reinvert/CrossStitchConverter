@@ -19,7 +19,7 @@ final class CSVReader {
 	 * @param str - CSV {@link java.lang.String String}.
 	 * @return 2nd-dimensional {@link ArrayList}.
 	 */
-	public static ArrayList<ArrayList<String>> read(final String str) {
+	static ArrayList<ArrayList<String>> read(final String str) {
 		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.replace("\r", "").split("\n")));
 		int maxRowSize = 0;
 		for (int i = 0; i < splitByRow.size(); i++) {
@@ -53,7 +53,7 @@ final class CSVReader {
 	 * @throws IllegalArgumentException occurs when one or more of the R, G, or B
 	 *                                  values is not a value between 0 and 255.
 	 */
-	public static ArrayList<StitchColor> readColorList(final ArrayList<ArrayList<String>> csv)
+	static ArrayList<StitchColor> readColorList(final ArrayList<ArrayList<String>> csv)
 			throws NoSuchElementException, NumberFormatException, IllegalArgumentException {
 		final ArrayList<StitchColor> output = new ArrayList<StitchColor>();
 		int i = 0;

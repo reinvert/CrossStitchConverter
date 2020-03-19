@@ -21,12 +21,14 @@ public class Main extends Application {
 		ERROR, SIZE_TOO_LARGE, SUCCESS
 	}
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		System.setProperty("prism.lcdtext", "false");
 		launch(args);
 	}
+	
 	private OverviewController controller;
-	private Listener listener = new Listener() {
+	
+	private final Listener listener = new Listener() {
 		@Override
 		public void onFinished(final StitchImage image) {
 			Platform.runLater(new Runnable() {

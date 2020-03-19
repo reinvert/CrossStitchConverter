@@ -87,7 +87,6 @@ public class Preferences {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public static HashMap<String, String> getKeyStore() {
 		return (HashMap<String, String>) keyStore.clone();
 	}

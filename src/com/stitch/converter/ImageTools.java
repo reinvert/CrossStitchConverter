@@ -142,28 +142,6 @@ final class ImageTools {
 		return backgroundFilledBufferedImage;
 	}
 
-	/**
-	 * Read {@link java.awt.BufferedImage BufferedImage} to
-	 * {@link java.util.ArrayList ArrayList}<{@link java.util.ArrayList
-	 * ArrayList}<{@link java.awt.Color Color}>>.
-	 * 
-	 * @param image - the {@link java.awt.BufferedImage BufferedImage} to convert.
-	 * @return the {@link java.util.ArrayList ArrayList}<{@link java.util.ArrayList
-	 *         ArrayList}<{@link java.awt.Color Color}>> array.
-	 */
-	static ArrayList<ArrayList<StitchColor>> readPixelArray(final BufferedImage image) {
-		final int w = image.getWidth(), h = image.getHeight();
-		final ArrayList<ArrayList<StitchColor>> output = new ArrayList<ArrayList<StitchColor>>();
-		for (int i = 0; i < w; i++) {
-			output.add(new ArrayList<StitchColor>());
-			final ArrayList<StitchColor> x = output.get(i);
-			for (int j = 0; j < h; j++) {
-				x.add(new StitchColor(image.getRGB(i, j), ""));
-			}
-		}
-		return output;
-	}
-
 	static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
 		final java.awt.Image originalImage = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
 		final BufferedImage outputImage = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);

@@ -79,23 +79,23 @@ public final class LogPrinter {
 		logger.error(content);
 	}
 
-	public static void print(String str) {
+	public static void print(final String str) {
 		logger.print(str);
 	}
 
-	public static void print(Throwable throwable) {
+	public static void print(final Throwable throwable) {
 		logger.print(throwable);
 	}
 
-	public static void setLogFile(String fileName) {
+	public static void setLogFile(final String fileName) {
 		logFile = fileName;
 	}
 
-	public static void setPrinter(Logger logger) {
+	public static void setPrinter(final Logger logger) {
 		LogPrinter.logger = logger;
 	}
 
 	private LogPrinter() {
-		throw new AssertionError();
+		throw new AssertionError("Singleton class should not be accessed by constructor.");
 	}
 }

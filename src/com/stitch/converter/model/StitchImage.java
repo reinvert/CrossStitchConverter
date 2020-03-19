@@ -12,6 +12,7 @@ import java.util.TreeSet;
 
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 
 public class StitchImage implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -71,9 +72,9 @@ public class StitchImage implements Serializable {
 	}
 
 	public List<StitchColor> getAlternate() {
-		List<Entry<StitchColor, Integer>> list = new ArrayList<>(alternateColors.entrySet());
+		final List<Entry<StitchColor, Integer>> list = new ArrayList<>(alternateColors.entrySet());
 		list.sort(Entry.comparingByValue());
-		List<StitchColor> output = new ArrayList<>();
+		final List<StitchColor> output = new ArrayList<>();
 		for (int i = list.size() - 1; i != 0; i--) {
 			output.add(list.get(i).getKey());
 		}
@@ -102,8 +103,9 @@ public class StitchImage implements Serializable {
 			fxImage = new WritableImage((int) width, (int) height);
 			final PixelWriter pixelWriter = fxImage.getPixelWriter();
 			for (final PixelList pixelList : pixelListSet) {
+				final Color color = pixelList.getColor().asFX();
 				for (final Pixel pixel : pixelList.getPixelSet()) {
-					pixelWriter.setColor(pixel.getX(), pixel.getY(), pixel.getColor().asFX());
+					pixelWriter.setColor(pixel.getX(), pixel.getY(), color);
 				}
 			}
 		}

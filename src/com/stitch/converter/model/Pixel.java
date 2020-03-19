@@ -14,7 +14,7 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 	}
 
 	@Override
-	public int compareTo(Pixel other) {
+	public int compareTo(final Pixel other) {
 		if (other == null)
 			throw new NullPointerException();
 		int comparison = x - other.getX();
@@ -25,14 +25,14 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Pixel other = (Pixel) obj;
+		final Pixel other = (Pixel) obj;
 		if (x != other.x)
 			return false;
 		if (y != other.y)

@@ -3,7 +3,6 @@ package com.stitch.converter;
 import com.stitch.converter.view.OverviewController;
 
 import javafx.event.EventHandler;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
 public class Shortcut {
@@ -12,8 +11,7 @@ public class Shortcut {
 			@Override
 			public void handle(final KeyEvent event) {
 				if(event.isControlDown() == true) {
-					final KeyCode key = event.getCode();
-					switch(key) {
+					switch(event.getCode()) {
 					case L: 
 						controller.loadMenu();
 						return;

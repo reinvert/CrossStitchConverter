@@ -81,12 +81,12 @@ public class StitchList {
 		return name;
 	}
 
-	public void setCompleted(boolean completed) {
+	public void setCompleted(final boolean completed) {
 		pixelList.setCompleted(completed);
 		isCompleted.set(completed);
 	}
 
-	public void setHighlight(boolean highlight) {
+	public void setHighlight(final boolean highlight) {
 		pixelList.setHighlighted(highlight);
 		isHighlighted.set(highlight);
 	}

@@ -20,14 +20,14 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  *
  */
-public final class ColorConverter extends Thread {
+final class ColorConverter extends Thread {
 	/**
 	 * Builder of {@link ColorConverter}
 	 * 
 	 * @author Reinvert
 	 *
 	 */
-	public static class Builder {
+	static class Builder {
 		private final Collection<StitchColor> colorList;
 		private final BufferedImage image;
 		private final StitchImage stitchImage;
@@ -41,8 +41,7 @@ public final class ColorConverter extends Thread {
 		 *                    pixels.
 		 * @param colorList   - Stitch color lists.
 		 */
-		public Builder(final BufferedImage image, final StitchImage stitchImage,
-				final Collection<StitchColor> colorList) {
+		Builder(final BufferedImage image, final StitchImage stitchImage, final Collection<StitchColor> colorList) {
 			this.image = image;
 			this.stitchImage = stitchImage;
 			this.colorList = colorList;
@@ -53,7 +52,7 @@ public final class ColorConverter extends Thread {
 		 * 
 		 * @return this instance.
 		 */
-		public ColorConverter build() {
+		ColorConverter build() {
 			return new ColorConverter(this);
 		}
 
@@ -63,7 +62,7 @@ public final class ColorConverter extends Thread {
 		 * @param thread - the number of threads.
 		 * @return this instance.
 		 */
-		public Builder setThread(final int thread) {
+		Builder setThread(final int thread) {
 			if (thread == 0) {
 				this.thread = Runtime.getRuntime().availableProcessors() + 1;
 			} else if (thread < 0) {
@@ -94,6 +93,7 @@ public final class ColorConverter extends Thread {
 
 		@Override
 		public void run() {
+			final ArrayList<StitchColor> alternateList = new ArrayList<>();
 			for (int x = this.x; x < this.x + width; x++) {
 				for (int y = this.y; y < this.y + height; y++) {
 					final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), ""));
@@ -109,7 +109,7 @@ public final class ColorConverter extends Thread {
 							difference = calculatedDifference;
 						}
 					}
-					final ArrayList<StitchColor> alternateList = new ArrayList<>();
+					alternateList.clear();
 					alternateList.addAll(colorList);
 					alternateList.remove(outputColor);
 					for (final StitchColor listColor : alternateList) {
@@ -147,8 +147,7 @@ public final class ColorConverter extends Thread {
 					if (pixel == poisonPill) {
 						return;
 					}
-					image.setRGB(pixel.getKey().getX(), pixel.getKey().getY(),
-							pixel.getKey().getColor().getRGB());
+					image.setRGB(pixel.getKey().getX(), pixel.getKey().getY(), pixel.getKey().getColor().getRGB());
 					stitchImage.add(pixel.getKey());
 					stitchImage.addAlternateColor(pixel.getValue());
 				} catch (final InterruptedException e) {
@@ -218,7 +217,8 @@ public final class ColorConverter extends Thread {
 				stitchImage.removeAlternate(pixelList.getColor());
 			}
 		} catch (final InterruptedException e) {
-
+			LogPrinter.print(e);
+			LogPrinter.error(Resources.getString("error_has_occurred"));
 		}
 	}
 }

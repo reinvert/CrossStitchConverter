@@ -9,8 +9,8 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 
 	private final String name;
 	private final int red, green, blue;
-	private Color fxColor = null;
-	
+	private transient Color fxColor = null;
+
 	public StitchColor(final int rgb, final String name) {
 		red = (rgb >> 16) & 0xFF;
 		green = (rgb >> 8) & 0xFF;
@@ -31,9 +31,9 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	public Color asFX() {
-		if(fxColor == null) {
-			fxColor = new Color((double) (getRed() / 255d), (double) (getGreen() / 255d),
-					(double) (getBlue() / 255d), 1d);
+		if (fxColor == null) {
+			fxColor = new Color((double) (getRed() / 255d), (double) (getGreen() / 255d), (double) (getBlue() / 255d),
+					1d);
 		}
 		return fxColor;
 	}
@@ -59,14 +59,14 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		StitchColor other = (StitchColor) obj;
+		final StitchColor other = (StitchColor) obj;
 		if (red != other.red)
 			return false;
 		if (blue != other.blue)
@@ -75,9 +75,9 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 			return false;
 		return true;
 	}
-	
+
 	public int getRGB() {
-		return red<<16 + green<<8 + blue;
+		return red << 16 + green << 8 + blue;
 	}
 
 	public int getBlue() {

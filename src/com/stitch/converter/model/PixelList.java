@@ -35,14 +35,14 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		PixelList other = (PixelList) obj;
+		final PixelList other = (PixelList) obj;
 		if (color == null) {
 			if (other.color != null)
 				return false;
@@ -100,11 +100,11 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 		}
 	}
 
-	public void setCompleted(boolean isCompleted) {
+	public void setCompleted(final boolean isCompleted) {
 		this.isCompleted = isCompleted;
 	}
 
-	public void setHighlighted(boolean isHighlighted) {
+	public void setHighlighted(final boolean isHighlighted) {
 		this.isHighlighted = isHighlighted;
 	}
 
