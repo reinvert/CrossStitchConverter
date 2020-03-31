@@ -107,10 +107,10 @@ public class CanvasController {
 
 	private void drawString(final int x, final int y, final String text) {
 		final String fontName = Preferences.getString("fontType", "");
-		context.setFont(Font.font(fontName, 0.6 * scale));
+		context.setFont(new Font(fontName, 0.6 * scale));
 		while (getTextWidth(context.getFont(), text) > scale) {
 			final double fontSize = scale / getTextWidth(context.getFont(), text);
-			context.setFont(new Font(context.getFont().getSize() * fontSize));
+			context.setFont(new Font(fontName, context.getFont().getSize() * fontSize));
 		}
 		context.fillText(text, x * scale + (scale / 2) + margin, y * scale + (scale / 2) + margin);
 	}

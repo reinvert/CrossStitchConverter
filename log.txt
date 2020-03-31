@@ -1,0 +1,13 @@
+java.lang.NullPointerException
+	at CrossStitchConverter/com.stitch.converter.ImageTools.readImage(ImageTools.java:139)
+	at CrossStitchConverter/com.stitch.converter.GraphicsEngine.makeNewFile(GraphicsEngine.java:196)
+	at CrossStitchConverter/com.stitch.converter.GraphicsEngine.run(GraphicsEngine.java:295)
+	at java.base/java.lang.Thread.run(Thread.java:832)
+	at javafx.graphics/com.sun.javafx.application.PlatformImpl.lambda$runLater$10(PlatformImpl.java:428)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:391)
+	at javafx.graphics/com.sun.javafx.application.PlatformImpl.lambda$runLater$11(PlatformImpl.java:427)
+	at javafx.graphics/com.sun.glass.ui.InvokeLaterDispatcher$Future.run(InvokeLaterDispatcher.java:96)
+	at javafx.graphics/com.sun.glass.ui.win.WinApplication._runLoop(Native Method)
+	at javafx.graphics/com.sun.glass.ui.win.WinApplication.lambda$runLoop$3(WinApplication.java:174)
+	at java.base/java.lang.Thread.run(Thread.java:832)
+
