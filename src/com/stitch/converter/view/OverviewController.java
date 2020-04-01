@@ -562,14 +562,13 @@ public class OverviewController extends Controller {
 		this.overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
 			setDividerPosition();
 		});
-
-		this.overviewStage.heightProperty().addListener((obs, oldVal, newVal) -> {
-			setDividerPosition();
-		});
-
+		if(Preferences.getBoolean("showColorTable", true) == false) {
+			horizontalSplitPane.getItems().remove(1);
+		}
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
+				
 				setDividerPosition();
 				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
 						(event) -> closeWindowEvent(event));
