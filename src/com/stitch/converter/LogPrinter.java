@@ -1,5 +1,6 @@
 package com.stitch.converter;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -20,7 +21,7 @@ public final class LogPrinter {
 		public void print(final Throwable throwable);
 	}
 
-	private static String logFile = "log.txt";
+	private static File logFile = new File(Preferences.getString("logFile", "log.txt"));
 
 	private static Logger logger = new Logger() {
 		@Override
@@ -87,8 +88,8 @@ public final class LogPrinter {
 		logger.print(throwable);
 	}
 
-	public static void setLogFile(final String fileName) {
-		logFile = fileName;
+	public static void setLogFile(final File file) {
+		logFile = file;
 	}
 
 	public static void setPrinter(final Logger logger) {

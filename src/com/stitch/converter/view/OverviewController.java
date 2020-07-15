@@ -77,6 +77,7 @@ public class OverviewController extends Controller {
 	@FXML
 	public TableView<StitchList> colorTable;
 	private File dmcFile;
+	private String name;
 	@FXML
 	public TableColumn<StitchList, Boolean> highlightColumn, completeColumn;
 	@FXML
@@ -100,11 +101,8 @@ public class OverviewController extends Controller {
 		try {
 			loader = new FXMLLoader(new File("resources/Author.fxml").toURI().toURL(), Resources.getBundle());
 			page = (AnchorPane) loader.load();
-			final StringBuilder style = new StringBuilder();
-			style.append("-fx-font: ");
-			style.append(Preferences.getString("fontSize", "11")).append("px ");
-			style.append(Preferences.getString("fontType", "Dotum")).append(";");
-			page.setStyle(style.toString());
+			page.setStyle(new StringBuilder("-fx-font: ").append(Preferences.getString("fontSize", "11")).append("px ")
+					.append(Preferences.getString("fontType", "Dotum")).append(";").toString());
 		} catch (final IOException e) {
 			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
@@ -186,8 +184,7 @@ public class OverviewController extends Controller {
 		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-		fileChooser.setInitialFileName(
-				dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + "_blueprint.png");
+		fileChooser.setInitialFileName(new StringBuilder(name).append("_blueprint.png").toString());
 		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
 				Resources.getString("png_file"), "*.png");
 		fileChooser.setSelectedExtensionFilter(extensionFilter);
@@ -221,7 +218,7 @@ public class OverviewController extends Controller {
 		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-		fileChooser.setInitialFileName(dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + ".png");
+		fileChooser.setInitialFileName(new StringBuilder(name).append(".png").toString());
 		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
 				Resources.getString("png_file"), "*.png");
 		fileChooser.getExtensionFilters().add(extensionFilter);
@@ -248,7 +245,7 @@ public class OverviewController extends Controller {
 		}
 		final FileChooser fileChooser = new FileChooser();
 		fileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-		fileChooser.setInitialFileName(dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf(".")) + ".act");
+		fileChooser.setInitialFileName(new StringBuilder(name).append(".act").toString());
 		final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
 				Resources.getString("filter_act"), "*.act");
 		fileChooser.getExtensionFilters().add(extensionFilter);
@@ -365,7 +362,7 @@ public class OverviewController extends Controller {
 				protected void updateItem(final String item, final boolean empty) {
 					super.updateItem(item, empty);
 					if (!isEmpty()) {
-						this.setStyle("-fx-background-color:" + item);
+						this.setStyle(new StringBuilder("-fx-background-color:").append(item).toString());
 					}
 				}
 			};
@@ -400,6 +397,7 @@ public class OverviewController extends Controller {
 		dmcFile = file;
 		overviewStage.setTitle(dmcFile.getName());
 		main.load(new GraphicsEngine.Builder(new File(Preferences.getString("csvFile", "resources/dmc.csv")), dmcFile));
+		name = dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf("."));
 	}
 
 	@FXML
@@ -418,11 +416,11 @@ public class OverviewController extends Controller {
 		fileChooser.getExtensionFilters().add(allFileFilter);
 		fileChooser.getExtensionFilters().add(dmcFilter);
 		fileChooser.getExtensionFilters().add(imageFilter);
-		File file = fileChooser.showOpenDialog(overviewStage);
+		final File file = fileChooser.showOpenDialog(overviewStage);
 		if (file != null) {
 			String extension = "";
 			{
-				String name = file.getName();
+				final String name = file.getName();
 				int lastIndexOf = name.lastIndexOf(".");
 				if (lastIndexOf == -1) {
 					LogPrinter.error(Resources.getString("cant_read_image"));
@@ -446,9 +444,9 @@ public class OverviewController extends Controller {
 				builder.setScaled(Preferences.getBoolean("resizeImage", true));
 
 				try {
-					dmcFile = new File(file.getParent() + File.separator
-							+ file.getName().substring(0, file.getName().lastIndexOf(".")) + ".dmc");
-					overviewStage.setTitle(dmcFile.getName() + "(*)");
+					dmcFile = new File(new StringBuilder(file.getParent()).append(File.separator)
+							.append(file.getName().substring(0, dmcFile.getName().lastIndexOf("."))).toString());
+					overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
 					main.startConversion(builder);
 				} catch (final IllegalArgumentException | NullPointerException e) {
 					LogPrinter.print(e);
@@ -559,6 +557,10 @@ public class OverviewController extends Controller {
 
 	public void setStage(final Stage overviewStage) {
 		this.overviewStage = overviewStage;
+		if (Preferences.getBoolean("showColorTable", true) == false) {
+			horizontalSplitPane.getItems().remove(1);
+			toggleColorTableItem.setSelected(false);
+		}
 		this.overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
 			setDividerPosition();
 		});
@@ -590,7 +592,8 @@ public class OverviewController extends Controller {
 						alert.getButtonTypes().setAll(update, notUpdate);
 						final Optional<ButtonType> result = alert.showAndWait();
 						if (result.get() == update) {
-							main.getHostServices().showDocument(Resources.getString("url") + "/releases");
+							main.getHostServices().showDocument(
+									new StringBuilder(Resources.getString("url")).append("/releases").toString());
 						}
 					}
 				} catch (final Exception e) {
@@ -609,11 +612,8 @@ public class OverviewController extends Controller {
 			final FXMLLoader loader = new FXMLLoader(new File("resources/Setting.fxml").toURI().toURL(),
 					Resources.getBundle());
 			page = (ScrollPane) loader.load();
-			final StringBuilder style = new StringBuilder();
-			style.append("-fx-font: ");
-			style.append(Preferences.getString("fontSize", "11")).append("px ");
-			style.append(Preferences.getString("fontType", "Dotum")).append(";");
-			page.setStyle(style.toString());
+			page.setStyle(new StringBuilder("-fx-font: ").append(Preferences.getString("fontSize", "11"))
+					.append("px ").append(Preferences.getString("fontType", "Dotum")).append(";").toString());
 		} catch (final IOException e) {
 			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
@@ -635,7 +635,7 @@ public class OverviewController extends Controller {
 			@Override
 			public void run() {
 				if (changed == true) {
-					overviewStage.setTitle(dmcFile.getName() + " (*)");
+					overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
 				} else {
 					overviewStage.setTitle(dmcFile.getName());
 				}
@@ -671,7 +671,7 @@ public class OverviewController extends Controller {
 				zoom.setText(Preferences.getValue("scale", "MATCH_WIDTH"));
 				return false;
 			}
-			zoom.setText(scaleRatio + "x");
+			zoom.setText(new StringBuilder().append(scaleRatio).append("x").toString());
 		}
 		return true;
 	}

@@ -1,9 +1,9 @@
 package com.stitch.converter.view;
 
 import java.util.AbstractMap.SimpleEntry;
-import java.util.HashMap;
 import java.util.MissingResourceException;
 import java.util.Set;
+import java.util.SortedMap;
 
 import com.stitch.converter.Preferences;
 import com.stitch.converter.Resources;
@@ -200,7 +200,7 @@ public class SettingController extends Controller {
 			final SimpleEntry<String, String> cellValue = cellData.getValue();
 			String description;
 			try {
-				description = Resources.getString(cellValue.getKey() + "_description");
+				description = Resources.getString(new StringBuilder(cellValue.getKey()).append("_description").toString());
 			} catch (final MissingResourceException e) {
 				description = "";
 			}
@@ -208,7 +208,7 @@ public class SettingController extends Controller {
 			return property;
 		});
 		description.setEditable(false);
-		final HashMap<String, String> keyStore = Preferences.getKeyStore();
+		final SortedMap<String, String> keyStore = Preferences.getKeyStore();
 		final Set<String> keySet = keyStore.keySet();
 		final ObservableList<SimpleEntry<String, String>> entryList = FXCollections.observableArrayList();
 		for (final String key : keySet) {

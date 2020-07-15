@@ -10,6 +10,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	private final String name;
 	private final int red, green, blue;
 	private transient Color fxColor = null;
+	private String toString;
 
 	public StitchColor(final int rgb, final String name) {
 		red = (rgb >> 16) & 0xFF;
@@ -32,8 +33,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 
 	public Color asFX() {
 		if (fxColor == null) {
-			fxColor = new Color((double) (getRed() / 255d), (double) (getGreen() / 255d), (double) (getBlue() / 255d),
-					1d);
+			fxColor = new Color(getRed() / 255d, getGreen() / 255d, getBlue() / 255d, 1d);
 		}
 		return fxColor;
 	}
@@ -85,7 +85,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	public String getColorString() {
-		return "#" + String.format("%02X", red) + String.format("%02X", green) + String.format("%02X", blue);
+		return String.format("#%02X%02X%02X", red, green, blue);
 	}
 
 	public int getGreen() {
@@ -113,6 +113,10 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 
 	@Override
 	public String toString() {
-		return "StitchColor [red=" + red + ", green=" + green + ", blue=" + blue + ", name=" + name + "]";
+		if (toString == null) {
+			toString = new StringBuilder("StitchColor [red=").append(red).append(", green=").append(green)
+					.append(", blue=").append(blue).append(", name=").append(name).append("]").toString();
+		}
+		return toString;
 	}
 }

@@ -114,8 +114,9 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 
 	@Override
 	public String toString() {
-		return "PixelList [color=" + color + ", pixelList=" + pixelSet + ", isHighlighted=" + isHighlighted
-				+ ", isCompleted=" + isCompleted + ", index=" + index + "]";
+		return new StringBuilder("\"PixelList [color=").append(color).append(", pixelList=").append(pixelSet)
+				.append(", isHighlighted=").append(isHighlighted).append(", isCompleted=").append(isCompleted)
+				.append(", index=").append(index).append("]").toString();
 	}
 
 }

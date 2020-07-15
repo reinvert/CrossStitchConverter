@@ -24,15 +24,15 @@ public class CanvasController {
 	final StitchImage image;
 	private boolean isHighlightExist = false;
 	double scale = 10.0d, margin = scale;
-	
+
 	private final Color darkGray1 = new Color(0.0d, 0.0d, 0.0d, 1d);
 	private final Color darkGray2 = new Color(0.0d, 0.0d, 0.0d, 0.25d);
 	private final Color darkGray3 = new Color(0.0d, 0.0d, 0.0d, 0.1d);
-	
+
 	private final Color brightGray1 = new Color(1.0d, 1.0d, 1.0d, 1d);
 	private final Color brightGray2 = new Color(1.0d, 1.0d, 1.0d, 0.25d);
 	private final Color brightGray3 = new Color(1.0d, 1.0d, 1.0d, 0.1d);
-	
+
 	private Color background;
 	private Color darkerColor;
 
@@ -60,7 +60,7 @@ public class CanvasController {
 			}
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
-		
+
 		context.setFill(isHighlightExist ? brightGray2 : darkGray2);
 		for (int count = 5; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
@@ -68,7 +68,7 @@ public class CanvasController {
 		for (int count = 5; count <= height; count += 10) {
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
-		
+
 		context.setFill(isHighlightExist ? brightGray1 : darkGray1);
 		for (int count = 0; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);

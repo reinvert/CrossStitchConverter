@@ -32,17 +32,17 @@
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>13.0.2</version>
+			<version>15-ea+3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-fxml</artifactId>
-			<version>13.0.2</version>
+			<version>15-ea+3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-swing</artifactId>
-			<version>13.0.2</version>
+			<version>15-ea+3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.json-simple</groupId>

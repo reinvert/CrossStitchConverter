@@ -16,5 +16,5 @@ module CrossStitchConverter {
 	requires transitive javafx.graphics;
 	requires transitive javafx.fxml;
 	requires transitive javafx.swing;
-	requires json.simple;
+	requires transitive json.simple;
 }

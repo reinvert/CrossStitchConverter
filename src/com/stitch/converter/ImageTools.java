@@ -82,36 +82,37 @@ final class ImageTools {
 	/**
 	 * Gets the scale between two size. Always same or lower than 1.0.
 	 * 
-	 * @param iMasterSize - the master size.
-	 * @param iTargetSize - the target size.
+	 * @param originalSize - the master size.
+	 * @param targetSize   - the target size.
 	 * @return the scale of two size.
 	 */
-	static double getScaleFactor(final int iMasterSize, final int iTargetSize) {
-		double dScale = 1;
-		if (iMasterSize > iTargetSize) {
-			dScale = (double) iTargetSize / (double) iMasterSize;
+	static double getScaleFactor(final int originalSize, final int targetSize) {
+		double scale = 1d;
+		if (originalSize > targetSize) {
+			scale = (double) targetSize / (double) originalSize;
 		} else {
-			dScale = (double) iTargetSize / (double) iMasterSize;
+			scale = (double) originalSize / (double) targetSize;
 		}
-		return dScale;
+		return scale;
 	}
 
 	/**
 	 * Gets the scale between two {@link java.awt.Dimension Dimension}. Always same
 	 * or lower than 1.0.
 	 * 
-	 * @param original - the original {@link java.awt.Dimension Dimension}.
-	 * @param toFit    - the target {@link java.awt.Dimension Dimension}.
+	 * @param originalSize - the original {@link java.awt.Dimension Dimension}.
+	 * @param targetSize   - the target {@link java.awt.Dimension Dimension}.
 	 * @return the scale of two {@link java.awt.Dimension Dimension}.
 	 */
-	static double getScaleFactorToFit(final Dimension original, final Dimension toFit) {
-		double dScale = 1d;
-		if (original != null && toFit != null) {
-			final double dScaleWidth = getScaleFactor(original.width, toFit.width);
-			final double dScaleHeight = getScaleFactor(original.height, toFit.height);
-			dScale = Math.min(dScaleHeight, dScaleWidth);
+	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize)
+			throws NullPointerException {
+		if (originalSize != null && targetSize != null) {
+			final double widthScale = getScaleFactor(originalSize.width, targetSize.width);
+			final double heightScale = getScaleFactor(originalSize.height, targetSize.height);
+			return Math.min(widthScale, heightScale);
+		} else {
+			throw new NullPointerException("Size is null.");
 		}
-		return dScale;
 	}
 
 	/**

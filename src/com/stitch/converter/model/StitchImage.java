@@ -125,7 +125,7 @@ public class StitchImage implements Serializable {
 				return pixelList;
 			}
 		}
-		throw new NoSuchElementException("No Such PixelList : " + color);
+		throw new NoSuchElementException(String.format("No Such PixelList: %s", color));
 	}
 
 	public PixelList getPixelListByName(final String name) {
@@ -134,7 +134,7 @@ public class StitchImage implements Serializable {
 				return pixelList;
 			}
 		}
-		throw new NoSuchElementException("No Such PixelList : " + name);
+		throw new NoSuchElementException(String.format("No Such PixelList: %s", name));
 	}
 
 	public Collection<PixelList> getPixelLists() {
@@ -183,7 +183,8 @@ public class StitchImage implements Serializable {
 
 	@Override
 	public String toString() {
-		return "StitchImage [background=" + background + ", pixelListSet=" + pixelListSet + ", width=" + width
-				+ ", height=" + height + ", numberVisible=" + numberVisible + "]";
+		return new StringBuilder("StitchImage [background=").append(background).append(", pixelListSet=")
+				.append(pixelListSet).append(", width=").append(width).append(", height=").append(height)
+				.append(", numberVisible=").append(numberVisible).append("]").toString();
 	}
 }

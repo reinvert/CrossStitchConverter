@@ -6,6 +6,7 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 	private static final long serialVersionUID = 1L;
 	private StitchColor color;
 	private final int x, y;
+	private String toString;
 
 	public Pixel(final int x, final int y, final StitchColor color) {
 		this.x = x;
@@ -67,6 +68,10 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 
 	@Override
 	public String toString() {
-		return "Pixel [color=" + color + ", x=" + x + ", y=" + y + "]";
+		if (toString == null) {
+			toString = new StringBuilder("Pixel [color=").append(color).append(", x=").append(x).append(", y=")
+					.append(y).append("]").toString();
+		}
+		return toString;
 	}
 }

@@ -39,7 +39,7 @@ public class Resources {
 				try(final StringWriter stringWriter = new StringWriter()) {
 					try(final PrintWriter printWriter = new PrintWriter(stringWriter)) {
 						t.printStackTrace(printWriter);
-						Resources.writeText("log.txt", stringWriter.toString());
+						Resources.writeText(new File("log.txt"), stringWriter.toString());
 					}
 				}
 			} catch (Throwable t2) {
@@ -75,22 +75,14 @@ public class Resources {
 			return String.format(getString(id), args);
 		} catch (final MissingFormatArgumentException e) {
 			LogPrinter.print(e);
-			LogPrinter.error("Exception on read resources from id : " + id + args);
+			LogPrinter.error(new StringBuilder("Exception on read resources from id: ").append(id).append(", args: ").append(args).toString());
 			return null;
 		}
 	}
 
 	public static Object readObject(final File file) throws IOException, ClassNotFoundException {
 		try (final FileInputStream fis = new FileInputStream(file)) {
-			try (final ObjectInputStream ois = new ObjectInputStream(fis);) {
-				return ois.readObject();
-			}
-		}
-	}
-
-	public static Object readObject(final String dir) throws IOException, ClassNotFoundException {
-		try (final FileInputStream fis = new FileInputStream(dir)) {
-			try (final ObjectInputStream ois = new ObjectInputStream(fis);) {
+			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
 				return ois.readObject();
 			}
 		}
@@ -104,8 +96,8 @@ public class Resources {
 		}
 	}
 
-	public static void writeText(final String dir, final String text) throws IOException {
-		try (final PrintWriter printWriter = new PrintWriter(dir)) {
+	public static void writeText(final File file, final String text) throws IOException {
+		try (final PrintWriter printWriter = new PrintWriter(file)) {
 			printWriter.println(text);
 		}
 	}

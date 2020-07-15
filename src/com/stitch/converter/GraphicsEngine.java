@@ -30,7 +30,7 @@ public final class GraphicsEngine implements Runnable {
 	 * @author Reinvert
 	 */
 	public final static class Builder {
-		private StitchColor backgroundColor = new StitchColor(Color.WHITE, "");
+		private StitchColor backgroundColor = new StitchColor(Color.WHITE, null);
 		private int colorLimit = -1, thread;
 
 		private final File csv;
@@ -192,7 +192,7 @@ public final class GraphicsEngine implements Runnable {
 		stitchImage.setChanged(true);
 		final BufferedImage image;
 		try {
-			int resizeLength = Preferences.getInteger("resizeLength", 200);
+			final int resizeLength = Preferences.getInteger("resizeLength", 200);
 			image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
 		} catch (final NullPointerException | IOException e) {
 			LogPrinter.print(e);

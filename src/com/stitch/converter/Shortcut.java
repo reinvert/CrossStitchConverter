@@ -10,9 +10,9 @@ public class Shortcut {
 		return new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(final KeyEvent event) {
-				if(event.isControlDown() == true) {
-					switch(event.getCode()) {
-					case L: 
+				if (event.isControlDown() == true) {
+					switch (event.getCode()) {
+					case L:
 						controller.loadMenu();
 						return;
 					case S:

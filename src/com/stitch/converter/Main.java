@@ -1,7 +1,6 @@
 package com.stitch.converter;
 
 import java.io.File;
-import java.io.IOException;
 
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.view.OverviewController;
@@ -25,9 +24,9 @@ public class Main extends Application {
 		System.setProperty("prism.lcdtext", "false");
 		launch(args);
 	}
-	
+
 	private OverviewController controller;
-	
+
 	private final Listener listener = new Listener() {
 		@Override
 		public void onFinished(final StitchImage image) {
@@ -49,11 +48,8 @@ public class Main extends Application {
 			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(),
 					Resources.getBundle());
 			rootLayout = (BorderPane) loader.load();
-			final StringBuilder style = new StringBuilder();
-			style.append("-fx-font: ");
-			style.append(Preferences.getString("fontSize", "11")).append("px ");
-			style.append(Preferences.getString("fontType", "Dotum")).append(";");
-			rootLayout.setStyle(style.toString());
+			rootLayout.setStyle(new StringBuilder("-fx-font: ").append(Preferences.getString("fontSize", "11"))
+					.append("px ").append(Preferences.getString("fontType", "Dotum")).append(";").toString());
 
 			final Scene scene = new Scene(rootLayout);
 
@@ -63,11 +59,15 @@ public class Main extends Application {
 
 			scene.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
 			primaryStage.setScene(scene);
-
-			final Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
-			primaryStage.getIcons().add(image);
+			try {
+				final Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
+				primaryStage.getIcons().add(image);
+			} catch (final Exception iconException) {
+				LogPrinter.print(iconException);
+				LogPrinter.error(Resources.getString("error_icon_load"));
+			}
 			primaryStage.show();
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("error_has_occurred"));
 		}

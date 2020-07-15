@@ -2,6 +2,7 @@ package com.stitch.converter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import com.stitch.converter.model.StitchColor;
@@ -20,19 +21,11 @@ final class CSVReader {
 	 * @return 2nd-dimensional {@link ArrayList}.
 	 */
 	static ArrayList<ArrayList<String>> read(final String str) {
-		final ArrayList<String> splitByRow = new ArrayList<String>(Arrays.asList(str.replace("\r", "").split("\n")));
-		int maxRowSize = 0;
-		for (int i = 0; i < splitByRow.size(); i++) {
-			final ArrayList<String> row = new ArrayList<String>(Arrays.asList(splitByRow.get(0).split(",")));
-			final int rowSize = row.size();
-			if (maxRowSize < rowSize) {
-				maxRowSize = rowSize;
-			}
-		}
+		final List<String> splitByRow = Arrays.asList(str.replace("\r", "").split("\n"));
 		final ArrayList<ArrayList<String>> output = new ArrayList<ArrayList<String>>();
 		for (int i = 0; i < splitByRow.size(); i++) {
 			output.add(new ArrayList<String>());
-			final ArrayList<String> row = new ArrayList<String>(Arrays.asList(splitByRow.get(i).split(",")));
+			final List<String> row = Arrays.asList(splitByRow.get(i).split(","));
 			for (int j = 0; j < row.size(); j++) {
 				output.get(i).add(row.get(j));
 			}

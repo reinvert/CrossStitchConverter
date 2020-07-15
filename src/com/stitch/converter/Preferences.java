@@ -6,15 +6,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.HashMap;
 import java.util.NoSuchElementException;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.stitch.converter.model.StitchColor;
 
 public class Preferences {
 	private final static String directory = "config.properties";
-	private static HashMap<String, String> keyStore = new HashMap<>();
+	private static SortedMap<String, String> keyStore = new TreeMap<>();
 
 	static {
 		try {
@@ -30,9 +30,7 @@ public class Preferences {
 	}
 
 	private static String colorToString(final StitchColor color) {
-		return new StringBuilder("#").append(Integer.toHexString((int) color.getRed()))
-				.append(Integer.toHexString((int) color.getGreen())).append(Integer.toHexString((int) color.getBlue()))
-				.toString();
+		return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	public static boolean getBoolean(final String key) throws NoSuchElementException {
@@ -87,8 +85,12 @@ public class Preferences {
 		}
 	}
 
-	public static HashMap<String, String> getKeyStore() {
-		return (HashMap<String, String>) keyStore.clone();
+	public static SortedMap<String, String> getKeyStore() {
+		final SortedMap<String, String> output = new TreeMap<>();
+		for(final String key:keyStore.keySet()) {
+			output.put(key, keyStore.get(key));
+		}
+		return output;
 	}
 
 	public static String getString(final String key) throws NoSuchElementException {
@@ -143,7 +145,7 @@ public class Preferences {
 	}
 
 	public static void setValue(final String key, final double value) {
-		keyStore.put(key, new DecimalFormat("#.####").format(value));
+		keyStore.put(key, String.format("%.4f",value));
 		store();
 	}
 
@@ -166,7 +168,7 @@ public class Preferences {
 		try (final FileWriter fileWriter = new FileWriter(directory)) {
 			try (final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
 				for (final String key : keyStore.keySet()) {
-					bufferedWriter.write(key + "=" + keyStore.get(key) + "\n");
+					bufferedWriter.write(new StringBuilder(key).append("=").append(keyStore.get(key)).append("\n").toString());
 				}
 				bufferedWriter.flush();
 			}
