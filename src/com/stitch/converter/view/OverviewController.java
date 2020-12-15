@@ -30,6 +30,7 @@ import com.stitch.converter.model.StitchList;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -445,7 +446,7 @@ public class OverviewController extends Controller {
 
 				try {
 					dmcFile = new File(new StringBuilder(file.getParent()).append(File.separator)
-							.append(file.getName().substring(0, dmcFile.getName().lastIndexOf("."))).toString());
+							.append(file.getName().substring(0, file.getName().lastIndexOf("."))).toString());
 					overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
 					main.startConversion(builder);
 				} catch (final IllegalArgumentException | NullPointerException e) {
@@ -553,6 +554,17 @@ public class OverviewController extends Controller {
 			canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
 			canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
 		}
+		
+		final ChangeListener<Number> sizeChangeListener = (observable, oldValue, newValue) -> {
+			final String zoomRatio = Preferences.getString("scale");
+			if(zoomRatio.contains("MATCH")) {
+				setZoom(Preferences.getString("scale"));
+				invalidate();
+			}
+		};
+		
+		canvasScrollPane.widthProperty().addListener(sizeChangeListener);
+		canvasScrollPane.heightProperty().addListener(sizeChangeListener);
 	}
 
 	public void setStage(final Stage overviewStage) {
@@ -564,9 +576,6 @@ public class OverviewController extends Controller {
 		this.overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
 			setDividerPosition();
 		});
-		if(Preferences.getBoolean("showColorTable", true) == false) {
-			horizontalSplitPane.getItems().remove(1);
-		}
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
@@ -648,10 +657,10 @@ public class OverviewController extends Controller {
 
 		final double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
 		final double imageWidth = canvasController.getImage().getWidth();
-		final double ratioByWidth = screenWidth / imageWidth;
+		final double ratioByWidth = Math.max(2.0, screenWidth / imageWidth);
 		final double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
 		final double imageHeight = canvasController.getImage().getHeight();
-		final double ratioByHeight = screenHeight / imageHeight;
+		final double ratioByHeight = Math.max(2.0, screenHeight / imageHeight);
 
 		if (scale.equals("MATCH_WIDTH")) {
 			canvasController.setScale(ratioByWidth);
@@ -685,15 +694,6 @@ public class OverviewController extends Controller {
 		} else {
 			Preferences.setValue("showColorTable", "false");
 			horizontalSplitPane.getItems().remove(1);
-		}
-		if (Preferences.getString("scale").contains("MATCH")) {
-			Platform.runLater(new Runnable() {
-				@Override
-				public void run() {
-					setZoom(Preferences.getString("scale"));
-					invalidate();
-				}
-			});
 		}
 	}
 }
