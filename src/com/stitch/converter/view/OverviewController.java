@@ -162,13 +162,8 @@ public class OverviewController extends Controller {
 			alert.getButtonTypes().setAll(save, notSave, cancel);
 			final Optional<ButtonType> result = alert.showAndWait();
 			if (result.get() == save) {
-				try {
-					save(dmcFile, canvasController.getImage());
-					return true;
-				} catch (final IOException e) {
-					LogPrinter.print(e);
-					return false;
-				}
+				saveMenu();
+				return true;
 			} else if (result.get() == notSave) {
 				return true;
 			} else {
@@ -464,15 +459,6 @@ public class OverviewController extends Controller {
 		canvasController.invalidate();
 	}
 
-	public boolean save(File file, StitchImage image) throws IOException {
-		try {
-			Resources.writeObject(file, image);
-			return true;
-		} catch (final IOException e) {
-			throw e;
-		}
-	}
-
 	@FXML
 	public boolean saveMenu() {
 		if (save.isDisable() == true) {
@@ -480,9 +466,8 @@ public class OverviewController extends Controller {
 		}
 		setTitleChanged(false);
 		try {
-			save(dmcFile, canvasController.getImage());
+			Resources.writeObject(dmcFile, canvasController.getImage());
 			Preferences.setValue("autoLoadFile", dmcFile.getPath());
-			LogPrinter.alert(Resources.getString("file_saved", dmcFile.getName(), Resources.getString("dmc_file")));
 			return true;
 		} catch (final IOException e) {
 			LogPrinter.print(e);
