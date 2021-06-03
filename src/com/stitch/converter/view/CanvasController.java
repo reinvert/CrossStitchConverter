@@ -18,7 +18,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 public class CanvasController {
-
 	final Canvas canvas;
 	final GraphicsContext context;
 	final StitchImage image;
@@ -36,6 +35,10 @@ public class CanvasController {
 	private Color background;
 	private Color darkerColor;
 
+	private final String fontName;
+	
+	private int highlightX = -1, highlightY = -1;
+	
 	public CanvasController(final StitchImage image, final Canvas canvas) {
 		this.image = image;
 		this.canvas = canvas;
@@ -44,6 +47,7 @@ public class CanvasController {
 		this.canvas.setHeight(image.getHeight() * scale + 2 * margin);
 		background = Preferences.getColor("completedFillColor", new StitchColor(255, 255, 0, "")).asFX();
 		darkerColor = new Color(0d, 0d, 0d, Preferences.getDouble("highlightBrightnessLevel", 0.75d));
+		fontName = Preferences.getString("fontType", "");
 	}
 
 	private void drawGrid(int x, int y, int width, int height, boolean isHighlightExist) {
@@ -106,7 +110,6 @@ public class CanvasController {
 	}
 
 	private void drawString(final int x, final int y, final String text) {
-		final String fontName = Preferences.getString("fontType", "");
 		context.setFont(new Font(fontName, 0.6 * scale));
 		while (getTextWidth(context.getFont(), text) > scale) {
 			final double fontSize = scale / getTextWidth(context.getFont(), text);
@@ -145,6 +148,9 @@ public class CanvasController {
 		drawGrid(0, 0, (int) image.getWidth(), (int) image.getHeight(), isHighlightExist);
 		if (Preferences.getBoolean("drawGridNumber", true)) {
 			drawIndex();
+		}
+		if(highlightX != -1 && highlightY != -1) {
+			drawHighlightPixel(highlightX, highlightY);
 		}
 	}
 
@@ -197,5 +203,15 @@ public class CanvasController {
 		this.scale = scale;
 		canvas.setWidth(image.getWidth() * scale + 2 * margin);
 		canvas.setHeight(image.getHeight() * scale + 2 * margin);
+	}
+	
+	public void setHighlightPixel(final int x, final int y) {
+		highlightX = x;
+		highlightY = y;
+	}
+	
+	public void drawHighlightPixel(final int x, final int y) {
+		context.setStroke(Color.RED);
+		context.strokeRect(x * scale + margin, y * scale + margin, scale, scale);
 	}
 }

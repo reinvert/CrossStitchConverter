@@ -56,6 +56,7 @@ import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -94,6 +95,8 @@ public class OverviewController extends Controller {
 	public SplitPane verticalSplitPane, horizontalSplitPane;
 	@FXML
 	public TextField zoom;
+	
+	private int x = -1, y = -1;
 
 	@FXML
 	public void author() {
@@ -121,7 +124,7 @@ public class OverviewController extends Controller {
 		authorStage.showAndWait();
 	}
 
-	private void clickCanvas(final double originalX, final double originalY) {
+	private void getClickedColor(final double originalX, final double originalY) {
 		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
 		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
 		final Pixel pixel = new Pixel(x, y, null);
@@ -138,6 +141,53 @@ public class OverviewController extends Controller {
 			}
 		}
 	}
+
+	public void highlightPixel(final KeyCode code) {
+		if(x == -1 || y == -1) {
+			return;
+		}
+		switch(code){
+		case W:
+			highlightPixel(x, y-1);
+			return;
+		case S:
+			highlightPixel(x, y+1);
+			return;
+		case A:
+			highlightPixel(x-1, y);
+			return;
+		case D:
+			highlightPixel(x+1, y);
+			return;
+		default:
+			return;
+		}
+	}
+	
+	private void highlightPixel(final double originalX, final double originalY) {
+		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
+		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
+		highlightPixel(x, y);
+	}
+	
+	private void highlightPixel(final int x, final int y) {
+		final Pixel pixel = new Pixel(x, y, null);
+		for (final StitchList stitchList : colorTable.getItems()) {
+			if (stitchList.getPixelList().hasPixel(pixel)) {
+				this.x = x;
+				this.y = y;
+				Platform.runLater(new Runnable() {
+					@Override
+					public void run() {
+						canvasController.setHighlightPixel(x, y);
+						canvasController.invalidate();
+					}
+				});
+			}
+		}
+	}
+	
+
 
 	private void closeWindowEvent(final WindowEvent event) {
 		if (confirmExit() == false) {
@@ -380,7 +430,12 @@ public class OverviewController extends Controller {
 		canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(final MouseEvent event) {
-				clickCanvas(event.getX(), event.getY());
+				final MouseButton button = event.getButton();
+				if(button.equals(MouseButton.PRIMARY)) {
+					highlightPixel(event.getX(), event.getY());
+				} else if(button.equals(MouseButton.SECONDARY)) {
+					getClickedColor(event.getX(), event.getY());
+				}
 			}
 		});
 	}
