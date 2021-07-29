@@ -61,6 +61,7 @@ public final class LogPrinter {
 
 		@Override
 		public void print(final Throwable throwable) {
+			throwable.printStackTrace();
 			try (final StringWriter stringWriter = new StringWriter()) {
 				try (final PrintWriter printWriter = new PrintWriter(stringWriter)) {
 					throwable.printStackTrace(printWriter);

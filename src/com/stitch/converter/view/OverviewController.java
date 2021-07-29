@@ -170,19 +170,25 @@ public class OverviewController extends Controller {
 		highlightPixel(x, y);
 	}
 	
-	private void highlightPixel(final int x, final int y) {
+	private void highlightPixel(int x, int y) {
 		final Pixel pixel = new Pixel(x, y, null);
 		for (final StitchList stitchList : colorTable.getItems()) {
 			if (stitchList.getPixelList().hasPixel(pixel)) {
+				if(this.x == x && this.y == y) {
+					x = -1;
+					y = -1;
+				}
 				this.x = x;
 				this.y = y;
+				final int pixelX = x, pixelY = y;
 				Platform.runLater(new Runnable() {
 					@Override
 					public void run() {
-						canvasController.setHighlightPixel(x, y);
+						canvasController.setHighlightPixel(pixelX, pixelY);
 						canvasController.invalidate();
 					}
 				});
+				return;
 			}
 		}
 	}
@@ -197,6 +203,7 @@ public class OverviewController extends Controller {
 				Preferences.setValue("scrollX", canvasScrollPane.getHvalue());
 				Preferences.setValue("scrollY", canvasScrollPane.getVvalue());
 			}
+			Preferences.store();
 		}
 	}
 
@@ -340,7 +347,7 @@ public class OverviewController extends Controller {
 		}
 	}
 
-	private boolean hasUpdates() throws Exception {
+	private boolean hasUpdates() {
 		try {
 			final URL url = new URL(Resources.getString("update_url"));
 			final HttpURLConnection httpUrlConnection = (HttpURLConnection) url.openConnection();
@@ -361,8 +368,9 @@ public class OverviewController extends Controller {
 				httpUrlConnection.disconnect();
 			}
 		} catch (final Exception e) {
-			throw e;
+			
 		}
+		return false;
 	}
 
 	@FXML
@@ -627,22 +635,25 @@ public class OverviewController extends Controller {
 					try {
 						loadDmc(new File(Preferences.getString("autoLoadFile")));
 					} catch (final NoSuchElementException e) {
-						Preferences.setValue("autoLoad", "false");
+						Preferences.setValue("autoLoad", false);
 					}
 				}
 				try {
-					if (hasUpdates() == true) {
+					if (Preferences.getBoolean("updateNeverRemind", false) == false && hasUpdates() == true) {
 						final ButtonType update = new ButtonType(Resources.getString("update"), ButtonData.YES);
 						final ButtonType notUpdate = new ButtonType(Resources.getString("update_no"), ButtonData.NO);
+						final ButtonType neverRemind = new ButtonType(Resources.getString("update_never_remind"), ButtonData.OTHER);
 						final Alert alert = new Alert(AlertType.INFORMATION);
 						alert.setTitle(Resources.getString("information"));
 						alert.setHeaderText(Resources.getString("update_header"));
 						alert.setContentText(Resources.getString("update_content"));
-						alert.getButtonTypes().setAll(update, notUpdate);
+						alert.getButtonTypes().setAll(update, notUpdate, neverRemind);
 						final Optional<ButtonType> result = alert.showAndWait();
-						if (result.get() == update) {
+						if(result.get() == update) {
 							main.getHostServices().showDocument(
 									new StringBuilder(Resources.getString("url")).append("/releases").toString());
+						} else if(result.get() == neverRemind) {
+							Preferences.setValue("updateNeverRemind", true);
 						}
 					}
 				} catch (final Exception e) {

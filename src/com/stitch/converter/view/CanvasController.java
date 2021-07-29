@@ -2,6 +2,7 @@
 package com.stitch.converter.view;
 
 import java.util.Collection;
+import java.util.HashMap;
 
 import com.stitch.converter.Preferences;
 import com.stitch.converter.model.Pixel;
@@ -39,6 +40,9 @@ public class CanvasController {
 	
 	private int highlightX = -1, highlightY = -1;
 	
+	private final Font originalFont;
+	private final HashMap<Integer, Font> fontBySize = new HashMap<>();
+	
 	public CanvasController(final StitchImage image, final Canvas canvas) {
 		this.image = image;
 		this.canvas = canvas;
@@ -48,6 +52,7 @@ public class CanvasController {
 		background = Preferences.getColor("completedFillColor", new StitchColor(255, 255, 0, "")).asFX();
 		darkerColor = new Color(0d, 0d, 0d, Preferences.getDouble("highlightBrightnessLevel", 0.75d));
 		fontName = Preferences.getString("fontType", "");
+		originalFont = new Font(fontName, scale);
 	}
 
 	private void drawGrid(int x, int y, int width, int height, boolean isHighlightExist) {
@@ -110,10 +115,16 @@ public class CanvasController {
 	}
 
 	private void drawString(final int x, final int y, final String text) {
-		context.setFont(new Font(fontName, 0.6 * scale));
-		while (getTextWidth(context.getFont(), text) > scale) {
-			final double fontSize = scale / getTextWidth(context.getFont(), text);
-			context.setFont(new Font(fontName, context.getFont().getSize() * fontSize));
+		context.setFont(originalFont);
+		if (getTextWidth(originalFont, text) > scale) {
+			final double textScale = scale / getTextWidth(originalFont, text);
+			int fontSize = (int)(context.getFont().getSize() * textScale);
+			Font newFont = fontBySize.get(fontSize);
+			if(newFont == null) {
+				newFont = new Font(fontName, fontSize);
+				fontBySize.put(fontSize, newFont);
+			}
+			context.setFont(newFont);
 		}
 		context.fillText(text, x * scale + (scale / 2) + margin, y * scale + (scale / 2) + margin);
 	}
@@ -134,8 +145,8 @@ public class CanvasController {
 		return scale;
 	}
 
+	final Text text = new Text();
 	private double getTextWidth(final Font font, final String input) {
-		final Text text = new Text();
 		text.setFont(font);
 		text.setText(input);
 		text.setWrappingWidth(0);

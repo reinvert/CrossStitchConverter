@@ -141,32 +141,27 @@ public class Preferences {
 
 	public static void setValue(final String key, final boolean value) {
 		keyStore.put(key, Boolean.toString(value));
-		store();
 	}
 
 	public static void setValue(final String key, final double value) {
 		keyStore.put(key, String.format("%.4f",value));
-		store();
 	}
 
 	public static void setValue(final String key, final int value) {
 		keyStore.put(key, Integer.toString(value));
-		store();
 	}
 
 	public static void setValue(final String key, final StitchColor value) {
 		keyStore.put(key, colorToString(value));
-		store();
 	}
 
 	public static void setValue(final String key, final String value) {
 		keyStore.put(key, value);
-		store();
 	}
 
-	private static void store() {
+	public static void store() {
 		try (final FileWriter fileWriter = new FileWriter(directory)) {
-			try (final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+			try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
 				for (final String key : keyStore.keySet()) {
 					bufferedWriter.write(new StringBuilder(key).append("=").append(keyStore.get(key)).append("\n").toString());
 				}

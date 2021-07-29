@@ -4,12 +4,21 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>CrossStitchConverter</groupId>
 	<artifactId>CrossStitchConverter</artifactId>
-	<version>200313</version>
+	<version>null</version>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<resources>
 			<resource>
 				<directory>src</directory>
+				<includes>
+					<include>**</include>
+				</includes>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>src/re</directory>
 				<includes>
 					<include>**</include>
 				</includes>
@@ -32,17 +41,17 @@
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>15-ea+3</version>
+			<version>16</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-fxml</artifactId>
-			<version>15-ea+3</version>
+			<version>16</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-swing</artifactId>
-			<version>15-ea+3</version>
+			<version>16</version>
 		</dependency>
 		<dependency>
 			<groupId>com.googlecode.json-simple</groupId>

@@ -31,11 +31,7 @@ import javafx.util.converter.DefaultStringConverter;
 
 public class SettingController extends Controller {
 	static class EditCell<S, T> extends TableCell<S, T> {
-
-		/**
-		 * Convenience converter that does nothing (converts Strings to themselves and
-		 * vice-versa...).
-		 */
+		
 		public static final StringConverter<String> IDENTITY_CONVERTER = new StringConverter<String>() {
 
 			@Override
@@ -49,24 +45,15 @@ public class SettingController extends Controller {
 			}
 
 		};
-
-		/**
-		 * Convenience method for creating an EditCell for a String value.
-		 * 
-		 * @return
-		 */
+		
 		public static <S> EditCell<S, String> createStringEditCell() {
 			return new EditCell<S, String>(IDENTITY_CONVERTER);
 		}
 
-		// Converter for converting the text in the text field to the user type, and
-		// vice-versa:
 		private final StringConverter<T> converter;
 
 		private T item;
 
-		// Text field for editing
-		// TODO: allow this to be a plugable control.
 		private final TextField textField = new TextField();
 
 		public EditCell(final StringConverter<T> converter) {
@@ -123,10 +110,6 @@ public class SettingController extends Controller {
 		public void commitEdit(T item) {
 
 			this.item = item;
-			// This block is necessary to support commit on losing focus, because the
-			// baked-in mechanism
-			// sets our editing state to false before we can intercept the loss of focus.
-			// The default commitEdit(...) method simply bails if we are not editing...
 			if (!isEditing() && !item.equals(getItem())) {
 				TableView<S> table = getTableView();
 				if (table != null) {
@@ -143,7 +126,6 @@ public class SettingController extends Controller {
 			setContentDisplay(ContentDisplay.TEXT_ONLY);
 		}
 
-		// set the text of the text field and display the graphic
 		@Override
 		public void startEdit() {
 			super.startEdit();
@@ -198,12 +180,10 @@ public class SettingController extends Controller {
 		});
 		description.setCellValueFactory(cellData -> {
 			final SimpleEntry<String, String> cellValue = cellData.getValue();
-			String description;
+			String description = "";
 			try {
 				description = Resources.getString(new StringBuilder(cellValue.getKey()).append("_description").toString());
-			} catch (final MissingResourceException e) {
-				description = "";
-			}
+			} catch (final MissingResourceException e) { }
 			final StringProperty property = new SimpleStringProperty(description);
 			return property;
 		});
