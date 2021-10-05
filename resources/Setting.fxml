@@ -4,13 +4,13 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 
-<ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.102" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.SettingController">
+<ScrollPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="600.0" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.SettingController">
    <content>
-      <TableView fx:id="settingTable" editable="true" prefHeight="600.0" prefWidth="600.0" tableMenuButtonVisible="true">
+      <TableView fx:id="settingTable" editable="true" prefHeight="598.0" prefWidth="598.0" tableMenuButtonVisible="true">
         <columns>
           <TableColumn fx:id="key" prefWidth="150.0" text="%key" />
           <TableColumn fx:id="value" prefWidth="100.0" text="%value" />
-            <TableColumn fx:id="description" prefWidth="340.0" text="%description" />
+            <TableColumn fx:id="description" prefWidth="330.0" text="%description" />
         </columns>
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

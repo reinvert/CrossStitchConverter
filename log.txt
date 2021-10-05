@@ -1,8 +1,10 @@
-java.lang.NullPointerException: Cannot invoke "java.awt.image.BufferedImage.getWidth()" because "image" is null
-	at CrossStitchConverter/com.stitch.converter.ImageTools.readImage(ImageTools.java:131)
-	at CrossStitchConverter/com.stitch.converter.GraphicsEngine.makeNewFile(GraphicsEngine.java:196)
-	at CrossStitchConverter/com.stitch.converter.GraphicsEngine.run(GraphicsEngine.java:295)
-	at java.base/java.lang.Thread.run(Thread.java:831)
+java.lang.IllegalStateException: Location is not set.
+	at javafx.fxml/javafx.fxml.FXMLLoader.loadImpl(FXMLLoader.java:2541)
+	at javafx.fxml/javafx.fxml.FXMLLoader.load(FXMLLoader.java:2517)
+	at CrossStitchConverter/com.stitch.converter.Main.initRootLayout(Main.java:45)
+	at CrossStitchConverter/com.stitch.converter.Main.start(Main.java:83)
+	at javafx.graphics/com.sun.javafx.application.LauncherImpl.lambda$launchApplication1$9(LauncherImpl.java:846)
+	at javafx.graphics/com.sun.javafx.application.PlatformImpl.lambda$runAndWait$12(PlatformImpl.java:474)
 	at javafx.graphics/com.sun.javafx.application.PlatformImpl.lambda$runLater$10(PlatformImpl.java:447)
 	at java.base/java.security.AccessController.doPrivileged(AccessController.java:391)
 	at javafx.graphics/com.sun.javafx.application.PlatformImpl.lambda$runLater$11(PlatformImpl.java:446)

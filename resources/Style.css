@@ -1,0 +1,152 @@
+.root {
+    -fx-accent: transparent;
+    -fx-focus-color: transparent;
+}
+
+.menu-bar{
+	-fx-background-color: #FAFAFA;
+	-fx-selection-bar: #E0E0E0;
+}
+
+.menu-item:focused{
+	-fx-background-color: #E0E0E0;
+}
+
+#load > .label{
+	-fx-graphic: url("icon/new_file.png");
+}
+
+#save > .label{
+	-fx-graphic: url("icon/save.png");
+}
+
+#saveAs > .label{
+	-fx-graphic: url("icon/save_as.png");
+}
+
+#exportConvertedImage > .label{
+	-fx-graphic: url("icon/export_converted_image.png");
+}
+
+#exportStitchList > .label{
+	-fx-graphic: url("icon/export_stitch_list.png");
+}
+
+#exportBlueprint > .label{
+	-fx-graphic: url("icon/export_blueprint.png");
+}
+
+#setting > .label{
+	-fx-graphic: url("icon/setting.png");
+}
+
+#toggleColorTableItem > .label{
+	-fx-graphic: url("icon/toggle_color_table_item.png");
+}
+
+#showNumberItem > .label{
+	-fx-graphic: url("icon/show_number_item.png");
+}
+
+#author > .label{
+	-fx-graphic: url("icon/author.png");
+}
+
+#fileMenu > .label{
+	-fx-graphic: url("icon/file_menu.png");
+}
+
+#settingMenu > .label{
+	-fx-graphic: url("icon/setting_menu.png");
+}
+
+#windowMenu > .label{
+	-fx-graphic: url("icon/window_menu.png");
+}
+
+#etcMenu > .label{
+	-fx-graphic: url("icon/etc.png");
+}
+
+.accelerator-text{
+	-fx-graphic: none !important;
+}
+
+.scroll-bar:horizontal .track,
+.scroll-bar:vertical .track{
+    -fx-background-color : #FAFAFA;
+    -fx-border-color :transparent;
+    -fx-background-radius : 0.0em;
+    -fx-border-radius :2.0em;
+}
+
+
+.scroll-bar .increment-button ,
+.scroll-bar .decrement-button {
+    -fx-background-color :transparent;
+    -fx-background-radius : 1.0em;
+    -fx-padding :5.0 5.0 5.0 5.0;
+
+}
+
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow{
+    -fx-background-color :#757575;
+    -fx-shape: "M 0 0 L 5 10 L 10 0 Z";
+    -fx-padding :0.25em;
+}
+
+ .scroll-bar:horizontal .increment-arrow{
+    -fx-rotate: -90;
+}
+
+ .scroll-bar:vertical .increment-arrow{
+    -fx-rotate: 0;
+}
+
+ .scroll-bar:horizontal .decrement-arrow{
+    -fx-rotate: 90;
+}
+
+ .scroll-bar:vertical .decrement-arrow{
+    -fx-rotate: -180;
+}
+
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color : #BDBDBD;
+    -fx-background-insets : 0.0, 0.0, 0.0;
+    -fx-background-radius : 0.0em;
+}
+
+.scroll-bar:horizontal .thumb:hover,
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color : #9E9E9E;
+    -fx-background-insets : 0.0, 0.0, 0.0;
+    -fx-background-radius : 0.0em;
+}
+
+.table-view {
+    -fx-accent: #BDBDBD;
+    -fx-focus-color: #BDBDBD;
+}
+
+.table-view .column-header,
+.table-view .column-header .filler,
+.table-view .column-header-background .filler {
+	-fx-background-color: #EEEEEE;
+	-fx-border-color: #BDBDBD;
+	-fx-border-width: 0.25px;
+}
+
+.table-view > .column-header-background > .show-hide-columns-button {
+    -fx-background-color: #EEEEEE;
+}
+
+.text-field {
+    -fx-accent: #BDBDBD;
+    -fx-focus-color: #BDBDBD;
+    -fx-background-color: #EEEEEE;
+    -fx-border-radius: 0 0 0 0;
+    -fx-background-radius: 0 0 0 0;
+}

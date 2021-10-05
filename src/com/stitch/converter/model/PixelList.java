@@ -16,15 +16,16 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 	}
 
 	public void add(final int x, final int y) {
-		if (pixelSet.contains(new Pixel(x, y, null))) {
-			pixelSet.remove(new Pixel(x, y, null));
+		final Pixel pixel = new Pixel(x, y, color);
+		if (pixelSet.contains(pixel)) {
+			return;
 		}
-		pixelSet.add(new Pixel(x, y, color));
+		pixelSet.add(pixel);
 	}
 
 	public void add(final Pixel pixel) {
 		if (pixelSet.contains(pixel)) {
-			pixelSet.remove(pixel);
+			return;
 		}
 		pixelSet.add(pixel);
 	}
@@ -36,10 +37,10 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
 		if (obj == null)
 			return false;
+		if (this == obj)
+			return true;
 		if (getClass() != obj.getClass())
 			return false;
 		final PixelList other = (PixelList) obj;
@@ -114,7 +115,7 @@ public class PixelList implements Serializable, Comparable<PixelList> {
 
 	@Override
 	public String toString() {
-		return new StringBuilder("\"PixelList [color=").append(color).append(", pixelList=").append(pixelSet)
+		return new StringBuilder("PixelList [color=").append(color).append(", pixelList=").append(pixelSet)
 				.append(", isHighlighted=").append(isHighlighted).append(", isCompleted=").append(isCompleted)
 				.append(", index=").append(index).append("]").toString();
 	}

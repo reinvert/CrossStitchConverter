@@ -53,17 +53,9 @@ final class ImageTools {
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {
 				final StitchColor originalColor = list.get(i).getColor();
-				final int originalRed = originalColor.getRed();
-				final int originalGreen = originalColor.getGreen();
-				final int originalBlue = originalColor.getBlue();
-
 				final StitchColor targetColor = list.get(j).getColor();
-				final int targetRed = targetColor.getRed();
-				final int targetGreen = targetColor.getGreen();
-				final int targetBlue = targetColor.getBlue();
 
-				final double avgcolor = Math.sqrt(Math.pow(originalRed - targetRed, 2)
-						+ Math.pow(originalGreen - targetGreen, 2) + Math.pow(originalBlue - targetBlue, 2));
+				final double avgcolor = calculateDifference(originalColor, targetColor);
 				if (difference > avgcolor) {
 					final int orgcount = usedColorCount.get(list.get(i).getColor().getName());
 					final int tarcount = usedColorCount.get(list.get(j).getColor().getName());
@@ -106,13 +98,9 @@ final class ImageTools {
 	 */
 	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize)
 			throws NullPointerException {
-		if (originalSize != null && targetSize != null) {
 			final double widthScale = getScaleFactor(originalSize.width, targetSize.width);
 			final double heightScale = getScaleFactor(originalSize.height, targetSize.height);
 			return Math.min(widthScale, heightScale);
-		} else {
-			throw new NullPointerException("Size is null.");
-		}
 	}
 
 	/**

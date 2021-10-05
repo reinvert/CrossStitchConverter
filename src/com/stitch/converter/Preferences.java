@@ -28,10 +28,47 @@ public class Preferences {
 			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
 		}
 	}
-
-	private static String colorToString(final StitchColor color) {
-		return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+	
+	private static boolean load() throws IOException {
+		try (final FileReader fileReader = new FileReader(directory)) {
+			try (final BufferedReader bufferedReader = new BufferedReader(fileReader)) {
+				String line = null;
+				while ((line = bufferedReader.readLine()) != null) {
+					try {
+						final String[] splitLine = line.split("=");
+						final String key = splitLine[0];
+						final String value = splitLine[1];
+						keyStore.put(key, value);
+					} catch (final ArrayIndexOutOfBoundsException e) {
+						continue;
+					}
+				}
+			}
+		}
+		return true;
 	}
+	
+	private static Runnable storeAction = new Runnable() {
+		@Override
+		public void run() {
+			try (final FileWriter fileWriter = new FileWriter(directory)) {
+				try (final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+					for (final String key : keyStore.keySet()) {
+						bufferedWriter.write(new StringBuilder(key).append("=").append(keyStore.get(key)).append("\n").toString());
+					}
+					bufferedWriter.flush();
+				}
+			} catch (final IOException e) {
+				LogPrinter.print(e);
+				LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
+			}
+		}
+	};
+
+	public static void store() {
+		new Thread(storeAction).start();
+	}
+
 
 	public static boolean getBoolean(final String key) throws NoSuchElementException {
 		return Boolean.parseBoolean(getValue(key));
@@ -117,60 +154,30 @@ public class Preferences {
 			return defaultValue;
 		}
 	}
-
-	private static boolean load() throws IOException {
-		try (final FileReader fileReader = new FileReader(directory)) {
-			try (final BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-				String line = null;
-				while ((line = bufferedReader.readLine()) != null) {
-					try {
-						final String[] splitLine = line.split("=");
-						final String key = splitLine[0];
-						final String value = splitLine[1];
-						keyStore.put(key, value);
-					} catch (final ArrayIndexOutOfBoundsException e) {
-						continue;
-					}
-				}
-			}
-		} catch (final IOException e) {
-			throw e;
-		}
+	
+	public static boolean setValue(final String key, final boolean value) {
+		keyStore.put(key, Boolean.toString(value));
 		return true;
 	}
 
-	public static void setValue(final String key, final boolean value) {
-		keyStore.put(key, Boolean.toString(value));
-	}
-
-	public static void setValue(final String key, final double value) {
+	public static boolean setValue(final String key, final double value) {
 		keyStore.put(key, String.format("%.4f",value));
+		return true;
 	}
 
-	public static void setValue(final String key, final int value) {
+	public static boolean setValue(final String key, final int value) {
 		keyStore.put(key, Integer.toString(value));
+		return true;
 	}
 
-	public static void setValue(final String key, final StitchColor value) {
+	public static boolean setValue(final String key, final StitchColor value) {
 		keyStore.put(key, colorToString(value));
+		return true;
 	}
 
-	public static void setValue(final String key, final String value) {
+	public static boolean setValue(final String key, final String value) {
 		keyStore.put(key, value);
-	}
-
-	public static void store() {
-		try (final FileWriter fileWriter = new FileWriter(directory)) {
-			try (BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-				for (final String key : keyStore.keySet()) {
-					bufferedWriter.write(new StringBuilder(key).append("=").append(keyStore.get(key)).append("\n").toString());
-				}
-				bufferedWriter.flush();
-			}
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
-		}
+		return true;
 	}
 
 	private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
@@ -183,6 +190,10 @@ public class Preferences {
 			throw new ClassCastException();
 		}
 		return new StitchColor(red, green, blue, colorCode);
+	}
+	
+	private static String colorToString(final StitchColor color) {
+		return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
 	}
 
 	private Preferences() {

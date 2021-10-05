@@ -164,7 +164,7 @@ public final class GraphicsEngine implements Runnable {
 	 * 
 	 * @param file - the list of image files.
 	 */
-	private void makeNewFile(final File file) {
+	private void makeNewFile(final File file) throws NullPointerException, IOException {
 		final ArrayList<StitchColor> colorList;
 		try {
 			final String csvInput = new String(Files.readAllBytes(csv.toPath()));
@@ -190,15 +190,8 @@ public final class GraphicsEngine implements Runnable {
 
 		final StitchImage stitchImage = new StitchImage();
 		stitchImage.setChanged(true);
-		final BufferedImage image;
-		try {
-			final int resizeLength = Preferences.getInteger("resizeLength", 200);
-			image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
-		} catch (final NullPointerException | IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("cant_read_image"));
-			return;
-		}
+		final int resizeLength = Preferences.getInteger("resizeLength", 200);
+		final BufferedImage image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
 		boolean onceRunned = false;
 		StitchColor toRemove = null;
 		final HashMap<String, Integer> usedColorCount = new HashMap<String, Integer>();
@@ -221,14 +214,6 @@ public final class GraphicsEngine implements Runnable {
 				return;
 			}
 
-			/*
-			 * final ColorConverterSingleThread converter = new
-			 * ColorConverterSingleThread.Builder(image, stitchImage,
-			 * colorList).setThread(thread) .build(); converter.start(); try {
-			 * converter.join(); } catch (final InterruptedException e) {
-			 * 
-			 * }
-			 */
 			stitchImage.setBackground(backgroundColor);
 
 			for (final PixelList pixelList : stitchImage.getPixelLists()) {
@@ -241,7 +226,7 @@ public final class GraphicsEngine implements Runnable {
 		onFinished(stitchImage);
 	}
 
-	public void onFinished(final StitchImage image) {
+	private void onFinished(final StitchImage image) {
 		for (final Listener listener : listenerList) {
 			listener.onFinished(image);
 		}
@@ -252,16 +237,8 @@ public final class GraphicsEngine implements Runnable {
 	 * 
 	 * @param file - saved *.dmc {@link File}.
 	 */
-	private void readFromSavedFile(final File file) {
-		final StitchImage stitchImage;
-		try {
-			stitchImage = (StitchImage) Resources.readObject(file);
-		} catch (final ClassNotFoundException | IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed", file.getName()));
-			return;
-		}
-
+	private void readFromSavedFile(final File file) throws NullPointerException, ClassNotFoundException, IOException {
+		final StitchImage stitchImage = (StitchImage) Resources.readObject(file);
 		onFinished(stitchImage);
 	}
 
@@ -290,11 +267,16 @@ public final class GraphicsEngine implements Runnable {
 	 * Creates {@link Blueprint} image and used thread list.
 	 */
 	@Override
-	public void run() {
-		if (loadMode.equals(Mode.NEW_FILE)) {
-			makeNewFile(file);
-		} else if (loadMode.equals(Mode.LOAD)) {
-			readFromSavedFile(file);
+	public void run() throws RuntimeException {
+		try {
+			if (loadMode.equals(Mode.NEW_FILE)) {
+				makeNewFile(file);
+			} else if (loadMode.equals(Mode.LOAD)) {
+				readFromSavedFile(file);
+			}
+		} catch (final Exception e) {
+			LogPrinter.print(e);
+			LogPrinter.error(Resources.getString("cant_read_image"));
 		}
 	}
 }

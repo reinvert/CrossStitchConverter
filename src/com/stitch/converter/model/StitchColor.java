@@ -10,7 +10,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	private final String name;
 	private final int red, green, blue;
 	private transient Color fxColor = null;
-	private String toString;
+	private transient String toString;
 
 	public StitchColor(final int rgb, final String name) {
 		red = (rgb >> 16) & 0xFF;
@@ -20,6 +20,9 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	public StitchColor(final int red, final int green, final int blue, final String name) {
+		if(red < 0 || red > 255 || green < 0 || green > 255 || blue < 0 || blue > 255) {
+			throw new IllegalStateException(new StringBuilder("Wrong input for color value: red=").append(red).append(", green=").append(green).append(", blue=").append(blue).toString());
+		}
 		this.red = red;
 		this.green = green;
 		this.blue = blue;

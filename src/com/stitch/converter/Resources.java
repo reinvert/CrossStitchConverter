@@ -10,8 +10,8 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.IllegalFormatException;
 import java.util.Locale;
-import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -27,9 +27,11 @@ public class Resources {
 		supportedLocales.add(Locale.KOREAN);
 		supportedLocales.add(Locale.ENGLISH);
 		try {
+			final String language = Locale.getDefault().getLanguage();
 			for (final Locale locale : supportedLocales) {
-				if (Locale.getDefault().getLanguage().equals(locale.getLanguage())) {
+				if (language.equals(locale.getLanguage())) {
 					bundle = ResourceBundle.getBundle("Languages", locale);
+					break;
 				}
 			}
 		} catch (final MissingResourceException e) {
@@ -42,7 +44,7 @@ public class Resources {
 						Resources.writeText(new File("log.txt"), stringWriter.toString());
 					}
 				}
-			} catch (Throwable t2) {
+			} catch (final Throwable t2) {
 				t2.printStackTrace();
 			}
 			Platform.runLater(new Runnable() {
@@ -52,9 +54,9 @@ public class Resources {
 					alert.setTitle("Error");
 					alert.setContentText("Failed to read resource file.");
 					alert.show();
+					System.exit(0);
 				}
 			});
-			System.exit(0);
 		}
 	}
 
@@ -65,7 +67,11 @@ public class Resources {
 	public static String getString(final String id) throws MissingResourceException {
 		try {
 			return bundle.getString(id);
-		} catch (final MissingResourceException e) {
+		} catch(final NullPointerException | ClassCastException e) {
+			LogPrinter.print(e);
+			LogPrinter.error(new StringBuilder("Exception on read resources from id: ").append(id).toString());
+			return null;
+		} catch(MissingResourceException e) {
 			throw e;
 		}
 	}
@@ -73,7 +79,7 @@ public class Resources {
 	public static String getString(final String id, final Object... args) {
 		try {
 			return String.format(getString(id), args);
-		} catch (final MissingFormatArgumentException e) {
+		} catch (final NullPointerException | MissingResourceException | IllegalFormatException e) {
 			LogPrinter.print(e);
 			LogPrinter.error(new StringBuilder("Exception on read resources from id: ").append(id).append(", args: ").append(args).toString());
 			return null;
@@ -89,16 +95,25 @@ public class Resources {
 	}
 
 	public static void writeObject(final File file, final Object object) throws FileNotFoundException, IOException {
-		try (FileOutputStream fos = new FileOutputStream(file)) {
-			try (ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(object);
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try (final FileOutputStream fos = new FileOutputStream(file)) {
+					try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+						oos.writeObject(object);
+					}
+				} catch(final Exception e) {
+					LogPrinter.print(e);
+				}
 			}
-		}
+		}).start();;
+		
 	}
 
-	public static void writeText(final File file, final String text) throws IOException {
+	public static boolean writeText(final File file, final String text) throws IOException {
 		try (final PrintWriter printWriter = new PrintWriter(file)) {
 			printWriter.println(text);
+			return true;
 		}
 	}
 

@@ -24,13 +24,18 @@ public final class LogPrinter {
 	private static File logFile = new File(Preferences.getString("logFile", "log.txt"));
 
 	private static Logger logger = new Logger() {
+		
+		private Alert alert, error;
+		
 		@Override
 		public void alert(final String content) {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					final Alert alert = new Alert(AlertType.INFORMATION);
-					alert.setTitle(Resources.getString("information"));
+					if(alert == null) {
+						alert = new Alert(AlertType.INFORMATION);
+						alert.setTitle(Resources.getString("information"));
+					}
 					alert.setContentText(content);
 					alert.show();
 				}
@@ -42,10 +47,12 @@ public final class LogPrinter {
 			Platform.runLater(new Runnable() {
 				@Override
 				public void run() {
-					final Alert alert = new Alert(AlertType.ERROR);
-					alert.setTitle(Resources.getString("error"));
-					alert.setContentText(content);
-					alert.show();
+					if(error == null) {
+						error = new Alert(AlertType.ERROR);
+						error.setTitle(Resources.getString("error"));
+					}
+					error.setContentText(content);
+					error.show();
 				}
 			});
 		}

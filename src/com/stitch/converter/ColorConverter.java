@@ -66,7 +66,7 @@ final class ColorConverter extends Thread {
 			if (thread == 0) {
 				this.thread = Runtime.getRuntime().availableProcessors() + 1;
 			} else if (thread < 0) {
-				throw new AssertionError("Thread should be at least 0.");
+				throw new IllegalStateException("Thread should be at least 0.");
 			} else {
 				this.thread = thread;
 			}
@@ -162,7 +162,7 @@ final class ColorConverter extends Thread {
 	private final Collection<StitchColor> colorList;
 	private final BufferedImage image;
 	private final BlockingQueue<Entry<Pixel, StitchColor>> outputQueue = new ArrayBlockingQueue<>(16);
-	private final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(-1, -1, null),
+	private final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(0, 0, new StitchColor(0, 0, 0, "poison")),
 			new StitchColor(0, 0, 0, "poison"));
 	private final StitchImage stitchImage;
 	private final int thread;

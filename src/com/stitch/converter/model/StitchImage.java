@@ -97,9 +97,7 @@ public class StitchImage implements Serializable {
 
 	public WritableImage getFXImage() {
 		if (fxImage == null) {
-			if (width == -1 || height == -1) {
-				calculateSize();
-			}
+			calculateSize();
 			fxImage = new WritableImage((int) width, (int) height);
 			final PixelWriter pixelWriter = fxImage.getPixelWriter();
 			for (final PixelList pixelList : pixelListSet) {

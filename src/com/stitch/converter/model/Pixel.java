@@ -6,9 +6,15 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 	private static final long serialVersionUID = 1L;
 	private StitchColor color;
 	private final int x, y;
-	private String toString;
+	private transient String toString;
 
 	public Pixel(final int x, final int y, final StitchColor color) {
+		if(x < 0 || y < 0) {
+			throw new IllegalStateException(new StringBuilder("Wrong pixel coordinate: x=").append(x).append(", y=").append(y).toString());
+		}
+		if(color == null) {
+			throw new NullPointerException("StitchColor is null");
+		}
 		this.x = x;
 		this.y = y;
 		this.color = color;
@@ -27,10 +33,10 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
-			return true;
 		if (obj == null)
 			return false;
+		if (this == obj)
+			return true;
 		if (getClass() != obj.getClass())
 			return false;
 		final Pixel other = (Pixel) obj;

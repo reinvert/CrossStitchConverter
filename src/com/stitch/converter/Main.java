@@ -16,10 +16,6 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-	enum FileStatus {
-		ERROR, SIZE_TOO_LARGE, SUCCESS
-	}
-
 	public static void main(final String[] args) {
 		System.setProperty("prism.lcdtext", "false");
 		launch(args);
@@ -41,15 +37,16 @@ public class Main extends Application {
 
 	private Stage primaryStage;
 
-	public BorderPane rootLayout;
-
 	public void initRootLayout() {
 		try {
-			final FXMLLoader loader = new FXMLLoader(new File("resources/Overview.fxml").toURI().toURL(),
-					Resources.getBundle());
-			rootLayout = (BorderPane) loader.load();
-			rootLayout.setStyle(new StringBuilder("-fx-font: ").append(Preferences.getString("fontSize", "11"))
-					.append("px ").append(Preferences.getString("fontType", "Dotum")).append(";").toString());
+			final FXMLLoader loader = new FXMLLoader();
+			loader.setLocation(new File("resources/Overview.fxml").toURI().toURL());
+			loader.setResources(Resources.getBundle());
+			final BorderPane rootLayout = (BorderPane) loader.load();
+			final int fontSize = Preferences.getInteger("fontSize", 11);
+			final String fontType = Preferences.getString("fontType", "Dotum");
+			final String style = new StringBuilder("-fx-font: ").append(fontSize).append("px ").append(fontType).append(";").toString();
+			rootLayout.setStyle(style);
 
 			final Scene scene = new Scene(rootLayout);
 
@@ -60,8 +57,9 @@ public class Main extends Application {
 			scene.addEventHandler(KeyEvent.KEY_PRESSED, Shortcut.get(controller));
 			primaryStage.setScene(scene);
 			try {
-				final Image image = new Image(new File("resources/icons8-needle-50.png").toURI().toURL().toString());
-				primaryStage.getIcons().add(image);
+				final Image icon = new Image("file:resources/icon/icons8-needle-50.png");
+				primaryStage.getIcons().add(icon);
+				
 			} catch (final Exception iconException) {
 				LogPrinter.print(iconException);
 				LogPrinter.error(Resources.getString("error_icon_load"));
