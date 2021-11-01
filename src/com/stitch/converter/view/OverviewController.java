@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -54,6 +55,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
@@ -95,8 +97,18 @@ public class OverviewController extends Controller {
 	private final int DIVIDER_SIZE = 317;
 
 	private int x = -1, y = -1;
+	
+	private String css, style;
 
 	public void setStage(final Stage overviewStage) {
+		try {
+			css = new File("resources/Style.css").toURI().toURL().toExternalForm();
+			final int fontSize = Preferences.getInteger("fontSize", 13);
+			final String fontType = Preferences.getString("fontType", "Malgun Gothic");
+			style = new StringBuilder("-fx-font: ").append(fontSize).append("px \"").append(fontType).append("\";").toString();
+		} catch (MalformedURLException e) {
+			LogPrinter.print(e);
+		}
 		if (Preferences.getBoolean("showColorTable", true) == false) {
 			setColorTable(false);
 		}
@@ -144,9 +156,15 @@ public class OverviewController extends Controller {
 								final ButtonType neverRemind = new ButtonType(Resources.getString("update_never_remind"),
 										ButtonData.OTHER);
 								final Alert alert = new Alert(AlertType.INFORMATION);
+								alert.getDialogPane().getStylesheets().add(css);
 								alert.setTitle(Resources.getString("information"));
 								alert.setHeaderText(Resources.getString("update_header"));
 								alert.setContentText(Resources.getString("update_content"));
+								
+								final Image icon = new Image("file:resources/icon/update.png");
+								alert.setGraphic(new ImageView(icon));
+								((Stage)alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+								
 								alert.getButtonTypes().setAll(update, notUpdate, neverRemind);
 								final Optional<ButtonType> result = alert.showAndWait();
 								if (result.get() == update) {
@@ -535,9 +553,15 @@ public class OverviewController extends Controller {
 				final ButtonType cancelButton = new ButtonType(Resources.getString("cancel_button"),
 						ButtonData.CANCEL_CLOSE);
 				confirmExitAlert = new Alert(AlertType.CONFIRMATION);
+				confirmExitAlert.getDialogPane().getStylesheets().add(css);
 				confirmExitAlert.setTitle(Resources.getString("warning"));
 				confirmExitAlert.setHeaderText(Resources.getString("file_changed_header"));
 				confirmExitAlert.setContentText(Resources.getString("file_changed"));
+				
+				final Image icon = new Image("file:resources/icon/information.png");
+				confirmExitAlert.setGraphic(new ImageView(icon));
+				((Stage)confirmExitAlert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+				
 				confirmExitAlert.getButtonTypes().setAll(saveButton, notSaveButton, cancelButton);
 			}
 			final Optional<ButtonType> result = confirmExitAlert.showAndWait();
@@ -705,8 +729,7 @@ public class OverviewController extends Controller {
 				loader.setLocation(new File("resources/Setting.fxml").toURI().toURL());
 				loader.setResources(Resources.getBundle());
 				page = (ScrollPane) loader.load();
-				page.setStyle(new StringBuilder("-fx-font: ").append(Preferences.getString("fontSize", "11"))
-						.append("px ").append(Preferences.getString("fontType", "Dotum")).append(";").toString());
+				page.setStyle(style);
 			} catch (final IOException e) {
 				LogPrinter.print(e);
 				LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
@@ -780,6 +803,7 @@ public class OverviewController extends Controller {
 			}
 			zoom.setText(new StringBuilder().append(scaleRatio).append("x").toString());
 		}
+		canvas.requestFocus();
 		return true;
 	}
 
@@ -821,8 +845,7 @@ public class OverviewController extends Controller {
 				loader.setLocation(new File("resources/Author.fxml").toURI().toURL());
 				loader.setResources(Resources.getBundle());
 				page = (AnchorPane) loader.load();
-				page.setStyle(new StringBuilder("-fx-font: ").append(Preferences.getString("fontSize", "12"))
-						.append("px ").append(Preferences.getString("fontType", "Dotum")).append(";").toString());
+				page.setStyle(style);
 			} catch (final IOException e) {
 				LogPrinter.print(e);
 				LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));

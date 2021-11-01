@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.AuthorController">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.AuthorController">
    <children>
-      <Hyperlink fx:id="hyperlink" text="%url" />
-      <Hyperlink fx:id="iconlink" layoutY="20.0" text="%icon_author" />
-      <Label fx:id="copyright" layoutY="40.0" prefWidth="600.0" text="%copyright" wrapText="true" />
+      <VBox>
+         <children>
+            <Hyperlink fx:id="hyperlink" text="%url" />
+            <Hyperlink fx:id="iconlink" text="%icon_author" />
+            <Hyperlink fx:id="googleiconlink" text="%google_icon_author" />
+            <TextArea fx:id="copyright" editable="false" prefHeight="340.0" prefWidth="600.0" text="%copyright" wrapText="true" />
+         </children>
+      </VBox>
    </children>
 </AnchorPane>

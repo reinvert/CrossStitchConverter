@@ -8,6 +8,9 @@ import java.io.StringWriter;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 
 public final class LogPrinter {
 
@@ -34,6 +37,11 @@ public final class LogPrinter {
 				public void run() {
 					if(alert == null) {
 						alert = new Alert(AlertType.INFORMATION);
+						
+						final Image icon = new Image("file:resources/icon/information.png");
+						alert.setGraphic(new ImageView(icon));
+						((Stage)alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+						
 						alert.setTitle(Resources.getString("information"));
 					}
 					alert.setContentText(content);
@@ -49,6 +57,11 @@ public final class LogPrinter {
 				public void run() {
 					if(error == null) {
 						error = new Alert(AlertType.ERROR);
+						
+						final Image icon = new Image("file:resources/icon/error.png");
+						error.setGraphic(new ImageView(icon));
+						((Stage)alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+						
 						error.setTitle(Resources.getString("error"));
 					}
 					error.setContentText(content);

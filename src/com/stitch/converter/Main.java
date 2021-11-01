@@ -43,9 +43,9 @@ public class Main extends Application {
 			loader.setLocation(new File("resources/Overview.fxml").toURI().toURL());
 			loader.setResources(Resources.getBundle());
 			final BorderPane rootLayout = (BorderPane) loader.load();
-			final int fontSize = Preferences.getInteger("fontSize", 11);
-			final String fontType = Preferences.getString("fontType", "Dotum");
-			final String style = new StringBuilder("-fx-font: ").append(fontSize).append("px ").append(fontType).append(";").toString();
+			final int fontSize = Preferences.getInteger("fontSize", 13);
+			final String fontType = Preferences.getString("fontType", "Malgun Gothic");
+			final String style = new StringBuilder("-fx-font: ").append(fontSize).append("px \"").append(fontType).append("\";").toString();
 			rootLayout.setStyle(style);
 
 			final Scene scene = new Scene(rootLayout);

@@ -12,9 +12,6 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 		if(x < 0 || y < 0) {
 			throw new IllegalStateException(new StringBuilder("Wrong pixel coordinate: x=").append(x).append(", y=").append(y).toString());
 		}
-		if(color == null) {
-			throw new NullPointerException("StitchColor is null");
-		}
 		this.x = x;
 		this.y = y;
 		this.color = color;

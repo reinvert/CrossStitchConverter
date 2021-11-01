@@ -3,6 +3,14 @@
     -fx-focus-color: transparent;
 }
 
+.hyperlink {
+    -fx-accent: #1976D2;
+}
+
+.text-area {
+    -fx-accent: #616161;
+}
+
 .menu-bar{
 	-fx-background-color: #FAFAFA;
 	-fx-selection-bar: #E0E0E0;
@@ -149,4 +157,22 @@
     -fx-background-color: #EEEEEE;
     -fx-border-radius: 0 0 0 0;
     -fx-background-radius: 0 0 0 0;
+}
+
+
+.button {
+  -fx-background-color: transparent;
+  -fx-stroke: transparent;
+  -fx-focus: transparent;
+}
+
+.button:hover {
+  -fx-background-color: #E0E0E0;
+}
+
+.button:default {
+  -fx-background-color: transparent;
+}
+.button:default:hover {
+  -fx-background-color: #B3E5FC;
 }
