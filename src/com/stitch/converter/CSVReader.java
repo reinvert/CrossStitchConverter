@@ -24,11 +24,7 @@ final class CSVReader {
 		final List<String> splitByRow = Arrays.asList(str.replace("\r", "").split("\n"));
 		final ArrayList<ArrayList<String>> output = new ArrayList<ArrayList<String>>();
 		for (int i = 0; i < splitByRow.size(); i++) {
-			output.add(new ArrayList<String>());
-			final List<String> row = Arrays.asList(splitByRow.get(i).split(","));
-			for (int j = 0; j < row.size(); j++) {
-				output.get(i).add(row.get(j));
-			}
+			output.add(new ArrayList<String>(Arrays.asList(splitByRow.get(i).split(","))));
 		}
 		return output;
 	}

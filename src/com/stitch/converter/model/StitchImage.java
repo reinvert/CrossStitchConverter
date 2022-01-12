@@ -28,7 +28,7 @@ public class StitchImage implements Serializable {
 
 	private boolean numberVisible = true;
 	private final SortedSet<PixelList> pixelListSet;
-	private double width = -1, height = -1;
+	private int width = -1, height = -1;
 
 	public StitchImage() {
 		pixelListSet = new TreeSet<PixelList>();
@@ -54,16 +54,16 @@ public class StitchImage implements Serializable {
 	}
 
 	public void calculateSize() {
-		double width = -1, height = -1;
+		int width = -1, height = -1;
 		for (final PixelList pixelList : pixelListSet) {
 			for (final Pixel pixel : pixelList.getPixelSet()) {
 				int x = pixel.getX();
 				int y = pixel.getY();
-				if (x > width) {
-					width = pixel.getX();
+				if (x > width-1) {
+					width = x+1;
 				}
-				if (y > height) {
-					height = pixel.getY();
+				if (y > height-1) {
+					height = y+1;
 				}
 			}
 		}
@@ -103,7 +103,11 @@ public class StitchImage implements Serializable {
 			for (final PixelList pixelList : pixelListSet) {
 				final Color color = pixelList.getColor().asFX();
 				for (final Pixel pixel : pixelList.getPixelSet()) {
-					pixelWriter.setColor(pixel.getX(), pixel.getY(), color);
+					try {
+						pixelWriter.setColor(pixel.getX(), pixel.getY(), color);
+					} catch(IndexOutOfBoundsException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -174,7 +178,7 @@ public class StitchImage implements Serializable {
 		this.numberVisible = numberVisible;
 	}
 
-	public void setSize(final double width, final double height) {
+	public void setSize(final int width, final int height) {
 		this.width = width;
 		this.height = height;
 	}

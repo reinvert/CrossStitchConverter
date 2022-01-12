@@ -11,6 +11,7 @@ import com.stitch.converter.model.StitchColor;
 import com.stitch.converter.model.StitchImage;
 
 import javafx.geometry.VPos;
+import javafx.scene.CacheHint;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
@@ -53,6 +54,8 @@ public class CanvasController {
 		darkerColor = new Color(0d, 0d, 0d, Preferences.getDouble("highlightBrightnessLevel", 0.75d));
 		fontName = Preferences.getString("fontType", "");
 		originalFont = new Font(fontName, scale);
+		canvas.setCache(true);
+		canvas.setCacheHint(CacheHint.SPEED);
 	}
 
 	private void drawGrid(int x, int y, int width, int height, boolean isHighlightExist) {

@@ -41,8 +41,7 @@ final class ImageTools {
 		final int targetGreen = targetColor.getGreen();
 		final int targetBlue = targetColor.getBlue();
 
-		return Math.sqrt(Math.pow(originalRed - targetRed, 2) + Math.pow(originalGreen - targetGreen, 2)
-				+ Math.pow(originalBlue - targetBlue, 2));
+		return Math.sqrt(Math.pow(originalRed - targetRed, 2) + Math.pow(originalGreen - targetGreen, 2) + Math.pow(originalBlue - targetBlue, 2));
 	}
 
 	static StitchColor calculateRemoveString(final StitchImage stitchImage,

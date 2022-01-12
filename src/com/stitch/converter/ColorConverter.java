@@ -98,7 +98,7 @@ final class ColorConverter extends Thread {
 				for (int y = this.y; y < this.y + height; y++) {
 					final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), null));
 					final StitchColor targetColor = pixel.getColor();
-					double difference = 256, alternateDifference = 256;
+					double difference = Double.MAX_VALUE, alternateDifference = Double.MAX_VALUE;
 					StitchColor outputColor = null, alternateColor = null;
 					double calculatedDifference = 0;
 
@@ -118,6 +118,9 @@ final class ColorConverter extends Thread {
 							alternateColor = listColor;
 							alternateDifference = calculatedDifference;
 						}
+					}
+					if(outputColor == null) {
+						System.out.println("null");
 					}
 					pixel.setColor(outputColor);
 					try {
