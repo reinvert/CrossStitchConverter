@@ -23,8 +23,8 @@ final class CSVReader {
 	static ArrayList<ArrayList<String>> read(final String str) {
 		final List<String> splitByRow = Arrays.asList(str.replace("\r", "").split("\n"));
 		final ArrayList<ArrayList<String>> output = new ArrayList<ArrayList<String>>();
-		for (int i = 0; i < splitByRow.size(); i++) {
-			output.add(new ArrayList<String>(Arrays.asList(splitByRow.get(i).split(","))));
+		for (final String row : splitByRow) {
+			output.add(new ArrayList<String>(Arrays.asList(row.split(","))));
 		}
 		return output;
 	}
@@ -47,9 +47,13 @@ final class CSVReader {
 		final ArrayList<StitchColor> output = new ArrayList<StitchColor>();
 		int i = 0;
 		try {
-			for (; i < csv.size(); i++) {
-				output.add(new StitchColor(Integer.parseInt(csv.get(i).get(1)), Integer.parseInt(csv.get(i).get(2)),
-						Integer.parseInt(csv.get(i).get(3)), csv.get(i).get(0)));
+			for (final ArrayList<String> row: csv) {
+				final String name = row.get(0);
+				final int red = Integer.parseInt(row.get(1));
+				final int green = Integer.parseInt(row.get(2));
+				final int blue = Integer.parseInt(row.get(3));
+				output.add(new StitchColor(red, green, blue, name));
+				i++;
 			}
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			throw new NoSuchElementException(Integer.toString(i + 1));

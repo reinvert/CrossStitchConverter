@@ -12,6 +12,7 @@
             <Hyperlink fx:id="hyperlink" text="%url" />
             <Hyperlink fx:id="iconlink" text="%icon_author" />
             <Hyperlink fx:id="googleiconlink" text="%google_icon_author" />
+            <Hyperlink fx:id="flossdatalink" layoutX="10.0" layoutY="52.0" text="%floss_data_author" />
             <TextArea fx:id="copyright" editable="false" prefHeight="340.0" prefWidth="600.0" text="%copyright" wrapText="true" />
          </children>
       </VBox>

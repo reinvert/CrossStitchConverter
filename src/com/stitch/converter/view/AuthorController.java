@@ -12,13 +12,14 @@ public class AuthorController extends Controller {
 	public TextArea copyright;
 	
 	@FXML
-	public Hyperlink hyperlink, iconlink, googleiconlink;
+	public Hyperlink hyperlink, iconlink, googleiconlink, flossdatalink;
 
 	@FXML
 	public void initialize() {
 		hyperlink.setOnAction(event -> main.getHostServices().showDocument(hyperlink.getText()));
 		iconlink.setOnAction(event -> main.getHostServices().showDocument(Resources.getString("icon_url")));
 		googleiconlink.setOnAction(event -> main.getHostServices().showDocument(Resources.getString("google_icon_url")));
+		flossdatalink.setOnAction(event -> main.getHostServices().showDocument(Resources.getString("floss_data_url")));
 		copyright.setText(Resources.getString("copyright", Resources.getString("version")));
 	}
 }

@@ -60,7 +60,7 @@ public final class LogPrinter {
 						
 						final Image icon = new Image("file:resources/icon/error.png");
 						error.setGraphic(new ImageView(icon));
-						((Stage)alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+						((Stage)error.getDialogPane().getScene().getWindow()).getIcons().add(icon);
 						
 						error.setTitle(Resources.getString("error"));
 					}

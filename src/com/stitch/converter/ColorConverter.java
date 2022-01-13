@@ -67,6 +67,8 @@ final class ColorConverter extends Thread {
 				this.thread = Runtime.getRuntime().availableProcessors() + 1;
 			} else if (thread < 0) {
 				throw new IllegalStateException("Thread should be at least 0.");
+			} else if (thread > image.getWidth()){
+				this.thread = image.getWidth();
 			} else {
 				this.thread = thread;
 			}
@@ -146,13 +148,17 @@ final class ColorConverter extends Thread {
 		public void run() {
 			while (true) {
 				try {
-					final Entry<Pixel, StitchColor> pixel = outputQueue.take();
-					if (pixel == poisonPill) {
+					final Entry<Pixel, StitchColor> pixelEntry = outputQueue.take();
+					final Pixel pixel = pixelEntry.getKey();
+					if (pixelEntry == poisonPill) {
 						return;
 					}
-					image.setRGB(pixel.getKey().getX(), pixel.getKey().getY(), pixel.getKey().getColor().getRGB());
-					stitchImage.add(pixel.getKey());
-					stitchImage.addAlternateColor(pixel.getValue());
+					final int x = pixel.getX();
+					final int y = pixel.getY();
+					final int color = pixel.getColor().getRGB();
+					image.setRGB(x, y, color);
+					stitchImage.add(pixel);
+					stitchImage.addAlternateColor(pixelEntry.getValue());
 				} catch (final InterruptedException e) {
 					LogPrinter.print(e);
 					LogPrinter.error(Resources.getString("error_has_occurred"));
@@ -198,12 +204,11 @@ final class ColorConverter extends Thread {
 				final int width = image.getWidth();
 				final int height = image.getHeight();
 				final float dividedWidth = width / thread;
+				final int threadWidth = (int) (dividedWidth * createThread);
 				if (createThread != thread - 1) {
-					threadList.add(new Thread(
-							new Converter((int) (dividedWidth * createThread), 0, (int) (dividedWidth), height)));
+					threadList.add(new Thread(new Converter(threadWidth, 0, (int) (dividedWidth), height)));
 				} else {
-					threadList.add(new Thread(new Converter((int) (dividedWidth * createThread), 0,
-							width - (int) (dividedWidth * createThread), height)));
+					threadList.add(new Thread(new Converter(threadWidth, 0, width - threadWidth, height)));
 				}
 			}
 			for (final Thread colorThread : threadList) {

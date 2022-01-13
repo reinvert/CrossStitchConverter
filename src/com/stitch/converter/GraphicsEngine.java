@@ -202,8 +202,7 @@ public final class GraphicsEngine implements Runnable {
 			}
 			usedColorCount.clear();
 
-			final ColorConverter converter = new ColorConverter.Builder(image, stitchImage, colorList).setThread(thread)
-					.build();
+			final ColorConverter converter = new ColorConverter.Builder(image, stitchImage, colorList).setThread(thread).build();
 			converter.start();
 
 			try {

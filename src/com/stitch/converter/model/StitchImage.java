@@ -28,7 +28,7 @@ public class StitchImage implements Serializable {
 
 	private boolean numberVisible = true;
 	private final SortedSet<PixelList> pixelListSet;
-	private int width = -1, height = -1;
+	private double width = -1, height = -1;
 
 	public StitchImage() {
 		pixelListSet = new TreeSet<PixelList>();
@@ -59,16 +59,16 @@ public class StitchImage implements Serializable {
 			for (final Pixel pixel : pixelList.getPixelSet()) {
 				int x = pixel.getX();
 				int y = pixel.getY();
-				if (x > width-1) {
-					width = x+1;
+				if (x > width) {
+					width = x;
 				}
-				if (y > height-1) {
-					height = y+1;
+				if (y > height) {
+					height = y;
 				}
 			}
 		}
-		this.width = width;
-		this.height = height;
+		this.width = width + 1;
+		this.height = height + 1;
 	}
 
 	public List<StitchColor> getAlternate() {
