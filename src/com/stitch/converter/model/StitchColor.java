@@ -30,7 +30,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	}
 
 	public StitchColor(final Color color, final String name) {
-		this((int) color.getRed() * 255, (int) color.getGreen() * 255, (int) color.getBlue() * 255, name);
+		this((int) (color.getRed() * 255d), (int) (color.getGreen() * 255d), (int) (color.getBlue() * 255d), name);
 		fxColor = color;
 	}
 

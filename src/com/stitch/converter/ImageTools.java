@@ -14,6 +14,9 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import com.stitch.converter.model.StitchImage;
+
+import javafx.scene.paint.Color;
+
 import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
 
@@ -25,6 +28,29 @@ import com.stitch.converter.model.StitchColor;
  *
  */
 final class ImageTools {
+	
+	static double calculateDifference(double originalRed, double originalGreen, double originalBlue,
+			double targetRed, double targetGreen, double targetBlue) {
+		// LINEAR TO GAMMA
+		/*
+		final double gamma = 2.2d;
+		originalRed = Math.pow(originalRed, 1d/gamma);
+		originalGreen = Math.pow(originalGreen, 1d/gamma);
+		originalBlue = Math.pow(originalBlue, 1d/gamma);
+
+		targetRed = Math.pow(targetRed, 1d/gamma);
+		targetGreen = Math.pow(targetGreen, 1d/gamma);
+		targetBlue = Math.pow(targetBlue, 1d/gamma);
+		*/
+		//LINEAR TO GAMMA END
+		
+		final double redDifference = Math.pow(originalRed - targetRed, 2);
+		final double greenDifference = Math.pow(originalGreen - targetGreen, 2);
+		final double blueDifference = Math.pow(originalBlue - targetBlue, 2);
+
+		return redDifference + greenDifference + blueDifference;
+	}
+	
 	/**
 	 * Calculate difference between two {@link java.awt.Color Color}.
 	 * 
@@ -33,19 +59,30 @@ final class ImageTools {
 	 * @return difference between two {@link java.awt.Color Color}.
 	 */
 	static double calculateDifference(final StitchColor originalColor, final StitchColor targetColor) {
-		final int originalRed = originalColor.getRed();
-		final int originalGreen = originalColor.getGreen();
-		final int originalBlue = originalColor.getBlue();
+		double originalRed = originalColor.asFX().getRed();
+		double originalGreen = originalColor.asFX().getGreen();
+		double originalBlue = originalColor.asFX().getBlue();
 
-		final int targetRed = targetColor.getRed();
-		final int targetGreen = targetColor.getGreen();
-		final int targetBlue = targetColor.getBlue();
+		double targetRed = targetColor.asFX().getRed();
+		double targetGreen = targetColor.asFX().getGreen(); 
+		double targetBlue = targetColor.asFX().getBlue();
+		
+		return calculateDifference(originalRed, originalGreen, originalBlue, targetRed, targetGreen, targetBlue);
+	}
+	
+	static double calculateDifference(final Color originalColor, final Color targetColor) {
+		final double originalRed = originalColor.getRed();
+		final double originalGreen = originalColor.getGreen();
+		final double originalBlue = originalColor.getBlue();
 
-		return Math.sqrt(Math.pow(originalRed - targetRed, 2) + Math.pow(originalGreen - targetGreen, 2) + Math.pow(originalBlue - targetBlue, 2));
+		final double targetRed = targetColor.getRed();
+		final double targetGreen = targetColor.getGreen(); 
+		final double targetBlue = targetColor.getBlue();
+
+		return calculateDifference(originalRed, originalGreen, originalBlue, targetRed, targetGreen, targetBlue);
 	}
 
-	static StitchColor calculateRemoveString(final StitchImage stitchImage,
-			final HashMap<String, Integer> usedColorCount) {
+	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {
 		StitchColor uselessColor = null;
 		double difference = 256;
 		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
@@ -95,8 +132,7 @@ final class ImageTools {
 	 * @param targetSize   - the target {@link java.awt.Dimension Dimension}.
 	 * @return the scale of two {@link java.awt.Dimension Dimension}.
 	 */
-	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize)
-			throws NullPointerException {
+	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize) throws NullPointerException {
 			final double widthScale = getScaleFactor(originalSize.width, targetSize.width);
 			final double heightScale = getScaleFactor(originalSize.height, targetSize.height);
 			return Math.min(widthScale, heightScale);

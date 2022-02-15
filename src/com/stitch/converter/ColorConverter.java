@@ -20,7 +20,7 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  *
  */
-final class ColorConverter extends Thread {
+class ColorConverter extends Thread {
 	/**
 	 * Builder of {@link ColorConverter}
 	 * 
@@ -32,6 +32,8 @@ final class ColorConverter extends Thread {
 		private final BufferedImage image;
 		private final StitchImage stitchImage;
 		private int thread = Runtime.getRuntime().availableProcessors() + 1;
+		int convertMode = GraphicsEngine.FLOYD;
+		boolean isGammaBased = true;
 
 		/**
 		 * The Constructor of {@link Builder}.
@@ -74,6 +76,16 @@ final class ColorConverter extends Thread {
 			}
 			return this;
 		}
+		
+		Builder setConvertMode(final int convertMode) {
+			this.convertMode = convertMode;
+			return this;
+		}
+		
+		Builder setGammaBased(final boolean isGammaBased) {
+			this.isGammaBased = isGammaBased;
+			return this;
+		}
 	}
 
 	/**
@@ -99,7 +111,8 @@ final class ColorConverter extends Thread {
 			for (int x = this.x; x < this.x + width; x++) {
 				for (int y = this.y; y < this.y + height; y++) {
 					final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), null));
-					final StitchColor targetColor = pixel.getColor();
+					StitchColor targetColor = pixel.getColor();
+					
 					double difference = Double.MAX_VALUE, alternateDifference = Double.MAX_VALUE;
 					StitchColor outputColor = null, alternateColor = null;
 					double calculatedDifference = 0;
@@ -120,9 +133,6 @@ final class ColorConverter extends Thread {
 							alternateColor = listColor;
 							alternateDifference = calculatedDifference;
 						}
-					}
-					if(outputColor == null) {
-						System.out.println("null");
 					}
 					pixel.setColor(outputColor);
 					try {
@@ -168,15 +178,17 @@ final class ColorConverter extends Thread {
 		}
 	}
 
-	private final Collection<StitchColor> colorList;
-	private final BufferedImage image;
+	final Collection<StitchColor> colorList;
+	final BufferedImage image;
+	final StitchImage stitchImage;
+	
+	private final int thread;
+	private final ArrayList<Thread> threadList = new ArrayList<>();
 	private final BlockingQueue<Entry<Pixel, StitchColor>> outputQueue = new ArrayBlockingQueue<>(16);
 	private final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(0, 0, new StitchColor(0, 0, 0, "poison")),
 			new StitchColor(0, 0, 0, "poison"));
-	private final StitchImage stitchImage;
-	private final int thread;
-	private final ArrayList<Thread> threadList = new ArrayList<>();
 
+	@SuppressWarnings("unused")
 	private ColorConverter() {
 		throw new AssertionError();
 	}
@@ -190,7 +202,7 @@ final class ColorConverter extends Thread {
 	 * @param colorList   - Stitch color lists.
 	 * @param thread      - the number of threads.
 	 */
-	private ColorConverter(final Builder builder) {
+	protected ColorConverter(final Builder builder) {
 		this.image = builder.image;
 		this.stitchImage = builder.stitchImage;
 		this.colorList = builder.colorList;

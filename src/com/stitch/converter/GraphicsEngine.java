@@ -24,6 +24,9 @@ import com.stitch.converter.model.StitchColor;
  * @author Reinvert
  */
 public final class GraphicsEngine implements Runnable {
+	
+	public static final int FLOYD=0, SIERRA=1;
+	
 	/**
 	 * Builder of {@link GraphicsEngine}.
 	 * 
@@ -31,7 +34,8 @@ public final class GraphicsEngine implements Runnable {
 	 */
 	public final static class Builder {
 		private StitchColor backgroundColor = new StitchColor(Color.WHITE, null);
-		private int colorLimit = -1, thread;
+		private int colorLimit = -1, thread, convertMode = Preferences.getInteger("convertMode", 0);
+		private boolean isGammaBased = Preferences.getBoolean("isGammaBased", true);
 
 		private final File csv;
 		private final File file;
@@ -120,6 +124,16 @@ public final class GraphicsEngine implements Runnable {
 			this.thread = thread;
 			return this;
 		}
+		
+		public Builder setGammaBased(final boolean isGammaBased) {
+			this.isGammaBased = isGammaBased;
+			return this;
+		}
+		
+		public Builder setConvertMode(final int convertMode) {
+			this.convertMode = convertMode;
+			return this;
+		}
 
 	}
 
@@ -134,13 +148,13 @@ public final class GraphicsEngine implements Runnable {
 	}
 
 	private final StitchColor backgroundColor;
-	private final int colorLimit, thread;
+	private final int colorLimit, thread, convertMode;
 	private final File csv;
 	private final File file;
 	private final List<Listener> listenerList;
 
 	private final Mode loadMode;
-	private final boolean scaled;
+	private final boolean scaled, isGammaBased;
 
 	/**
 	 * Construct {@link GraphicsEngine} defined by {@link Builder}.
@@ -156,6 +170,8 @@ public final class GraphicsEngine implements Runnable {
 		loadMode = builder.loadMode;
 		thread = builder.thread;
 		listenerList = builder.listenerList;
+		isGammaBased = builder.isGammaBased;
+		convertMode = builder.convertMode;
 	}
 
 	/**
@@ -201,10 +217,14 @@ public final class GraphicsEngine implements Runnable {
 				removeColor(colorList, toRemove);
 			}
 			usedColorCount.clear();
-
-			final ColorConverter converter = new ColorConverter.Builder(image, stitchImage, colorList).setThread(thread).build();
+			ColorConverter converter;
+			final ColorConverter.Builder builder = new ColorConverter.Builder(image, stitchImage, colorList).setThread(thread).setGammaBased(isGammaBased).setConvertMode(convertMode);
+			if(Preferences.getBoolean("isDither", true) == false) {
+				converter = builder.build();
+			} else {
+				converter = new DitheredColorConverter(builder);
+			}
 			converter.start();
-
 			try {
 				converter.join();
 			} catch (final InterruptedException e) {
