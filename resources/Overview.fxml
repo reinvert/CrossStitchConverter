@@ -2,118 +2,117 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.CheckMenuItem?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SeparatorMenuItem?>
-<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
-   <top>
-      <HBox BorderPane.alignment="CENTER">
-         <children>
-            <MenuBar fx:id="menuBar">
-              <menus>
-                <Menu fx:id="fileMenu" mnemonicParsing="false">
-                  <items>
-                        <MenuItem fx:id="load" mnemonicParsing="false" onAction="#loadMenu" text="%load">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#saveMenu" text="%save">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                        <MenuItem fx:id="saveAs" disable="true" mnemonicParsing="false" onAction="#saveAsMenu" text="%save_as">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="A" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="exportConvertedImage" disable="true" mnemonicParsing="false" onAction="#exportConvertedImageMenu" text="%export_converted_image">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                        <MenuItem fx:id="exportStitchList" disable="true" mnemonicParsing="false" onAction="#exportStitchListMenu" text="%export_stitch_list">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                        <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprintMenu" text="%export_blueprint">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="B" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                  </items>
-                </Menu>
-                  <Menu fx:id="windowMenu" mnemonicParsing="false">
-                     <items>
-                        <CheckMenuItem fx:id="toggleColorTableItem" mnemonicParsing="false" onAction="#toggleWindowColorTable" selected="true" text="%color_table">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="T" control="UP" meta="UP" shift="UP" shortcut="ANY" />
-                           </accelerator>
-                        </CheckMenuItem>
-                        <CheckMenuItem fx:id="showNumberItem" mnemonicParsing="false" onAction="#onShowNumberItemClicked" selected="true" text="%button_show_index">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="ANY" />
-                           </accelerator>
-                        </CheckMenuItem>
-                     </items>
-                  </Menu>
-                  <Menu fx:id="settingMenu" mnemonicParsing="false">
-                    <items>
-                        <MenuItem fx:id="setting" mnemonicParsing="false" onAction="#setting" text="%setting">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                           </accelerator>
-                        </MenuItem>
-                    </items>
-                  </Menu>
-                <Menu fx:id="etcMenu" mnemonicParsing="false">
-                  <items>
-                    <MenuItem fx:id="author" mnemonicParsing="false" onAction="#author" text="%about" />
-                  </items>
-                </Menu>
-              </menus>
-            </MenuBar>
-            <TextField fx:id="zoom" disable="true" focusTraversable="false" prefHeight="32.0" prefWidth="100.0" />
-         </children>
-      </HBox>
-   </top>
+<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
+   <right>
+      <TableView id="colorTable" fx:id="colorTable" disable="true" editable="true" maxWidth="330.0" minWidth="330.0" prefWidth="330.0" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
+      <placeholder><Label text="" /></placeholder>
+        <columns>
+            <TableColumn fx:id="highlightColumn" minWidth="40.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
+            <TableColumn fx:id="completeColumn" prefWidth="40.0" resizable="false" text="%table_title_completed" />
+            <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
+            <TableColumn fx:id="totalNumberColumn" prefWidth="70.0" text="%total_number" />
+            <TableColumn fx:id="colorColumn" prefWidth="45.0" text="%table_title_color" />
+            <TableColumn fx:id="nameColumn" prefWidth="66.0" text="%table_title_name" />
+        </columns>
+      </TableView>
+   </right>
    <center>
-      <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.5" BorderPane.alignment="CENTER">
-        <items>
-            <ScrollPane fx:id="canvasScrollPane" hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS">
+      <BorderPane BorderPane.alignment="CENTER">
+         <top>
+            <HBox BorderPane.alignment="CENTER">
+               <children>
+                  <MenuBar fx:id="menuBar">
+                    <menus>
+                      <Menu fx:id="fileMenu" mnemonicParsing="false">
+                        <items>
+                              <MenuItem fx:id="load" mnemonicParsing="false" onAction="#loadMenu" text="%load">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="O" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="save" disable="true" mnemonicParsing="false" onAction="#saveMenu" text="%save">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="S" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="saveAs" disable="true" mnemonicParsing="false" onAction="#saveAsMenu" text="%save_as">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="A" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="exportConvertedImage" disable="true" mnemonicParsing="false" onAction="#exportConvertedImageMenu" text="%export_converted_image">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="exportStitchList" disable="true" mnemonicParsing="false" onAction="#exportStitchListMenu" text="%export_stitch_list">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprintMenu" text="%export_blueprint">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                        </items>
+                      </Menu>
+                        <Menu fx:id="windowMenu" mnemonicParsing="false">
+                           <items>
+                              <CheckMenuItem fx:id="toggleColorTableItem" mnemonicParsing="false" onAction="#toggleWindowColorTable" selected="true" text="%color_table">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="T" control="UP" meta="UP" shift="UP" shortcut="ANY" />
+                                 </accelerator>
+                              </CheckMenuItem>
+                              <CheckMenuItem fx:id="showNumberItem" mnemonicParsing="false" onAction="#onShowNumberItemClicked" selected="true" text="%button_show_index">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="ANY" />
+                                 </accelerator>
+                              </CheckMenuItem>
+                           </items>
+                        </Menu>
+                        <Menu fx:id="settingMenu" mnemonicParsing="false">
+                          <items>
+                              <MenuItem fx:id="setting" mnemonicParsing="false" onAction="#setting" text="%setting">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="P" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                                 </accelerator>
+                              </MenuItem>
+                          </items>
+                        </Menu>
+                      <Menu fx:id="etcMenu" mnemonicParsing="false">
+                        <items>
+                          <MenuItem fx:id="author" mnemonicParsing="false" onAction="#author" text="%about" />
+                        </items>
+                      </Menu>
+                    </menus>
+                  </MenuBar>
+                  <TextField fx:id="zoom" disable="true" focusTraversable="false" prefHeight="32.0" prefWidth="100.0" />
+               </children>
+            </HBox>
+         </top>
+         <center>
+            <ScrollPane fx:id="canvasScrollPane" hbarPolicy="ALWAYS" style="-fx-background-color: transparent;" vbarPolicy="ALWAYS" BorderPane.alignment="CENTER">
                <content>
                   <Canvas fx:id="canvas" disable="true" height="700.0" width="1000.0" />
                </content>
             </ScrollPane>
-            <TableView fx:id="colorTable" disable="true" editable="true" maxWidth="700.0" minWidth="317.0" prefWidth="317.0" tableMenuButtonVisible="true">
-      	                  <placeholder>
-      		                  <Label text="" />
-      	                  </placeholder>
-              <columns>
-                <TableColumn fx:id="highlightColumn" minWidth="30.0" prefWidth="30.0" resizable="false" text="%table_title_highlight" />
-                <TableColumn fx:id="completeColumn" prefWidth="30.0" resizable="false" text="%table_title_completed" />
-                  <TableColumn fx:id="indexColumn" prefWidth="50.0" text="%index" />
-                  <TableColumn fx:id="totalNumberColumn" prefWidth="50.0" text="%total_number" />
-                  <TableColumn fx:id="colorColumn" prefWidth="70.0" text="%table_title_color" />
-                  <TableColumn fx:id="nameColumn" prefWidth="70.0" text="%table_title_name" />
-              </columns>
-            </TableView>
-        </items>
-      </SplitPane>
+         </center>
+      </BorderPane>
    </center>
 </BorderPane>

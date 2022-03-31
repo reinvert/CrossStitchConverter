@@ -173,6 +173,17 @@
 .button:default {
   -fx-background-color: transparent;
 }
+
 .button:default:hover {
   -fx-background-color: #B3E5FC;
+}
+
+.split-pane *.split-pane-divider {
+    -fx-padding: 0 0 0 0;
+    -visibility: hidden;
+}
+
+#colorTable.table-view .table-cell {
+    -fx-alignment: CENTER-RIGHT;
+    -fx-padding: 0 10 0 0;
 }

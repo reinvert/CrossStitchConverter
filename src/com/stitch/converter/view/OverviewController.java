@@ -93,8 +93,6 @@ public class OverviewController extends Controller {
 	public SplitPane verticalSplitPane, horizontalSplitPane;
 	@FXML
 	public TextField zoom;
-	
-	private final int DIVIDER_SIZE = 317;
 
 	private int x = -1, y = -1;
 	
@@ -112,24 +110,16 @@ public class OverviewController extends Controller {
 		if (Preferences.getBoolean("showColorTable", true) == false) {
 			setColorTable(false);
 		}
-		overviewStage.widthProperty().addListener((obs, oldVal, newVal) -> {
-			setDividerPosition();
-		});
 		Platform.runLater(new Runnable() {
 			@Override
 			public void run() {
 				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
 						(event) -> closeWindowEvent(event));
-				setDividerPosition();
 				autoLoad();
 			}
 		});
 		checkUpdate();
 		this.overviewStage = overviewStage;
-	}
-
-	public void setDividerPosition() {
-		horizontalSplitPane.setDividerPositions((double) (1 - DIVIDER_SIZE / borderPane.getWidth()));
 	}
 
 	private void autoLoad() {
@@ -832,15 +822,14 @@ public class OverviewController extends Controller {
 		if (enable == true) {
 			toggleColorTableItem.setSelected(true);
 			Preferences.setValue("showColorTable", "true");
-			if (horizontalSplitPane.getItems().contains(colorTable) == false) {
-				horizontalSplitPane.getItems().add(1, colorTable);
-				setDividerPosition();
+			if (borderPane.getChildren().contains(colorTable) == false) {
+				borderPane.setRight(colorTable);
 			}
 		} else {
 			toggleColorTableItem.setSelected(false);
 			Preferences.setValue("showColorTable", "false");
-			if (horizontalSplitPane.getItems().contains(colorTable) == true) {
-				horizontalSplitPane.getItems().remove(1);
+			if (borderPane.getChildren().contains(colorTable) == true) {
+				borderPane.setRight(null);
 			}
 		}
 	}
