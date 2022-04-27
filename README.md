@@ -4,7 +4,3 @@ Just a tool to convert image to cross-stitch pattern.
 
 You can use [binary file](https://github.com/reinvert/CrossStitchConverter/raw/master/crossstitchconverter.zip) without compile.  
 컴파일 없이 [바이너리 파일](https://github.com/reinvert/CrossStitchConverter/raw/master/crossstitchconverter.zip)을 다운로드받아 실행할 수 있습니다.
-
-TODO
-- create shortcut on menu items.
-- clean source code and markup.
