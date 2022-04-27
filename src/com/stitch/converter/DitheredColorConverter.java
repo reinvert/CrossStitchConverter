@@ -24,7 +24,7 @@ public class DitheredColorConverter extends ColorConverter {
 		for(int x=0; x<image.getWidth(); x++) {
 			final ArrayList<Color> row = new ArrayList<>();
 			for(int y=0; y<image.getHeight(); y++) {
-				row.add(gammaToLinear(new StitchColor(image.getRGB(x, y), "").asFX()));
+				row.add(gammaToLinear(new StitchColor(image.getRGB(x, y), "").asFX(), isGammaBased));
 			}
 			doubleValueImage.add(row);
 		}
@@ -38,7 +38,7 @@ public class DitheredColorConverter extends ColorConverter {
 				double calculatedDifference = 0;
 
 				for (final StitchColor listColor : colorList) {
-					calculatedDifference = ImageTools.calculateDifference(linearToGamma(color), listColor.asFX());
+					calculatedDifference = ImageTools.calculateDifference(linearToGamma(color, isGammaBased), listColor.asFX());
 					if (calculatedDifference < difference) {
 						outputColor = listColor;
 						difference = calculatedDifference;
@@ -48,7 +48,7 @@ public class DitheredColorConverter extends ColorConverter {
 				image.setRGB(x,  y, pixel.getColor().getRGB());
 				stitchImage.add(pixel);
 				
-				final Color outputLinearColor = gammaToLinear(outputColor.asFX());
+				final Color outputLinearColor = gammaToLinear(outputColor.asFX(), isGammaBased);
 
 				final double redDifference = color.getRed() - outputLinearColor.getRed();
 				final double greenDifference = color.getGreen() - outputLinearColor.getGreen();
@@ -145,14 +145,20 @@ public class DitheredColorConverter extends ColorConverter {
 		}
 	}
 	
-	private Color gammaToLinear(Color color) {
+	private Color gammaToLinear(Color color, boolean isGammaBased) {
+		if(isGammaBased == false) {
+			return color;
+		}
 		final double red = gammaToLinear(color.getRed());
 		final double green = gammaToLinear(color.getGreen());
 		final double blue = gammaToLinear(color.getBlue());
 		return new Color(red, green, blue, 1d);
 	}
 	
-	private Color linearToGamma(Color color) {
+	private Color linearToGamma(Color color, boolean isGammaBased) {
+		if(isGammaBased == false) {
+			return color;
+		}
 		final double red = linearToGamma(color.getRed());
 		final double green = linearToGamma(color.getGreen());
 		final double blue = linearToGamma(color.getBlue());
@@ -160,26 +166,18 @@ public class DitheredColorConverter extends ColorConverter {
 	}
 	
 	private double linearToGamma(double value) {
-		if(isGammaBased == true) {
-			if(value <= 0.0031308d) {
-				return value * 12.92d;
-			} else {
-				return Math.pow(value, 1d / 2.4d) * 1.055 - 0.055;
-			}
+		if(value <= 0.0031308d) {
+			return value * 12.92d;
 		} else {
-			return value;
+			return Math.pow(value, 1d / 2.4d) * 1.055 - 0.055;
 		}
 	}
 	
 	private double gammaToLinear(double value) {
-		if(isGammaBased == true) {
-			if(value <= 0.04045d) {
-				return value / 12.92d;
-			} else {
-				return Math.pow((value + 0.055d) / 1.055d, 2.4d);
-			}
+		if(value <= 0.04045d) {
+			return value / 12.92d;
 		} else {
-			return value;
+			return Math.pow((value + 0.055d) / 1.055d, 2.4d);
 		}
 	}
 	

@@ -11,6 +11,18 @@
     -fx-accent: #616161;
 }
 
+.menu{
+	-fx-padding: 1 7 1 7;
+}
+
+.context-menu{
+	-fx-padding: 0 0 0 0;
+}
+
+.menu-item{
+	-fx-padding: 3 3 3 3;
+}
+
 .menu-bar{
 	-fx-background-color: #FAFAFA;
 	-fx-selection-bar: #E0E0E0;

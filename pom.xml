@@ -54,17 +54,17 @@
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-controls</artifactId>
-			<version>18</version>
+			<version>18.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-fxml</artifactId>
-			<version>18</version>
+			<version>18.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-swing</artifactId>
-			<version>18</version>
+			<version>18.0.1</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.googlecode.json-simple</groupId>
@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>io.github.palexdev</groupId>
 			<artifactId>materialfx</artifactId>
-			<version>11.13.4</version>
+			<version>11.13.5</version>
 		</dependency>
 	</dependencies>
 </project>

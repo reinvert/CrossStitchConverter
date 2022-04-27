@@ -2,6 +2,7 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.CheckMenuItem?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
@@ -10,12 +11,11 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.OverviewController">
+<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/18" fx:controller="com.stitch.converter.view.OverviewController">
    <right>
       <TableView id="colorTable" fx:id="colorTable" disable="true" editable="true" maxWidth="330.0" minWidth="330.0" prefWidth="330.0" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
       <placeholder><Label text="" /></placeholder>
@@ -32,9 +32,9 @@
    <center>
       <BorderPane BorderPane.alignment="CENTER">
          <top>
-            <HBox BorderPane.alignment="CENTER">
+            <HBox fillHeight="false" maxHeight="20.0" prefHeight="20.0" prefWidth="1590.0" BorderPane.alignment="CENTER">
                <children>
-                  <MenuBar fx:id="menuBar">
+                  <MenuBar fx:id="menuBar" maxHeight="20.0" prefHeight="20.0">
                     <menus>
                       <Menu fx:id="fileMenu" mnemonicParsing="false">
                         <items>
@@ -102,7 +102,7 @@
                       </Menu>
                     </menus>
                   </MenuBar>
-                  <TextField fx:id="zoom" disable="true" focusTraversable="false" prefHeight="32.0" prefWidth="100.0" />
+                  <TextField fx:id="zoom" disable="true" focusTraversable="false" prefWidth="100.0" />
                </children>
             </HBox>
          </top>

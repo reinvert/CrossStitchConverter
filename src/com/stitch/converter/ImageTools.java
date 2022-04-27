@@ -114,12 +114,12 @@ final class ImageTools {
 	 * @param targetSize   - the target size.
 	 * @return the scale of two size.
 	 */
-	static double getScaleFactor(final int originalSize, final int targetSize) {
+	static double getScaleFactor(final double originalSize, final double targetSize) {
 		double scale = 1d;
 		if (originalSize > targetSize) {
-			scale = (double) targetSize / (double) originalSize;
+			scale = targetSize / originalSize;
 		} else {
-			scale = (double) originalSize / (double) targetSize;
+			scale = originalSize / targetSize;
 		}
 		return scale;
 	}
@@ -133,8 +133,8 @@ final class ImageTools {
 	 * @return the scale of two {@link java.awt.Dimension Dimension}.
 	 */
 	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize) throws NullPointerException {
-			final double widthScale = getScaleFactor(originalSize.width, targetSize.width);
-			final double heightScale = getScaleFactor(originalSize.height, targetSize.height);
+			final double widthScale = getScaleFactor(originalSize.getWidth(), targetSize.getWidth());
+			final double heightScale = getScaleFactor(originalSize.getHeight(), targetSize.getHeight());
 			return Math.min(widthScale, heightScale);
 	}
 

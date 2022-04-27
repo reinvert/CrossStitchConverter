@@ -23,7 +23,6 @@ import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.text.Text;
 import javafx.util.StringConverter;
@@ -78,22 +77,26 @@ public class SettingController extends Controller {
 				}
 			});
 			textField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-				if (event.getCode() == KeyCode.ESCAPE) {
+				switch(event.getCode()) {
+				case ESCAPE:
 					textField.setText(converter.toString(getItem()));
 					cancelEdit();
 					event.consume();
-				} else if (event.getCode() == KeyCode.RIGHT) {
-					getTableView().getSelectionModel().selectRightCell();
-					event.consume();
-				} else if (event.getCode() == KeyCode.LEFT) {
-					getTableView().getSelectionModel().selectLeftCell();
-					event.consume();
-				} else if (event.getCode() == KeyCode.UP) {
+					break;
+					
+				case UP:
 					getTableView().getSelectionModel().selectAboveCell();
+					cancelEdit();
 					event.consume();
-				} else if (event.getCode() == KeyCode.DOWN) {
+					break;
+					
+				case DOWN:
 					getTableView().getSelectionModel().selectBelowCell();
+					cancelEdit();
 					event.consume();
+					break;
+				
+				default:
 				}
 			});
 		}
@@ -111,10 +114,10 @@ public class SettingController extends Controller {
 
 			this.item = item;
 			if (!isEditing() && !item.equals(getItem())) {
-				TableView<S> table = getTableView();
+				final TableView<S> table = getTableView();
 				if (table != null) {
-					TableColumn<S, T> column = getTableColumn();
-					CellEditEvent<S, T> event = new CellEditEvent<>(table,
+					final TableColumn<S, T> column = getTableColumn();
+					final CellEditEvent<S, T> event = new CellEditEvent<>(table,
 							new TablePosition<S, T>(table, getIndex(), column), TableColumn.editCommitEvent(), item);
 					Event.fireEvent(column, event);
 					itemProperty().setValue(item);
