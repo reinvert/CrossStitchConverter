@@ -16,4 +16,5 @@ module CrossStitchConverter {
 	requires transitive javafx.fxml;
 	requires transitive javafx.swing;
 	requires transitive json.simple;
+	requires com.opencsv;
 }

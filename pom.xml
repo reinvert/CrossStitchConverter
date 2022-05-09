@@ -76,5 +76,10 @@
 			<artifactId>materialfx</artifactId>
 			<version>11.13.5</version>
 		</dependency>
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>5.6</version>
+		</dependency>
 	</dependencies>
 </project>

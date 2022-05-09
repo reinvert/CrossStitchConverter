@@ -2,8 +2,8 @@ package com.stitch.converter;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,6 +15,8 @@ import com.stitch.converter.model.StitchImage;
 
 import javafx.scene.paint.Color;
 
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvException;
 import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
 
@@ -121,7 +123,9 @@ public final class GraphicsEngine implements Runnable {
 		 * @return this instance.
 		 */
 		public Builder setThread(final int thread) {
-			this.thread = thread;
+			if(thread > 0) {
+				this.thread = thread;
+			}
 			return this;
 		}
 		
@@ -131,7 +135,11 @@ public final class GraphicsEngine implements Runnable {
 		}
 		
 		public Builder setConvertMode(final int convertMode) {
-			this.convertMode = convertMode;
+			switch(convertMode) {
+			case 0:
+			case 1:
+				this.convertMode = convertMode;
+			}
 			return this;
 		}
 
@@ -183,10 +191,10 @@ public final class GraphicsEngine implements Runnable {
 	private void makeNewFile(final File file) throws NullPointerException, IOException {
 		final ArrayList<StitchColor> colorList;
 		try {
-			final String csvInput = new String(Files.readAllBytes(csv.toPath()));
-			final ArrayList<ArrayList<String>> csvArray = CSVReader.read(csvInput);
-			colorList = CSVReader.readColorList(csvArray);
-		} catch (final IOException e) {
+			final CSVReader csvReader = new CSVReader(new FileReader(csv));
+			final List<String[]> csvList = csvReader.readAll();
+			colorList = readColorList(csvList);
+		} catch (final IOException | CsvException e) {
 			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("read_failed"));
 			return;
@@ -207,7 +215,12 @@ public final class GraphicsEngine implements Runnable {
 		final StitchImage stitchImage = new StitchImage();
 		stitchImage.setChanged(true);
 		final int resizeLength = Preferences.getInteger("resizeLength", 200);
-		final BufferedImage image = ImageTools.readImage(file, scaled, resizeLength, resizeLength);
+		BufferedImage image;
+		if(scaled == true) {
+			image = ImageTools.readImage(file, resizeLength, resizeLength);
+		} else {
+			image = ImageTools.readImage(file);
+		}
 		boolean onceRunned = false;
 		StitchColor toRemove = null;
 		final HashMap<String, Integer> usedColorCount = new HashMap<String, Integer>();
@@ -271,7 +284,7 @@ public final class GraphicsEngine implements Runnable {
 	 *                  colors of all threads.
 	 * @param toRemove  - the name of the thread to delete.
 	 */
-	private void removeColor(final Collection<StitchColor> colorList, final StitchColor toRemove) {
+	private static void removeColor(final Collection<StitchColor> colorList, final StitchColor toRemove) {
 		final Iterator<StitchColor> iterator = colorList.iterator();
 		StitchColor color;
 		while ((color = iterator.next()) != null) {
@@ -297,5 +310,41 @@ public final class GraphicsEngine implements Runnable {
 			LogPrinter.print(e);
 			LogPrinter.error(Resources.getString("cant_read_image"));
 		}
+	}
+	
+	/**
+	 * Convert 2nd-dimensional CSV {@link String} {@link ArrayList} to a
+	 * {@link StitchColor} {@link ArrayList}.
+	 * 
+	 * @param csv - 2nd-dimensional CSV {@link String} Array.
+	 * @return {@link StitchColor} Array.
+	 * @throws NoSuchElementException   occurs when one or more of R, G, or B values
+	 *                                  is missing.
+	 * @throws NumberFormatException    occurs when one or more of R, G, or B values
+	 *                                  can not be read.
+	 * @throws IllegalArgumentException occurs when one or more of the R, G, or B
+	 *                                  values is not a value between 0 and 255.
+	 */
+	private static ArrayList<StitchColor> readColorList(final List<String[]> csv)
+			throws NoSuchElementException, NumberFormatException, IllegalArgumentException {
+		final ArrayList<StitchColor> output = new ArrayList<StitchColor>();
+		int i = 0;
+		try {
+			for (final String[] row: csv) {
+				final String name = row[0];
+				final int red = Integer.parseInt(row[1]);
+				final int green = Integer.parseInt(row[2]);
+				final int blue = Integer.parseInt(row[3]);
+				output.add(new StitchColor(red, green, blue, name));
+				i++;
+			}
+		} catch (final ArrayIndexOutOfBoundsException e) {
+			throw new NoSuchElementException(Integer.toString(i + 1));
+		} catch (final NumberFormatException e) {
+			throw new NumberFormatException(Integer.toString(i + 1));
+		} catch (final IllegalArgumentException e) {
+			throw new IllegalArgumentException(Integer.toString(i + 1));
+		}
+		return output;
 	}
 }

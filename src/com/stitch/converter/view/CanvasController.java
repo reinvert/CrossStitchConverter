@@ -23,18 +23,18 @@ public class CanvasController {
 	final Canvas canvas;
 	final GraphicsContext context;
 	final StitchImage image;
-	private boolean isHighlightExist = false;
-	double scale = 10.0d, margin = scale;
+	private boolean isHighlightExist = false, isHighlightAlternate = false;
+	protected double scale = 10.0d, margin = scale;
 
-	private final Color darkGray1 = new Color(0.0d, 0.0d, 0.0d, 1d);
-	private final Color darkGray2 = new Color(0.0d, 0.0d, 0.0d, 0.25d);
-	private final Color darkGray3 = new Color(0.0d, 0.0d, 0.0d, 0.1d);
+	private static final Color DARK_GRAY_1 = new Color(0.0d, 0.0d, 0.0d, 1d);
+	private static final Color DARK_GRAY_2 = new Color(0.0d, 0.0d, 0.0d, 0.25d);
+	private static final Color DARK_GRAY_3 = new Color(0.0d, 0.0d, 0.0d, 0.1d);
 
-	private final Color brightGray1 = new Color(1.0d, 1.0d, 1.0d, 1d);
-	private final Color brightGray2 = new Color(1.0d, 1.0d, 1.0d, 0.25d);
-	private final Color brightGray3 = new Color(1.0d, 1.0d, 1.0d, 0.1d);
+	private static final Color BRIGHT_GRAY_1 = new Color(1.0d, 1.0d, 1.0d, 1d);
+	private static final Color BRIGHT_GRAY_2 = new Color(1.0d, 1.0d, 1.0d, 0.25d);
+	private static final Color BRIGHT_GRAY_3 = new Color(1.0d, 1.0d, 1.0d, 0.1d);
 
-	private Color background;
+	private Color background, highlightAlternateColor;
 	private Color darkerColor;
 
 	private final String fontName;
@@ -51,6 +51,8 @@ public class CanvasController {
 		this.canvas.setWidth(image.getWidth() * scale + 2 * margin);
 		this.canvas.setHeight(image.getHeight() * scale + 2 * margin);
 		background = Preferences.getColor("completedFillColor", new StitchColor(255, 255, 0, "")).asFX();
+		highlightAlternateColor = Preferences.getColor("highlightAlternateColor", new StitchColor(128, 255, 128, "")).asFX();
+		isHighlightAlternate = Preferences.getBoolean("isHighlightAlternate", false);
 		darkerColor = new Color(0d, 0d, 0d, Preferences.getDouble("highlightBrightnessLevel", 0.75d));
 		fontName = Preferences.getString("fontType", "");
 		originalFont = new Font(fontName, scale);
@@ -59,7 +61,7 @@ public class CanvasController {
 	}
 
 	private void drawGrid(int x, int y, int width, int height, boolean isHighlightExist) {
-		context.setFill(isHighlightExist ? brightGray3 : darkGray3);
+		context.setFill(isHighlightExist ? BRIGHT_GRAY_3 : DARK_GRAY_3);
 		for (int count = 0; count <= width; count++) {
 			if (count % 5 == 0) {
 				continue;
@@ -73,7 +75,7 @@ public class CanvasController {
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
 
-		context.setFill(isHighlightExist ? brightGray2 : darkGray2);
+		context.setFill(isHighlightExist ? BRIGHT_GRAY_2 : DARK_GRAY_2);
 		for (int count = 5; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}
@@ -81,7 +83,7 @@ public class CanvasController {
 			context.fillRect((int) (x * scale) + margin, (int) ((y + count) * scale) + margin, width * scale, 1);
 		}
 
-		context.setFill(isHighlightExist ? brightGray1 : darkGray1);
+		context.setFill(isHighlightExist ? BRIGHT_GRAY_1 : DARK_GRAY_1);
 		for (int count = 0; count <= width; count += 10) {
 			context.fillRect((int) ((x + count) * scale) + margin, (int) (y * scale) + margin, 1, height * scale);
 		}
@@ -191,7 +193,11 @@ public class CanvasController {
 					context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
 				} else if (isHighlightExist == true) {
 					if (pixelList.isHighlighted() == true) {
-						context.setFill(Color.WHITE);
+						if(isHighlightAlternate == true && (pixel.getX() * pixel.getY()) %2 == 0) {
+							context.setFill(highlightAlternateColor);
+						} else {
+							context.setFill(Color.WHITE);
+						}
 						context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
 					} else {
 						context.setFill(pixelColor);

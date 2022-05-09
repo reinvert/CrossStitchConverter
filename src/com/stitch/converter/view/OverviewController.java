@@ -256,9 +256,7 @@ public class OverviewController extends Controller {
 			if (event.getCode() == KeyCode.ENTER) {
 				event.consume();
 				final String zoomScale = zoom.getText();
-				if (setZoom(zoomScale) == true) {
-					Preferences.setValue("scale", zoomScale);
-				}
+				setZoom(zoomScale);
 				invalidate();
 			}
 		});
@@ -301,10 +299,7 @@ public class OverviewController extends Controller {
 			}
 		});
 		colorTable.setItems(stitchListArrayList);
-		if (setZoom(Preferences.getValue("scale", "MATCH_WIDTH")) == false) {
-			Preferences.setValue("scale", "MATCH_WIDTH");
-			setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
-		}
+		setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
 		canvas.setDisable(false);
 		canvas.requestFocus();
 		colorTable.setDisable(false);
@@ -487,7 +482,7 @@ public class OverviewController extends Controller {
 		name = dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf("."));
 	}
 	
-	private String getExtension(final File file) {
+	private static String getExtension(final File file) {
 		final String name = file.getName();
 		final int lastIndexOf = name.lastIndexOf(".");
 		if (lastIndexOf == -1) {
@@ -753,12 +748,10 @@ public class OverviewController extends Controller {
 			overviewStage.setTitle(dmcFile.getName());
 		}
 	}
-	
-	private Alert zoomAlert;
 
 	public boolean setZoom(final String scale) {
 		double scaleRatio = 0d;
-
+		
 		final double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
 		final double imageWidth = canvasController.getImage().getWidth();
 		final double ratioByWidth = Math.max(2.0, screenWidth / imageWidth);
@@ -779,32 +772,20 @@ public class OverviewController extends Controller {
 			try {
 				scaleRatio = Double.parseDouble(scale.replace("x", ""));
 				if(scaleRatio <= 0) {
-					throw new NumberFormatException();
+					scaleRatio = 2d;
 				}
-				if(scaleRatio >= 20) {
-					if (zoomAlert == null) {
-						zoomAlert = new Alert(AlertType.CONFIRMATION);
-						zoomAlert.getDialogPane().getStylesheets().add(css);
-						zoomAlert.setTitle(Resources.getString("warning"));
-						zoomAlert.setHeaderText(Resources.getString("zoom_number_too_large"));
-						zoomAlert.setContentText(Resources.getString("zoom_number_large_description"));
-						
-						final Image icon = new Image("file:resources/icon/information.png");
-						zoomAlert.setGraphic(new ImageView(icon));
-						((Stage)zoomAlert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-					}
-					final Optional<ButtonType> result = zoomAlert.showAndWait();
-					if (result.get().equals(ButtonType.OK) == false) {
-						throw new NumberFormatException();
-					}
+				if(scaleRatio >= 15) {
+					scaleRatio = 15d;
 				}
 				canvasController.setScale(Double.parseDouble(scale));
+				zoom.setText(Double.toString(scaleRatio));
 			} catch (final NumberFormatException e) {
+				canvasController.setScale(ratioByWidth);
 				zoom.setText(Preferences.getValue("scale", "MATCH_WIDTH"));
 				return false;
 			}
-			zoom.setText(new StringBuilder().append(scaleRatio).append("x").toString());
 		}
+		Preferences.setValue("scale", zoom.getText());
 		canvas.requestFocus();
 		return true;
 	}

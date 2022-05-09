@@ -185,7 +185,7 @@ class ColorConverter extends Thread {
 	private final int thread;
 	private final ArrayList<Thread> threadList = new ArrayList<>();
 	private final BlockingQueue<Entry<Pixel, StitchColor>> outputQueue = new ArrayBlockingQueue<>(16);
-	private final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(0, 0, new StitchColor(0, 0, 0, "poison")),
+	private static final Entry<Pixel, StitchColor> poisonPill = new AbstractMap.SimpleEntry<>(new Pixel(0, 0, new StitchColor(0, 0, 0, "poison")),
 			new StitchColor(0, 0, 0, "poison"));
 
 	@SuppressWarnings("unused")

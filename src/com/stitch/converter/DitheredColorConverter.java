@@ -145,7 +145,7 @@ public class DitheredColorConverter extends ColorConverter {
 		}
 	}
 	
-	private Color gammaToLinear(Color color, boolean isGammaBased) {
+	private static Color gammaToLinear(Color color, boolean isGammaBased) {
 		if(isGammaBased == false) {
 			return color;
 		}
@@ -155,7 +155,7 @@ public class DitheredColorConverter extends ColorConverter {
 		return new Color(red, green, blue, 1d);
 	}
 	
-	private Color linearToGamma(Color color, boolean isGammaBased) {
+	private static Color linearToGamma(Color color, boolean isGammaBased) {
 		if(isGammaBased == false) {
 			return color;
 		}
@@ -165,24 +165,28 @@ public class DitheredColorConverter extends ColorConverter {
 		return new Color(red, green, blue, 1d);
 	}
 	
-	private double linearToGamma(double value) {
+	private static double linearToGamma(double value) {
+		if(value < 0 || value > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value: " + value);
+		}
 		if(value <= 0.0031308d) {
 			return value * 12.92d;
-		} else {
-			return Math.pow(value, 1d / 2.4d) * 1.055 - 0.055;
 		}
+		return Math.pow(value, 1d / 2.4d) * 1.055 - 0.055;
 	}
 	
-	private double gammaToLinear(double value) {
+	private static double gammaToLinear(double value) {
+		if(value < 0 || value > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value: " + value);
+		}
 		if(value <= 0.04045d) {
 			return value / 12.92d;
-		} else {
-			return Math.pow((value + 0.055d) / 1.055d, 2.4d);
 		}
+		return Math.pow((value + 0.055d) / 1.055d, 2.4d);
 	}
 	
 	private class DifferenceCalc{
-		final double red, green, blue;
+		private final double red, green, blue;
 		DifferenceCalc(final double red, final double green, final double blue){
 			this.red = red;
 			this.green = green;

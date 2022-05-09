@@ -13,8 +13,8 @@ import java.util.TreeMap;
 import com.stitch.converter.model.StitchColor;
 
 public class Preferences {
-	private final static String directory = "config.properties";
-	private static SortedMap<String, String> keyStore = new TreeMap<>();
+	private static final String directory = "config.properties";
+	private static final SortedMap<String, String> keyStore = new TreeMap<>();
 
 	static {
 		try {
@@ -48,7 +48,7 @@ public class Preferences {
 		return true;
 	}
 	
-	private static Runnable storeAction = new Runnable() {
+	private static final Runnable storeAction = new Runnable() {
 		@Override
 		public void run() {
 			try (final FileWriter fileWriter = new FileWriter(directory)) {

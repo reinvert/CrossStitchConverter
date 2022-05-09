@@ -31,6 +31,24 @@ final class ImageTools {
 	
 	static double calculateDifference(double originalRed, double originalGreen, double originalBlue,
 			double targetRed, double targetGreen, double targetBlue) {
+		if(originalRed < 0 || originalRed > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value(originalRed): " + originalRed);
+		}
+		if(originalGreen < 0 || originalGreen > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value(originalGreen): " + originalGreen);
+		}
+		if(originalBlue < 0 || originalBlue > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value(originalBlue): " + originalBlue);
+		}
+		if(targetRed < 0 || targetRed > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value(targetRed): " + targetRed);
+		}
+		if(targetGreen < 0 || targetGreen > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value(targetGreen): " + targetGreen);
+		}
+		if(targetBlue < 0 || targetBlue > 1) {
+			throw new ArithmeticException("Input value should between 0 and 1. Input Value(targetBlue): " + targetBlue);
+		}
 		// LINEAR TO GAMMA
 		/*
 		final double gamma = 2.2d;
@@ -84,7 +102,7 @@ final class ImageTools {
 
 	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {
 		StitchColor uselessColor = null;
-		double difference = 256;
+		double difference = Double.MAX_VALUE;
 		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());
 		for (int i = 0; i < list.size(); i++) {
 			for (int j = i + 1; j < list.size(); j++) {
@@ -132,30 +150,43 @@ final class ImageTools {
 	 * @param targetSize   - the target {@link java.awt.Dimension Dimension}.
 	 * @return the scale of two {@link java.awt.Dimension Dimension}.
 	 */
-	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize) throws NullPointerException {
+	static double getScaleFactorToFit(final Dimension originalSize, final Dimension targetSize) {
 			final double widthScale = getScaleFactor(originalSize.getWidth(), targetSize.getWidth());
 			final double heightScale = getScaleFactor(originalSize.getHeight(), targetSize.getHeight());
 			return Math.min(widthScale, heightScale);
 	}
 
 	/**
-	 * Converts the size of the image to read or just read.
+	 * Reads the image to convert.
 	 * 
 	 * @param file   - the image {@link java.io.File file}.
-	 * @param scaled - true if converts the size of the image.
 	 * @return {@link java.awt.BufferedImage BufferedImage} file.
 	 * @throws IOException occurs when the image file can't read.
 	 */
-	static BufferedImage readImage(final File file, final boolean scaled, final int width, final int height)
+	static BufferedImage readImage(final File file) throws IOException {
+		final BufferedImage image = ImageIO.read(file);
+		return readImage(image);
+	}
+	
+	/**
+	 * Reads the image to convert. Size is changed by the width and height.
+	 * 
+	 * @param file   - the image {@link java.io.File file}.
+	 * @return {@link java.awt.BufferedImage BufferedImage} file.
+	 * @throws IOException occurs when the image file can't read.
+	 */
+	static BufferedImage readImage(final File file, final int width, final int height)
 			throws IOException {
 		BufferedImage image = ImageIO.read(file);
-		if (scaled) {
-			final double scaleFactor = Math.min(1d, ImageTools.getScaleFactorToFit(
-					new Dimension(image.getWidth(), image.getHeight()), new Dimension(width, height)));
-			final int scaleWidth = (int) Math.round(image.getWidth() * scaleFactor);
-			final int scaleHeight = (int) Math.round(image.getHeight() * scaleFactor);
-			image = ImageTools.resize(image, scaleWidth, scaleHeight);
-		}
+		final double scaleFactor = Math.min(1d, ImageTools.getScaleFactorToFit(
+				new Dimension(image.getWidth(), image.getHeight()), new Dimension(width, height)));
+		final int scaleWidth = (int) Math.round(image.getWidth() * scaleFactor);
+		final int scaleHeight = (int) Math.round(image.getHeight() * scaleFactor);
+		image = ImageTools.resize(image, scaleWidth, scaleHeight);
+		return readImage(image);
+	}
+	
+	private static BufferedImage readImage(final BufferedImage image) throws IOException {
 		final GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		final GraphicsConfiguration graphicsConfiguration = graphicsEnvironment.getDefaultScreenDevice()
 				.getDefaultConfiguration();
@@ -166,7 +197,13 @@ final class ImageTools {
 		return backgroundFilledBufferedImage;
 	}
 
-	static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
+	private static BufferedImage resize(final BufferedImage img, final int newW, final int newH) {
+		if(newW < 0) {
+			throw new ArithmeticException("Input value should above 0. Input Value(newW): " + newW);
+		}
+		if(newH < 0) {
+			throw new ArithmeticException("Input value should above 0. Input Value(newH): " + newH);
+		}
 		final java.awt.Image originalImage = img.getScaledInstance(newW, newH, java.awt.Image.SCALE_SMOOTH);
 		final BufferedImage outputImage = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_ARGB);
 

@@ -106,8 +106,7 @@ public class Resources {
 					LogPrinter.print(e);
 				}
 			}
-		}).start();;
-		
+		}).start();
 	}
 
 	public static boolean writeText(final File file, final String text) throws IOException {
