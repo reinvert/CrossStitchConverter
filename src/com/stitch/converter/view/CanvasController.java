@@ -193,7 +193,7 @@ public class CanvasController {
 					context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
 				} else if (isHighlightExist == true) {
 					if (pixelList.isHighlighted() == true) {
-						if(isHighlightAlternate == true && (pixel.getX() * pixel.getY()) %2 == 0) {
+						if(isHighlightAlternate == true && (pixel.getX() + pixel.getY()) %2 == 0) {
 							context.setFill(highlightAlternateColor);
 						} else {
 							context.setFill(Color.WHITE);
