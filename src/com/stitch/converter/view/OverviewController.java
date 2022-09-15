@@ -261,7 +261,7 @@ public class OverviewController extends Controller {
 			}
 		});
 
-		canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
+		canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(final MouseEvent event) {
 				final MouseButton button = event.getButton();
@@ -272,6 +272,26 @@ public class OverviewController extends Controller {
 				}
 			}
 		});
+		
+		if(Preferences.getBoolean("showDistanceCircle", false) == true) {
+			final EventHandler<MouseEvent> startHandler = new EventHandler<>() {
+				@Override
+				public void handle(MouseEvent event) {
+					canvasController.startDrawDistanceCircle(event.getX(), event.getY());
+					invalidate();
+				}
+			};
+			canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, startHandler);
+			canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, startHandler);
+			canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
+				@Override
+				public void handle(MouseEvent event) {
+					canvasController.stopDrawDistanceCircle();
+					invalidate();
+				}
+			});
+		}
+		
 		canvas.requestFocus();
 	}
 	

@@ -168,6 +168,9 @@ public class CanvasController {
 		if(highlightX != -1 && highlightY != -1) {
 			drawHighlightPixel(highlightX, highlightY);
 		}
+		if(isDrawDistanceCircle == true) {
+			drawDistanceCircle();
+		}
 	}
 
 	private void renderImage() {
@@ -233,5 +236,25 @@ public class CanvasController {
 	public void drawHighlightPixel(final int x, final int y) {
 		context.setStroke(Color.RED);
 		context.strokeRect(x * scale + margin, y * scale + margin, scale, scale);
+	}
+	
+	private boolean isDrawDistanceCircle = false;
+	private double distanceCircleX = 0, distanceCircleY = 0;
+	
+	public void startDrawDistanceCircle(final double x, final double y) {
+		isDrawDistanceCircle = true;
+		distanceCircleX = x;
+		distanceCircleY = y;
+	}
+	
+	public void stopDrawDistanceCircle() {
+		isDrawDistanceCircle = false;
+	}
+	
+	public void drawDistanceCircle() {
+		final double circleSize = Preferences.getDouble("distanceCircleSize", 20d) * scale;
+		final Color color = Preferences.getColor("distanceCircleColor", new StitchColor(128, 128, 255, "")).asFX();
+		context.setStroke(color);
+		context.strokeOval(distanceCircleX - circleSize/2, distanceCircleY - circleSize/2, circleSize, circleSize);
 	}
 }

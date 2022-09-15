@@ -35,7 +35,7 @@ public class Preferences {
 				String line = null;
 				while ((line = bufferedReader.readLine()) != null) {
 					try {
-						final String[] splitLine = line.split("=");
+						final String[] splitLine = line.replace("= ", "=").replace(" =", "=").split("=");
 						final String key = splitLine[0];
 						final String value = splitLine[1];
 						keyStore.put(key, value);
