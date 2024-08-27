@@ -102,7 +102,7 @@ public class OverviewController extends Controller {
 		try {
 			css = new File("resources/Style.css").toURI().toURL().toExternalForm();
 			final int fontSize = Preferences.getInteger("fontSize", 13);
-			final String fontType = Preferences.getString("fontType", "Malgun Gothic");
+			final String fontType = Preferences.getValue("fontType", "Malgun Gothic");
 			style = new StringBuilder("-fx-font: ").append(fontSize).append("px \"").append(fontType).append("\";").toString();
 		} catch (MalformedURLException e) {
 			LogPrinter.print(e);
@@ -125,7 +125,7 @@ public class OverviewController extends Controller {
 	private void autoLoad() {
 		if (Preferences.getBoolean("autoLoad", false) == true) {
 			try {
-				loadDmc(new File(Preferences.getString("autoLoadFile")));
+				loadDmc(new File(Preferences.getValue("autoLoadFile", "")));
 			} catch (final NoSuchElementException e) {
 				LogPrinter.error(Resources.getString("auto_load_file_not_found"));
 			}
@@ -199,242 +199,210 @@ public class OverviewController extends Controller {
 	
 	@FXML
 	public void initialize() {
-		highlightColumn.setCellFactory(column -> new CheckBoxTableCell<>());
-		highlightColumn.setCellValueFactory(cellData -> {
-			final StitchList cellValue = cellData.getValue();
-			final BooleanProperty property = cellValue.highlightProperty();
-			cellValue.setHighlight(property.get());
-			property.addListener((observable, oldValue, newValue) -> {
-				if (newValue == cellValue.isHighlighted()) {
-					cellValue.setHighlight(newValue);
-					cellValue.getPixelList().setHighlighted(newValue);
-					if (newValue == true && cellValue.isCompleted() == true) {
-						cellValue.setCompleted(false);
-					}
-					setTitleChanged(true);
-				}
-			});
-			return property;
-		});
-		
-		completeColumn.setCellFactory(column -> new CheckBoxTableCell<>());
-		completeColumn.setCellValueFactory(cellData -> {
-			final StitchList cellValue = cellData.getValue();
-			final BooleanProperty property = cellValue.completeProperty();
-			cellValue.setCompleted(property.get());
-			property.addListener((observable, oldValue, newValue) -> {
-				cellValue.setCompleted(newValue);
-				cellValue.getPixelList().setCompleted(newValue);
-				if (newValue == true && cellValue.isHighlighted() == true) {
-					cellValue.setHighlight(false);
-				}
-				setTitleChanged(true);
-			});
-			return property;
-		});
-		
-		indexColumn.setCellValueFactory(cellData -> cellData.getValue().indexProperty().asObject());
-		
-		totalNumberColumn.setCellValueFactory(cellData -> cellData.getValue().totalNumberProperty().asObject());
-		
-		colorColumn.setCellFactory(column -> {
-			return new TableCell<StitchList, String>() {
-				@Override
-				protected void updateItem(final String item, final boolean empty) {
-					super.updateItem(item, empty);
-					if (!isEmpty()) {
-						this.setStyle(new StringBuilder("-fx-background-color:").append(item).toString());
-					}
-				}
-			};
-		});
-		colorColumn.setCellValueFactory(cellData -> cellData.getValue().colorStringProperty());
-		
-		nameColumn.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+	    highlightColumn.setCellFactory(column -> new CheckBoxTableCell<>());
+	    highlightColumn.setCellValueFactory(cellData -> {
+	        StitchList cellValue = cellData.getValue();
+	        BooleanProperty property = cellValue.highlightProperty();
+	        cellValue.setHighlight(property.get());
+	        property.addListener((observable, oldValue, newValue) -> {
+	            if (newValue.equals(cellValue.isHighlighted())) {
+	                cellValue.setHighlight(newValue);
+	                cellValue.getPixelList().setHighlighted(newValue);
+	                if (newValue && cellValue.isCompleted()) {
+	                    cellValue.setCompleted(false);
+	                }
+	                setTitleChanged(true);
+	            }
+	        });
+	        return property;
+	    });
 
-		zoom.setOnKeyPressed(event -> {
-			if (event.getCode() == KeyCode.ENTER) {
-				event.consume();
-				final String zoomScale = zoom.getText();
-				setZoom(zoomScale);
-				invalidate();
-			}
-		});
+	    completeColumn.setCellFactory(column -> new CheckBoxTableCell<>());
+	    completeColumn.setCellValueFactory(cellData -> {
+	        StitchList cellValue = cellData.getValue();
+	        BooleanProperty property = cellValue.completeProperty();
+	        cellValue.setCompleted(property.get());
+	        property.addListener((observable, oldValue, newValue) -> {
+	            cellValue.setCompleted(newValue);
+	            cellValue.getPixelList().setCompleted(newValue);
+	            if (newValue && cellValue.isHighlighted()) {
+	                cellValue.setHighlight(false);
+	            }
+	            setTitleChanged(true);
+	        });
+	        return property;
+	    });
 
-		canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(final MouseEvent event) {
-				final MouseButton button = event.getButton();
-				if (button.equals(MouseButton.PRIMARY)) {
-					highlightPixel(event.getX(), event.getY());
-				} else if (button.equals(MouseButton.SECONDARY)) {
-					getClickedColor(event.getX(), event.getY());
-				}
-			}
-		});
-		
-		if(Preferences.getBoolean("showDistanceCircle", false) == true) {
-			final EventHandler<MouseEvent> startHandler = new EventHandler<>() {
-				@Override
-				public void handle(MouseEvent event) {
-					canvasController.startDrawDistanceCircle(event.getX(), event.getY());
-					invalidate();
-				}
-			};
-			canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, startHandler);
-			canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, startHandler);
-			canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
-				@Override
-				public void handle(MouseEvent event) {
-					canvasController.stopDrawDistanceCircle();
-					invalidate();
-				}
-			});
-		}
-		
-		canvas.requestFocus();
+	    indexColumn.setCellValueFactory(cellData -> cellData.getValue().indexProperty().asObject());
+
+	    totalNumberColumn.setCellValueFactory(cellData -> cellData.getValue().totalNumberProperty().asObject());
+
+	    colorColumn.setCellFactory(column -> new TableCell<StitchList, String>() {
+	        @Override
+	        protected void updateItem(String item, boolean empty) {
+	            super.updateItem(item, empty);
+	            if (!empty) {
+	                this.setStyle("-fx-background-color:" + item);
+	            }
+	        }
+	    });
+	    colorColumn.setCellValueFactory(cellData -> cellData.getValue().colorStringProperty());
+
+	    // Handle zoom input
+	    zoom.setOnKeyPressed(event -> {
+	        if (event.getCode() == KeyCode.ENTER) {
+	            event.consume();
+	            setZoom(zoom.getText());
+	            invalidate();
+	        }
+	    });
+
+	    // Mouse events on canvas
+	    canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+	        if (event.getButton().equals(MouseButton.PRIMARY)) {
+	            highlightPixel(event.getX(), event.getY());
+	        } else if (event.getButton().equals(MouseButton.SECONDARY)) {
+	            getClickedColor(event.getX(), event.getY());
+	        }
+	    });
+
+	    // Handling distance circle drawing
+	    if (Preferences.getBoolean("showDistanceCircle", false)) {
+	        EventHandler<MouseEvent> drawHandler = event -> {
+	            canvasController.startDrawDistanceCircle(event.getX(), event.getY());
+	            invalidate();
+	        };
+	        canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, drawHandler);
+	        canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, drawHandler);
+	        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+	            canvasController.stopDrawDistanceCircle();
+	            invalidate();
+	        });
+	    }
+
+	    canvas.requestFocus();
 	}
+
 	
 	public void setImage(final StitchImage stitchImage) {
-		canvasController = new CanvasController(stitchImage, canvas);
-		final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList(
-				stitchList -> new Observable[] { stitchList.highlightProperty(), stitchList.completeProperty() });
-		for (final PixelList pixelList : stitchImage.getPixelLists()) {
-			stitchListArrayList.add(new StitchList(pixelList));
-		}
-		stitchListArrayList.addListener(new ListChangeListener<StitchList>() {
-			@Override
-			public void onChanged(Change<? extends StitchList> c) {
-				while (c.next()) {
-					if (c.wasUpdated()) {
-						Platform.runLater(new Runnable() {
-							@Override
-							public void run() {
-								invalidate();
-							}
-						});
-						return;
-					}
-				}
-			}
-		});
-		colorTable.setItems(stitchListArrayList);
-		setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
-		canvas.setDisable(false);
-		canvas.requestFocus();
-		colorTable.setDisable(false);
-		zoom.setDisable(false);
-		save.setDisable(false);
-		saveAs.setDisable(false);
-		exportConvertedImage.setDisable(false);
-		exportStitchList.setDisable(false);
-		exportBlueprint.setDisable(false);
-		showNumberItem.setSelected(Preferences.getBoolean("drawGridNumber", true));
-		invalidate();
-		if (Preferences.getBoolean("autoLoad", false) == true) {
-			canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
-			canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
-		}
+	    canvasController = new CanvasController(stitchImage, canvas);
 
-		final ChangeListener<Number> sizeChangeListener = (observable, oldValue, newValue) -> {
-			final String zoomRatio = Preferences.getString("scale");
-			if (zoomRatio.contains("MATCH")) {
-				setZoom(Preferences.getString("scale"));
-				invalidate();
-			}
-		};
+	    ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList(
+	        stitchList -> new Observable[]{stitchList.highlightProperty(), stitchList.completeProperty()}
+	    );
 
-		canvasScrollPane.widthProperty().addListener(sizeChangeListener);
-		canvasScrollPane.heightProperty().addListener(sizeChangeListener);
+	    stitchImage.getPixelLists().forEach(pixelList -> stitchListArrayList.add(new StitchList(pixelList)));
+
+	    stitchListArrayList.addListener((ListChangeListener<StitchList>) c -> {
+	        if (c.next() && c.wasUpdated()) {
+	            Platform.runLater(this::invalidate);
+	        }
+	    });
+
+	    colorTable.setItems(stitchListArrayList);
+	    setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
+
+	    enableCanvasInteraction();
+	}
+	
+	private void enableCanvasInteraction() {
+	    canvas.setDisable(false);
+	    canvas.requestFocus();
+	    colorTable.setDisable(false);
+	    zoom.setDisable(false);
+	    save.setDisable(false);
+	    saveAs.setDisable(false);
+	    exportConvertedImage.setDisable(false);
+	    exportStitchList.setDisable(false);
+	    exportBlueprint.setDisable(false);
+
+	    showNumberItem.setSelected(Preferences.getBoolean("drawGridNumber", true));
+	    invalidate();
+
+	    if (Preferences.getBoolean("autoLoad", false)) {
+	        canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
+	        canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
+	    }
+
+	    canvasScrollPane.widthProperty().addListener(createSizeChangeListener());
+	    canvasScrollPane.heightProperty().addListener(createSizeChangeListener());
+	}
+	
+	private ChangeListener<Number> createSizeChangeListener() {
+	    return (observable, oldValue, newValue) -> {
+	        if (Preferences.getValue("scale", "MATCH_SCREEN").contains("MATCH")) {
+	            setZoom(Preferences.getValue("scale", "MATCH_SCREEN"));
+	            invalidate();
+	        }
+	    };
+	}
+
+	private void getClickedColor(double originalX, double originalY) {
+	    int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
+	    int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
+	    Pixel pixel = new Pixel(x, y, null);
+
+	    colorTable.getItems().stream()
+	        .filter(stitchList -> stitchList.getPixelList().hasPixel(pixel))
+	        .findFirst()
+	        .ifPresent(stitchList -> Platform.runLater(() -> {
+	            colorTable.requestFocus();
+	            colorTable.getSelectionModel().select(stitchList);
+	            colorTable.scrollTo(stitchList);
+	        }));
 	}
 	
 	public void invalidate() {
 		canvasController.invalidate();
 	}
 
-	private void getClickedColor(final double originalX, final double originalY) {
-		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
-		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
-		final Pixel pixel = new Pixel(x, y, null);
-		for (final StitchList stitchList : colorTable.getItems()) {
-			if (stitchList.getPixelList().hasPixel(pixel)) {
-				Platform.runLater(new Runnable() {
-					@Override
-					public void run() {
-						colorTable.requestFocus();
-						colorTable.getSelectionModel().select(stitchList);
-						colorTable.scrollTo(stitchList);
-					}
-				});
-				return;
-			}
-		}
+	public void highlightPixel(KeyCode code) {
+	    if (x == -1 || y == -1) return;
+
+	    switch (code) {
+	        case W -> highlightPixel(x, y - 1);
+	        case S -> highlightPixel(x, y + 1);
+	        case A -> highlightPixel(x - 1, y);
+	        case D -> highlightPixel(x + 1, y);
+	        default -> {}
+	    }
 	}
 
-	public void highlightPixel(final KeyCode code) {
-		if (x == -1 || y == -1) {
-			return;
-		}
-		switch (code) {
-		case W:
-			highlightPixel(x, y - 1);
-			return;
-		case S:
-			highlightPixel(x, y + 1);
-			return;
-		case A:
-			highlightPixel(x - 1, y);
-			return;
-		case D:
-			highlightPixel(x + 1, y);
-			return;
-		default:
-			return;
-		}
-	}
-
-	private void highlightPixel(final double originalX, final double originalY) {
-		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
-		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
-		highlightPixel(x, y);
+	private void highlightPixel(double originalX, double originalY) {
+	    int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
+	    int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
+	    highlightPixel(x, y);
 	}
 
 	private void highlightPixel(int x, int y) {
-		if(x == -1 || y == -1) {
-			return;
-		}
-		final Pixel pixel = new Pixel(x, y, new StitchColor(0, null));
-		for (final StitchList stitchList : colorTable.getItems()) {
-			if (stitchList.getPixelList().hasPixel(pixel)) {
-				if (this.x == x && this.y == y) {
-					x = -1;
-					y = -1;
-				}
-				this.x = x;
-				this.y = y;
-				final int pixelX = x, pixelY = y;
-				Platform.runLater(new Runnable() {
-					@Override
-					public void run() {
-						canvasController.setHighlightPixel(pixelX, pixelY);
-						canvasController.invalidate();
-					}
-				});
-				return;
-			}
-		}
+	    if (x == -1 || y == -1) return;
+
+	    Pixel pixel = new Pixel(x, y, new StitchColor(0, null));
+
+	    colorTable.getItems().stream()
+	        .filter(stitchList -> stitchList.getPixelList().hasPixel(pixel))
+	        .findFirst()
+	        .ifPresent(stitchList -> {
+	            this.x = (this.x == x && this.y == y) ? -1 : x;
+	            this.y = (this.x == x && this.y == y) ? -1 : y;
+
+	            Platform.runLater(() -> {
+	                canvasController.setHighlightPixel(this.x, this.y);
+	                canvasController.invalidate();
+	            });
+	        });
 	}
 
-	private void closeWindowEvent(final WindowEvent event) {
-		if (Preferences.getBoolean("autoLoad", false) == true) {
-			Preferences.setValue("scrollX", canvasScrollPane.getHvalue());
-			Preferences.setValue("scrollY", canvasScrollPane.getVvalue());
-		}
-		Preferences.store();
-		if (confirmExit() == false) {
-			event.consume();
-			return;
-		}
+	private void closeWindowEvent(WindowEvent event) {
+	    if (Preferences.getBoolean("autoLoad", false)) {
+	        Preferences.setValue("scrollX", canvasScrollPane.getHvalue());
+	        Preferences.setValue("scrollY", canvasScrollPane.getVvalue());
+	    }
+	    Preferences.store();
+
+	    if (!confirmExit()) {
+	        event.consume();
+	    }
 	}
 	
 	private File dmcFile, csvFile;
@@ -449,7 +417,7 @@ public class OverviewController extends Controller {
 		}
 
 		if (csvFile == null) {
-			csvFile = new File(Preferences.getString("csvFile", "resources/dmc.csv"));
+			csvFile = new File(Preferences.getValue("csvFile", "resources/dmc.csv"));
 		}
 
 		if (loadFileChooser == null) {
@@ -493,7 +461,7 @@ public class OverviewController extends Controller {
 		final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(csvFile, file);
 		builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
 		builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
-		builder.setThread(Preferences.getInteger("workingThread", 0));
+		builder.setThreadCount(Preferences.getInteger("workingThread", 0));
 		builder.setScaled(Preferences.getBoolean("resizeImage", true));
 		dmcFile = new File(new StringBuilder(file.getParent()).append(File.separator)
 				.append(file.getName().substring(0, file.getName().lastIndexOf("."))).append(".dmc").toString());
@@ -518,15 +486,9 @@ public class OverviewController extends Controller {
 			return false;
 		}
 		setTitleChanged(false);
-		try {
-			Resources.writeObject(dmcFile, canvasController.getImage());
-			Preferences.setValue("autoLoadFile", dmcFile.getPath());
-			return true;
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("save_failed", Resources.getString("dmc_file")));
-			return false;
-		}
+		Resources.writeObject(dmcFile, canvasController.getImage());
+		Preferences.setValue("autoLoadFile", dmcFile.getPath());
+		return true;
 	}
 
 	private FileChooser saveToFileChooser;

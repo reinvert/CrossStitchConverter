@@ -4,347 +4,228 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-
-import com.stitch.converter.model.StitchImage;
-
-import javafx.scene.paint.Color;
+import java.util.*;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
+import com.stitch.converter.model.StitchImage;
 
-/**
- * Convert and save the output image.
- * 
- * @author Reinvert
- */
+import javafx.scene.paint.Color;
+
 public final class GraphicsEngine implements Runnable {
-	
-	public static final int FLOYD=0, SIERRA=1;
-	
-	/**
-	 * Builder of {@link GraphicsEngine}.
-	 * 
-	 * @author Reinvert
-	 */
-	public final static class Builder {
-		private StitchColor backgroundColor = new StitchColor(Color.WHITE, null);
-		private int colorLimit = -1, thread, convertMode = Preferences.getInteger("convertMode", 0);
-		private boolean isGammaBased = Preferences.getBoolean("isGammaBased", true);
 
-		private final File csv;
-		private final File file;
-		private final List<Listener> listenerList = new ArrayList<>();
-		private Mode loadMode = Mode.NEW_FILE;
-		private boolean scaled = false;
+    public static final int FLOYD = 0, SIERRA = 1;
 
-		/**
-		 * Constructor of the {@link Builder}.
-		 * 
-		 * @param csv  - the csv {@link File} containing color information.
-		 * @param file - the image {@link File} to convert.
-		 */
-		public Builder(final File csv, final File file) {
-			this.file = file;
-			this.csv = csv;
-			thread = Runtime.getRuntime().availableProcessors() + 1;
-		}
+    public static class Builder {
+        private StitchColor backgroundColor = new StitchColor(Color.WHITE, null);
+        private int colorLimit = -1;
+        private int threadCount;
+        private int convertMode = Preferences.getInteger("convertMode", 0);
+        private boolean isGammaBased = Preferences.getBoolean("isGammaBased", true);
+        private ProgressListener progressListener;
 
-		/**
-		 * Build and returns {@link GraphicsEngine} instance.
-		 * 
-		 * @return the {@link GraphicsEngine} instance.
-		 */
-		public GraphicsEngine build() {
-			return new GraphicsEngine(this);
-		}
+        private final File csvFile;
+        private final File imageFile;
+        private final List<Listener> listeners = new ArrayList<>();
+        private Mode loadMode = Mode.NEW_FILE;
+        private boolean scaled = false;
 
-		/**
-		 * Set background {@link StitchColor} of image.
-		 * 
-		 * @param backgroundColor - the background {@link StitchColor} of image.
-		 * @return this instance.
-		 */
-		public Builder setBackground(final StitchColor backgroundColor) {
-			this.backgroundColor = backgroundColor;
-			return this;
-		}
+        public Builder(final File csvFile, final File imageFile) {
+            this.csvFile = csvFile;
+            this.imageFile = imageFile;
+            this.threadCount = Runtime.getRuntime().availableProcessors() + 1;
+        }
 
-		/**
-		 * Set the limit of colors.
-		 * 
-		 * @param colorLimit - the limit of colors. 0 means unlimited.
-		 * @return this instance.
-		 */
-		public Builder setColorLimit(final int colorLimit) {
-			this.colorLimit = colorLimit;
-			return this;
-		}
+        public GraphicsEngine build() {
+            return new GraphicsEngine(this);
+        }
 
-		public Builder setListener(final Listener listener) {
-			listenerList.add(listener);
-			return this;
-		}
+        public Builder setBackground(final StitchColor backgroundColor) {
+            this.backgroundColor = backgroundColor;
+            return this;
+        }
 
-		/**
-		 * Set whether it is a new file or an existing one.
-		 * 
-		 * @param loadMode - the {@link Mode} whether it is a new file or an existing
-		 *                 one.
-		 * @return this instance.
-		 */
-		public Builder setMode(final Mode loadMode) {
-			this.loadMode = loadMode;
-			return this;
-		}
+        public Builder setColorLimit(final int colorLimit) {
+            this.colorLimit = colorLimit;
+            return this;
+        }
 
-		/**
-		 * Set whether or not to resize the image.
-		 * 
-		 * @param resize - the boolean whether or not to resize the images.
-		 * @return this instance.
-		 */
-		public Builder setScaled(final boolean scaled) {
-			this.scaled = scaled;
-			return this;
-		}
+        public Builder addListener(final Listener listener) {
+            listeners.add(listener);
+            return this;
+        }
 
-		/**
-		 * Set the number of {@link java.lang.Thread Threads} to work with.
-		 * 
-		 * @param thread - the number of {@link java.lang.Thread Threads} to work with.
-		 * @return this instance.
-		 */
-		public Builder setThread(final int thread) {
-			if(thread > 0) {
-				this.thread = thread;
-			}
-			return this;
-		}
-		
-		public Builder setGammaBased(final boolean isGammaBased) {
-			this.isGammaBased = isGammaBased;
-			return this;
-		}
-		
-		public Builder setConvertMode(final int convertMode) {
-			switch(convertMode) {
-			case 0:
-			case 1:
-				this.convertMode = convertMode;
-			}
-			return this;
-		}
+        public Builder setMode(final Mode loadMode) {
+            this.loadMode = loadMode;
+            return this;
+        }
 
-	}
+        public Builder setScaled(final boolean scaled) {
+            this.scaled = scaled;
+            return this;
+        }
 
-	/**
-	 * Determine whether it is a new file or an existing one.
-	 * 
-	 * @author Reinvert
-	 *
-	 */
-	public enum Mode {
-		LOAD, NEW_FILE
-	}
+        public Builder setThreadCount(final int threadCount) {
+            if (threadCount > 0) {
+                this.threadCount = threadCount;
+            }
+            return this;
+        }
 
-	private final StitchColor backgroundColor;
-	private final int colorLimit, thread, convertMode;
-	private final File csv;
-	private final File file;
-	private final List<Listener> listenerList;
+        public Builder setGammaBased(final boolean isGammaBased) {
+            this.isGammaBased = isGammaBased;
+            return this;
+        }
 
-	private final Mode loadMode;
-	private final boolean scaled, isGammaBased;
+        public Builder setConvertMode(final int convertMode) {
+            if (convertMode == FLOYD || convertMode == SIERRA) {
+                this.convertMode = convertMode;
+            }
+            return this;
+        }
 
-	/**
-	 * Construct {@link GraphicsEngine} defined by {@link Builder}.
-	 * 
-	 * @param builder - the {@link Builder} that defines {@link GraphicsEngine}.
-	 */
-	private GraphicsEngine(final Builder builder) {
-		file = builder.file;
-		csv = builder.csv;
-		colorLimit = builder.colorLimit;
-		scaled = builder.scaled;
-		backgroundColor = builder.backgroundColor;
-		loadMode = builder.loadMode;
-		thread = builder.thread;
-		listenerList = builder.listenerList;
-		isGammaBased = builder.isGammaBased;
-		convertMode = builder.convertMode;
-	}
+        public Builder setProgressListener(final ProgressListener progressListener) {
+            this.progressListener = progressListener;
+            return this;
+        }
+    }
 
-	/**
-	 * Create a new blueprint from {@link java.util.ArrayList
-	 * ArrayList}<{@link java.io.File File}>.
-	 * 
-	 * @param file - the list of image files.
-	 */
-	private void makeNewFile(final File file) throws NullPointerException, IOException {
-		final ArrayList<StitchColor> colorList;
-		try {
-			final CSVReader csvReader = new CSVReader(new FileReader(csv));
-			final List<String[]> csvList = csvReader.readAll();
-			colorList = readColorList(csvList);
-		} catch (final IOException | CsvException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed"));
-			return;
-		} catch (final NoSuchElementException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("rgb_missing", e.getMessage()));
-			return;
-		} catch (final NumberFormatException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("rgb_not_integer", e.getMessage()));
-			return;
-		} catch (final IllegalArgumentException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("rgb_out_of_range", e.getMessage()));
-			return;
-		}
+    public enum Mode {
+        LOAD, NEW_FILE
+    }
 
-		final StitchImage stitchImage = new StitchImage();
-		stitchImage.setChanged(true);
-		final int resizeLength = Preferences.getInteger("resizeLength", 200);
-		BufferedImage image;
-		if(scaled == true) {
-			image = ImageTools.readImage(file, resizeLength, resizeLength);
-		} else {
-			image = ImageTools.readImage(file);
-		}
-		boolean onceRunned = false;
-		StitchColor toRemove = null;
-		final HashMap<String, Integer> usedColorCount = new HashMap<String, Integer>();
-		do {
-			stitchImage.setSize(image.getWidth(), image.getHeight());
-			if (onceRunned == true) {
-				removeColor(colorList, toRemove);
-			}
-			usedColorCount.clear();
-			ColorConverter converter;
-			final ColorConverter.Builder builder = new ColorConverter.Builder(image, stitchImage, colorList).setThread(thread).setGammaBased(isGammaBased).setConvertMode(convertMode);
-			if(Preferences.getBoolean("isDither", true) == false) {
-				converter = builder.build();
-			} else {
-				converter = new DitheredColorConverter(builder);
-			}
-			converter.start();
-			try {
-				converter.join();
-			} catch (final InterruptedException e) {
-				LogPrinter.print(e);
-				LogPrinter.error(Resources.getString("error_has_occurred"));
-				return;
-			}
+    private final StitchColor backgroundColor;
+    private final int colorLimit;
+    private final int threadCount;
+    private final int convertMode;
+    private final File csvFile;
+    private final File imageFile;
+    private final List<Listener> listeners;
+    private final Mode loadMode;
+    private final boolean scaled;
+    private final boolean isGammaBased;
+    private final ProgressListener progressListener;
 
-			stitchImage.setBackground(backgroundColor);
+    private GraphicsEngine(final Builder builder) {
+        this.csvFile = builder.csvFile;
+        this.imageFile = builder.imageFile;
+        this.colorLimit = builder.colorLimit;
+        this.scaled = builder.scaled;
+        this.backgroundColor = builder.backgroundColor;
+        this.loadMode = builder.loadMode;
+        this.threadCount = builder.threadCount;
+        this.listeners = builder.listeners;
+        this.isGammaBased = builder.isGammaBased;
+        this.convertMode = builder.convertMode;
+        this.progressListener = builder.progressListener;
+    }
 
-			for (final PixelList pixelList : stitchImage.getPixelLists()) {
-				usedColorCount.put(pixelList.getColor().getName(), pixelList.getCount());
-			}
-			onceRunned = true;
-			toRemove = ImageTools.calculateRemoveString(stitchImage, usedColorCount);
-		} while (colorLimit != 0 && stitchImage.getPixelLists().size() > colorLimit);
-		stitchImage.setChanged(true);
-		onFinished(stitchImage);
-	}
+    @Override
+    public void run() {
+        try {
+            if (loadMode == Mode.NEW_FILE) {
+                processNewFile(imageFile);
+            } else if (loadMode == Mode.LOAD) {
+                loadFromSavedFile(imageFile);
+            }
+        } catch (Exception e) {
+            LogPrinter.print(e);
+            LogPrinter.error(Resources.getString("cant_read_image"));
+        }
+    }
 
-	private void onFinished(final StitchImage image) {
-		for (final Listener listener : listenerList) {
-			listener.onFinished(image);
-		}
-	}
+    private void processNewFile(final File file) throws IOException {
+        List<StitchColor> colorList;
+        try (CSVReader csvReader = new CSVReader(new FileReader(csvFile))) {
+            colorList = readColorList(csvReader.readAll());
+        } catch (CsvException | NoSuchElementException | IllegalArgumentException e) {
+            LogPrinter.print(e);
+            LogPrinter.error(Resources.getString("read_failed"));
+            return;
+        }
 
-	/**
-	 * Read from saved *.dmc {@link File} to {@link StitchImage} instance.
-	 * 
-	 * @param file - saved *.dmc {@link File}.
-	 */
-	private void readFromSavedFile(final File file) throws NullPointerException, ClassNotFoundException, IOException {
-		final StitchImage stitchImage = (StitchImage) Resources.readObject(file);
-		onFinished(stitchImage);
-	}
+        StitchImage stitchImage = new StitchImage();
+        stitchImage.setChanged(true);
+        BufferedImage image = scaled ? ImageTools.readImage(file, Preferences.getInteger("resizeLength", 200), Preferences.getInteger("resizeLength", 200)) : ImageTools.readImage(file);
+        
 
-	/**
-	 * Remove the color from the {@link Collection}. Only works if maximum color is
-	 * limited.
-	 * 
-	 * @param colorName - the {@link java.lang.String String} Array containing the
-	 *                  names of all threads.
-	 * @param colorList - the {@link java.awt.color Color} Array containing the
-	 *                  colors of all threads.
-	 * @param toRemove  - the name of the thread to delete.
-	 */
-	private static void removeColor(final Collection<StitchColor> colorList, final StitchColor toRemove) {
-		final Iterator<StitchColor> iterator = colorList.iterator();
-		StitchColor color;
-		while ((color = iterator.next()) != null) {
-			if (color.equals(toRemove)) {
-				colorList.remove(color);
-				return;
-			}
-		}
-	}
+        boolean firstRun = true;
+        StitchColor colorToRemove = null;
+        Map<String, Integer> usedColorCount = new HashMap<>();
 
-	/**
-	 * Creates {@link Blueprint} image and used thread list.
-	 */
-	@Override
-	public void run() throws RuntimeException {
-		try {
-			if (loadMode.equals(Mode.NEW_FILE)) {
-				makeNewFile(file);
-			} else if (loadMode.equals(Mode.LOAD)) {
-				readFromSavedFile(file);
-			}
-		} catch (final Exception e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("cant_read_image"));
-		}
-	}
-	
-	/**
-	 * Convert 2nd-dimensional CSV {@link String} {@link ArrayList} to a
-	 * {@link StitchColor} {@link ArrayList}.
-	 * 
-	 * @param csv - 2nd-dimensional CSV {@link String} Array.
-	 * @return {@link StitchColor} Array.
-	 * @throws NoSuchElementException   occurs when one or more of R, G, or B values
-	 *                                  is missing.
-	 * @throws NumberFormatException    occurs when one or more of R, G, or B values
-	 *                                  can not be read.
-	 * @throws IllegalArgumentException occurs when one or more of the R, G, or B
-	 *                                  values is not a value between 0 and 255.
-	 */
-	private static ArrayList<StitchColor> readColorList(final List<String[]> csv)
-			throws NoSuchElementException, NumberFormatException, IllegalArgumentException {
-		final ArrayList<StitchColor> output = new ArrayList<StitchColor>();
-		int i = 0;
-		try {
-			for (final String[] row: csv) {
-				final String name = row[0];
-				final int red = Integer.parseInt(row[1]);
-				final int green = Integer.parseInt(row[2]);
-				final int blue = Integer.parseInt(row[3]);
-				output.add(new StitchColor(red, green, blue, name));
-				i++;
-			}
-		} catch (final ArrayIndexOutOfBoundsException e) {
-			throw new NoSuchElementException(Integer.toString(i + 1));
-		} catch (final NumberFormatException e) {
-			throw new NumberFormatException(Integer.toString(i + 1));
-		} catch (final IllegalArgumentException e) {
-			throw new IllegalArgumentException(Integer.toString(i + 1));
-		}
-		return output;
-	}
+        do {
+            stitchImage.setSize(image.getWidth(), image.getHeight());
+            if (!firstRun) {
+                removeColor(colorList, colorToRemove);
+            }
+            usedColorCount.clear();
+
+            ColorConverter converter = createColorConverter(image, stitchImage, colorList);
+            Thread converterThread = new Thread(converter);
+            converterThread.start();
+            try {
+                converterThread.join();
+            } catch (InterruptedException e) {
+                LogPrinter.print(e);
+                LogPrinter.error(Resources.getString("error_has_occurred"));
+                return;
+            }
+
+            stitchImage.setBackground(backgroundColor);
+            for (PixelList pixelList : stitchImage.getPixelLists()) {
+                usedColorCount.put(pixelList.getColor().getName(), pixelList.getCount());
+            }
+            firstRun = false;
+            colorToRemove = ImageTools.calculateRemoveString(stitchImage, usedColorCount);
+
+        } while (colorLimit != 0 && stitchImage.getPixelLists().size() > colorLimit);
+
+        stitchImage.setChanged(true);
+        notifyListeners(stitchImage);
+        progressListener.onProgress(1.0, Resources.getString("conversion_completed"));
+    }
+
+    private void loadFromSavedFile(final File file) throws IOException, ClassNotFoundException {
+        StitchImage stitchImage = (StitchImage) Resources.readObject(file);
+        notifyListeners(stitchImage);
+    }
+
+    private void notifyListeners(final StitchImage image) {
+        for (Listener listener : listeners) {
+            listener.onFinished(image);
+        }
+    }
+
+    private ColorConverter createColorConverter(BufferedImage image, StitchImage stitchImage, List<StitchColor> colorList) {
+        ColorConverter.Builder builder = new ColorConverter.Builder(image, stitchImage, colorList)
+                .setThreadCount(threadCount)
+                .setGammaBased(isGammaBased)
+                .setConvertMode(convertMode)
+                .setProgressListener(progressListener);
+
+        return Preferences.getBoolean("isDither", true) ? new DitheredColorConverter(builder) : builder.build();
+    }
+    private static void removeColor(final Collection<StitchColor> colorList, final StitchColor toRemove) {
+        colorList.removeIf(color -> color.equals(toRemove));
+    }
+
+    private static List<StitchColor> readColorList(final List<String[]> csv) {
+        List<StitchColor> colors = new ArrayList<>();
+        int lineNumber = 0;
+        try {
+            for (String[] row : csv) {
+                String name = row[0];
+                int red = Integer.parseInt(row[1]);
+                int green = Integer.parseInt(row[2]);
+                int blue = Integer.parseInt(row[3]);
+                colors.add(new StitchColor(red, green, blue, name));
+                lineNumber++;
+            }
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+            throw new IllegalArgumentException("Error at line " + (lineNumber + 1), e);
+        }
+        return colors;
+    }
 }

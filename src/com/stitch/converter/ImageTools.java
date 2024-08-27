@@ -9,7 +9,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -49,19 +49,6 @@ final class ImageTools {
 		if(targetBlue < 0 || targetBlue > 1) {
 			throw new ArithmeticException("Input value should between 0 and 1. Input Value(targetBlue): " + targetBlue);
 		}
-		// LINEAR TO GAMMA
-		/*
-		final double gamma = 2.2d;
-		originalRed = Math.pow(originalRed, 1d/gamma);
-		originalGreen = Math.pow(originalGreen, 1d/gamma);
-		originalBlue = Math.pow(originalBlue, 1d/gamma);
-
-		targetRed = Math.pow(targetRed, 1d/gamma);
-		targetGreen = Math.pow(targetGreen, 1d/gamma);
-		targetBlue = Math.pow(targetBlue, 1d/gamma);
-		*/
-		//LINEAR TO GAMMA END
-		
 		final double redDifference = Math.pow(originalRed - targetRed, 2);
 		final double greenDifference = Math.pow(originalGreen - targetGreen, 2);
 		final double blueDifference = Math.pow(originalBlue - targetBlue, 2);
@@ -100,7 +87,7 @@ final class ImageTools {
 		return calculateDifference(originalRed, originalGreen, originalBlue, targetRed, targetGreen, targetBlue);
 	}
 
-	static StitchColor calculateRemoveString(final StitchImage stitchImage, final HashMap<String, Integer> usedColorCount) {
+	static StitchColor calculateRemoveString(final StitchImage stitchImage, final Map<String, Integer> usedColorCount) {
 		StitchColor uselessColor = null;
 		double difference = Double.MAX_VALUE;
 		final ArrayList<PixelList> list = new ArrayList<PixelList>(stitchImage.getPixelLists());

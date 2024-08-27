@@ -1,0 +1,15 @@
+java.util.MissingResourceException: Can't find resource for bundle java.util.PropertyResourceBundle, key conversion_completed 
+	at java.base/java.util.ResourceBundle.getObject(ResourceBundle.java:566)
+	at java.base/java.util.ResourceBundle.getString(ResourceBundle.java:522)
+	at CrossStitchConverter/com.stitch.converter.Resources.getString(Resources.java:69)
+	at CrossStitchConverter/com.stitch.converter.GraphicsEngine.processNewFile(GraphicsEngine.java:187)
+	at CrossStitchConverter/com.stitch.converter.GraphicsEngine.run(GraphicsEngine.java:129)
+	at java.base/java.lang.Thread.run(Thread.java:1570)
+	at javafx.graphics@18.0.1/com.sun.javafx.application.PlatformImpl.lambda$runLater$10(PlatformImpl.java:457)
+	at java.base/java.security.AccessController.doPrivileged(AccessController.java:400)
+	at javafx.graphics@18.0.1/com.sun.javafx.application.PlatformImpl.lambda$runLater$11(PlatformImpl.java:456)
+	at javafx.graphics@18.0.1/com.sun.glass.ui.InvokeLaterDispatcher$Future.run(InvokeLaterDispatcher.java:96)
+	at javafx.graphics@18.0.1/com.sun.glass.ui.win.WinApplication._runLoop(Native Method)
+	at javafx.graphics@18.0.1/com.sun.glass.ui.win.WinApplication.lambda$runLoop$3(WinApplication.java:184)
+	at java.base/java.lang.Thread.run(Thread.java:1570)
+

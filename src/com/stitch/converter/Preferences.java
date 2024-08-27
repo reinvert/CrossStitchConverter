@@ -2,201 +2,166 @@ package com.stitch.converter;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import com.stitch.converter.model.StitchColor;
 
 public class Preferences {
-	private static final String directory = "config.properties";
-	private static final SortedMap<String, String> keyStore = new TreeMap<>();
+    private static final String CONFIG_FILE = "config.properties";
+    private static final SortedMap<String, String> keyStore = new TreeMap<>();
+    private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-	static {
-		try {
-			final File file = new File(directory);
-			if (file.exists() == false) {
-				file.createNewFile();
-			}
-			load();
-		} catch (final IOException e) {
-			LogPrinter.print(e);
-			LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
-		}
-	}
-	
-	private static boolean load() throws IOException {
-		try (final FileReader fileReader = new FileReader(directory)) {
-			try (final BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-				String line = null;
-				while ((line = bufferedReader.readLine()) != null) {
-					try {
-						final String[] splitLine = line.replace("= ", "=").replace(" =", "=").split("=");
-						final String key = splitLine[0];
-						final String value = splitLine[1];
-						keyStore.put(key, value);
-					} catch (final ArrayIndexOutOfBoundsException e) {
-						continue;
-					}
-				}
-			}
-		}
-		return true;
-	}
-	
-	private static final Runnable storeAction = new Runnable() {
-		@Override
-		public void run() {
-			try (final FileWriter fileWriter = new FileWriter(directory)) {
-				try (final BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-					for (final String key : keyStore.keySet()) {
-						bufferedWriter.write(new StringBuilder(key).append("=").append(keyStore.get(key)).append("\n").toString());
-					}
-					bufferedWriter.flush();
-				}
-			} catch (final IOException e) {
-				LogPrinter.print(e);
-				LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
-			}
-		}
-	};
+    static {
+        try {
+            Path configPath = Paths.get(CONFIG_FILE);
+            if (!Files.exists(configPath)) {
+                Files.createFile(configPath);
+            }
+            load();
+        } catch (IOException e) {
+            LogPrinter.print(e);
+            LogPrinter.error(Resources.getString("read_failed", Resources.getString("setting_file")));
+        }
+    }
 
-	public static void store() {
-		new Thread(storeAction).start();
-	}
+    private static void load() throws IOException {
+        Path configPath = Paths.get(CONFIG_FILE);
+        try (BufferedReader bufferedReader = Files.newBufferedReader(configPath)) {
+            bufferedReader.lines().forEach(line -> {
+                try {
+                    String[] splitLine = line.trim().split("=");
+                    if (splitLine.length == 2) {
+                        keyStore.put(splitLine[0].trim(), splitLine[1].trim());
+                    }
+                } catch (ArrayIndexOutOfBoundsException ignored) {
+                }
+            });
+        }
+    }
 
+    private static final Runnable storeAction = () -> {
+        Path configPath = Paths.get(CONFIG_FILE);
+        try (BufferedWriter bufferedWriter = Files.newBufferedWriter(configPath)) {
+            for (var entry : keyStore.entrySet()) {
+                bufferedWriter.write(entry.getKey() + "=" + entry.getValue() + "\n");
+            }
+        } catch (IOException e) {
+            LogPrinter.print(e);
+            LogPrinter.error(Resources.getString("write_failed", Resources.getString("setting_file")));
+        }
+    };
 
-	public static boolean getBoolean(final String key) throws NoSuchElementException {
-		return Boolean.parseBoolean(getValue(key));
-	}
+    public static void store() {
+        executor.submit(storeAction);
+    }
 
-	public static boolean getBoolean(final String key, final boolean defaultValue) {
-		try {
-			return getBoolean(key);
-		} catch (final NoSuchElementException e) {
-			setValue(key, defaultValue);
-			return defaultValue;
-		}
-	}
+    // Shuts down the ExecutorService gracefully
+    public static void shutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(1, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+        }
+    }
 
-	public static StitchColor getColor(final String key) throws NoSuchElementException, ClassCastException {
-		return stringToColor(getValue(key));
-	}
+    public static boolean getBoolean(final String key) throws NoSuchElementException {
+        return Boolean.parseBoolean(getValue(key).orElseThrow());
+    }
 
-	public static StitchColor getColor(final String key, final StitchColor defaultValue) {
-		try {
-			return getColor(key);
-		} catch (final NoSuchElementException | ClassCastException e) {
-			setValue(key, defaultValue);
-			return defaultValue;
-		}
-	}
+    public static boolean getBoolean(final String key, final boolean defaultValue) {
+        return getValue(key).map(Boolean::parseBoolean).orElse(defaultValue);
+    }
 
-	public static double getDouble(final String key) throws NoSuchElementException, NumberFormatException {
-		return Double.parseDouble(getValue(key));
-	}
+    public static StitchColor getColor(final String key) throws NoSuchElementException, ClassCastException {
+        return stringToColor(getValue(key).orElseThrow());
+    }
 
-	public static double getDouble(final String key, final double defaultValue) {
-		try {
-			return getDouble(key);
-		} catch (final NoSuchElementException | NumberFormatException e) {
-			setValue(key, defaultValue);
-			return defaultValue;
-		}
-	}
+    public static StitchColor getColor(final String key, final StitchColor defaultValue) {
+        return getValue(key).map(Preferences::stringToColor).orElse(defaultValue);
+    }
 
-	public static int getInteger(final String key) throws NoSuchElementException, NumberFormatException {
-		return Integer.parseInt(getValue(key));
-	}
+    public static double getDouble(final String key) throws NoSuchElementException, NumberFormatException {
+        return Double.parseDouble(getValue(key).orElseThrow());
+    }
 
-	public static int getInteger(final String key, final int defaultValue) {
-		try {
-			return getInteger(key);
-		} catch (final NoSuchElementException | NumberFormatException e) {
-			setValue(key, defaultValue);
-			return defaultValue;
-		}
-	}
+    public static double getDouble(final String key, final double defaultValue) {
+        return getValue(key).map(Double::parseDouble).orElse(defaultValue);
+    }
 
-	public static SortedMap<String, String> getKeyStore() {
-		final SortedMap<String, String> output = new TreeMap<>();
-		for(final String key:keyStore.keySet()) {
-			output.put(key, keyStore.get(key));
-		}
-		return output;
-	}
+    public static int getInteger(final String key) throws NoSuchElementException, NumberFormatException {
+        return Integer.parseInt(getValue(key).orElseThrow());
+    }
 
-	public static String getString(final String key) throws NoSuchElementException {
-		return getValue(key);
-	}
+    public static int getInteger(final String key, final int defaultValue) {
+        return getValue(key).map(Integer::parseInt).orElse(defaultValue);
+    }
 
-	public static String getString(final String key, final String defaultValue) {
-		return getValue(key, defaultValue);
-	}
+    public static SortedMap<String, String> getKeyStore() {
+        return new TreeMap<>(keyStore);  // Immutable
+    }
 
-	public static String getValue(final String key) throws NoSuchElementException {
-		final String value = keyStore.get(key);
-		if (value == null) {
-			throw new NoSuchElementException();
-		}
-		return value;
-	}
+    public static Optional<String> getValue(final String key) {
+        return Optional.ofNullable(keyStore.get(key));
+    }
 
-	public static String getValue(final String key, final String defaultValue) {
-		try {
-			return getValue(key);
-		} catch (final NoSuchElementException e) {
-			setValue(key, defaultValue);
-			return defaultValue;
-		}
-	}
-	
-	public static boolean setValue(final String key, final boolean value) {
-		keyStore.put(key, Boolean.toString(value));
-		return true;
-	}
+    public static String getValue(final String key, final String defaultValue) {
+        return getValue(key).orElse(defaultValue);
+    }
 
-	public static boolean setValue(final String key, final double value) {
-		keyStore.put(key, String.format("%.4f",value));
-		return true;
-	}
+    public static boolean setValue(final String key, final boolean value) {
+        keyStore.put(key, Boolean.toString(value));
+        return true;
+    }
 
-	public static boolean setValue(final String key, final int value) {
-		keyStore.put(key, Integer.toString(value));
-		return true;
-	}
+    public static boolean setValue(final String key, final double value) {
+        keyStore.put(key, String.format("%.4f", value));
+        return true;
+    }
 
-	public static boolean setValue(final String key, final StitchColor value) {
-		keyStore.put(key, colorToString(value));
-		return true;
-	}
+    public static boolean setValue(final String key, final int value) {
+        keyStore.put(key, Integer.toString(value));
+        return true;
+    }
 
-	public static boolean setValue(final String key, final String value) {
-		keyStore.put(key, value);
-		return true;
-	}
+    public static boolean setValue(final String key, final StitchColor value) {
+        keyStore.put(key, colorToString(value));
+        return true;
+    }
 
-	private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
-		final int red, green, blue;
-		try {
-			red = Integer.valueOf(colorCode.substring(1, 3), 16);
-			green = Integer.valueOf(colorCode.substring(3, 5), 16);
-			blue = Integer.valueOf(colorCode.substring(5, 7), 16);
-		} catch (final NumberFormatException | IndexOutOfBoundsException e) {
-			throw new ClassCastException();
-		}
-		return new StitchColor(red, green, blue, colorCode);
-	}
-	
-	private static String colorToString(final StitchColor color) {
-		return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
-	}
+    public static boolean setValue(final String key, final String value) {
+        keyStore.put(key, value);
+        return true;
+    }
 
-	private Preferences() {
-		throw new AssertionError("Singleton class should not be accessed by constructor.");
-	}
+    private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
+        try {
+            int red = Integer.parseInt(colorCode.substring(1, 3), 16);
+            int green = Integer.parseInt(colorCode.substring(3, 5), 16);
+            int blue = Integer.parseInt(colorCode.substring(5, 7), 16);
+            return new StitchColor(red, green, blue, colorCode);
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+            throw new ClassCastException();
+        }
+    }
+
+    private static String colorToString(final StitchColor color) {
+        return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
+    }
+
+    private Preferences() {
+        throw new AssertionError("Singleton class should not be accessed by constructor.");
+    }
 }
