@@ -14,13 +14,13 @@ import com.stitch.converter.model.StitchImage;
 
 import javafx.scene.paint.Color;
 
-public final class GraphicsEngine implements Runnable {
+public final class GraphicsEngine implements Runnable{
 
     public static final int FLOYD = 0, SIERRA = 1;
 
     public static class Builder {
         private StitchColor backgroundColor = new StitchColor(Color.WHITE, null);
-        private int colorLimit = -1;
+        private int colorLimit = 0;
         private int threadCount;
         private int convertMode = Preferences.getInteger("convertMode", 0);
         private boolean isGammaBased = Preferences.getBoolean("isGammaBased", true);
@@ -30,7 +30,7 @@ public final class GraphicsEngine implements Runnable {
         private final File imageFile;
         private final List<Listener> listeners = new ArrayList<>();
         private Mode loadMode = Mode.NEW_FILE;
-        private boolean scaled = false;
+        private boolean scaled = Preferences.getBoolean("resizeImage", true);
 
         public Builder(final File csvFile, final File imageFile) {
             this.csvFile = csvFile;
@@ -133,24 +133,33 @@ public final class GraphicsEngine implements Runnable {
         } catch (Exception e) {
             LogPrinter.print(e);
             LogPrinter.error(Resources.getString("cant_read_image"));
+        } finally {
+        	progressListener.finished();
         }
     }
 
     private void processNewFile(final File file) throws IOException {
         List<StitchColor> colorList;
+        StitchImage stitchImage;
+        BufferedImage image;
         try (CSVReader csvReader = new CSVReader(new FileReader(csvFile))) {
             colorList = readColorList(csvReader.readAll());
-        } catch (CsvException | NoSuchElementException | IllegalArgumentException e) {
+        } catch (CsvException | NoSuchElementException | IllegalArgumentException | NullPointerException e) {
             LogPrinter.print(e);
-            LogPrinter.error(Resources.getString("read_failed"));
+            LogPrinter.error(Resources.getString("read_failed", Resources.getString("color_table")));
             return;
         }
-
-        StitchImage stitchImage = new StitchImage();
-        stitchImage.setChanged(true);
-        BufferedImage image = scaled ? ImageTools.readImage(file, Preferences.getInteger("resizeLength", 200), Preferences.getInteger("resizeLength", 200)) : ImageTools.readImage(file);
         
-
+        try {
+            stitchImage = new StitchImage();
+            stitchImage.setChanged(true);
+            image = scaled ? ImageTools.readImage(file, Preferences.getInteger("resizeLength", 200), Preferences.getInteger("resizeLength", 200)) : ImageTools.readImage(file);
+        } catch (NullPointerException e) {
+            LogPrinter.print(e);
+            LogPrinter.error(Resources.getString("read_failed", file.getName()));
+            return;
+        }
+        
         boolean firstRun = true;
         StitchColor colorToRemove = null;
         Map<String, Integer> usedColorCount = new HashMap<>();
@@ -164,6 +173,7 @@ public final class GraphicsEngine implements Runnable {
 
             ColorConverter converter = createColorConverter(image, stitchImage, colorList);
             Thread converterThread = new Thread(converter);
+            converterThread.setDaemon(true);
             converterThread.start();
             try {
                 converterThread.join();
@@ -180,7 +190,7 @@ public final class GraphicsEngine implements Runnable {
             firstRun = false;
             colorToRemove = ImageTools.calculateRemoveString(stitchImage, usedColorCount);
 
-        } while (colorLimit != 0 && stitchImage.getPixelLists().size() > colorLimit);
+        } while (0 < colorLimit && colorLimit < stitchImage.getPixelLists().size());
 
         stitchImage.setChanged(true);
         notifyListeners(stitchImage);

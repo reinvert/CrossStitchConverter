@@ -1,7 +1,6 @@
 package com.stitch.converter;
 
 import java.io.File;
-
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.view.OverviewController;
 import com.stitch.converter.view.ProgressWindow;
@@ -17,26 +16,34 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    public static void main(final String[] args) {
+    public static void main(String[] args) {
         System.setProperty("prism.lcdtext", "false");
         launch(args);
     }
 
     private OverviewController controller;
     private ProgressWindow progressWindow;
+    private ProgressListener progressListener;
 
     private final Listener listener = new Listener() {
         @Override
         public void onFinished(final StitchImage image) {
             Platform.runLater(() -> {
                 controller.setImage(image);
-                progressWindow.hide();
             });
         }
     };
 
     private Stage primaryStage;
 
+    @Override
+    public void start(final Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        this.primaryStage.setTitle(Resources.getString("title"));
+        this.primaryStage.setMaximized(true);
+        initRootLayout();
+    }
+    
     public void initRootLayout() {
         try {
             final FXMLLoader loader = new FXMLLoader();
@@ -64,42 +71,29 @@ public class Main extends Application {
                 LogPrinter.print(iconException);
                 LogPrinter.error(Resources.getString("error_icon_load"));
             }
+            progressListener = new ProgressListener() {
+                @Override
+                public void onProgress(double progress, String message) {
+                    progressWindow.updateProgress(progress, message);
+                }
+
+    			@Override
+    			public void finished() {
+					progressWindow.hide();
+    			}
+            };
+            
             primaryStage.show();
         } catch (final Exception e) {
             LogPrinter.print(e);
             LogPrinter.error(Resources.getString("error_has_occurred"));
         }
     }
-
-    public void load(final GraphicsEngine.Builder builder) {
+    
+    public void load(final GraphicsEngine.Builder builder, GraphicsEngine.Mode mode) {
         progressWindow = new ProgressWindow(primaryStage);
-        builder.setProgressListener(new ProgressListener() {
-            @Override
-            public void onProgress(double progress, String message) {
-                progressWindow.updateProgress(progress, message);
-            }
-        });
+        builder.setProgressListener(progressListener);
         progressWindow.show();
-        Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.LOAD).addListener(listener).build()));
-    }
-
-    @Override
-    public void start(final Stage primaryStage) {
-        this.primaryStage = primaryStage;
-        this.primaryStage.setTitle(Resources.getString("title"));
-        this.primaryStage.setMaximized(true);
-        initRootLayout();
-    }
-
-    public void startConversion(final GraphicsEngine.Builder builder) {
-        progressWindow = new ProgressWindow(primaryStage);
-        builder.setProgressListener(new ProgressListener() {
-            @Override
-            public void onProgress(double progress, String message) {
-                progressWindow.updateProgress(progress, message);
-            }
-        });
-        progressWindow.show();
-        Platform.runLater(new Thread(builder.setMode(GraphicsEngine.Mode.NEW_FILE).addListener(listener).build()));
+        new Thread(builder.setMode(mode).addListener(listener).build()).start();
     }
 }

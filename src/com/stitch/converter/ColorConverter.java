@@ -20,6 +20,10 @@ class ColorConverter implements Runnable {
 			public void onProgress(double progress, String message) {
 				
 			}
+			
+			public void finished() {
+				
+			}
         };
         int convertMode = GraphicsEngine.FLOYD;
         boolean isGammaBased = true;
@@ -185,6 +189,7 @@ class ColorConverter implements Runnable {
             }
 
             Thread writeThread = new Thread(new ImageWriter());
+            writeThread.setDaemon(true);
             writeThread.start();
 
             executorService.shutdown();

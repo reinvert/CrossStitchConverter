@@ -2,10 +2,10 @@ package com.stitch.converter;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.stitch.converter.model.Pixel;
 import com.stitch.converter.model.StitchColor;
 
-import javafx.concurrent.Task;
 import javafx.scene.paint.Color;
 
 public class DitheredColorConverter extends ColorConverter {
@@ -22,9 +22,10 @@ public class DitheredColorConverter extends ColorConverter {
     @Override
     public void run() {
     	final int imageSize = image.getWidth()*image.getHeight();
-    	final int updateInterval = 1000;
+    	//final int updateInterval = 1000;
     	int count=0;
         List<List<Color>> doubleValueImage = new ArrayList<>();
+        
         for (int x = 0; x < image.getWidth(); x++) {
             List<Color> row = new ArrayList<>();
             for (int y = 0; y < image.getHeight(); y++) {
@@ -49,19 +50,7 @@ public class DitheredColorConverter extends ColorConverter {
 
                 DifferenceCalc calc = new DifferenceCalc(redDifference, greenDifference, blueDifference);
                 applyErrorDiffusion(doubleValueImage, x, y, calc);
-                if(count % updateInterval == 0 || count == 0 || count == imageSize) {
-                    double progress = (double) ++count / imageSize;
-                    Task<Void> task = new Task<Void>() {
-						@Override
-						protected Void call() throws Exception {
-		                    progressListener.onProgress(progress, Resources.getString("conversion_processing_colors"));
-							return null;
-						}
-                    	
-                    };
-                    new Thread(task).start();
-                }
-                
+                progressListener.onProgress((double) ++count / imageSize, Resources.getString("conversion_processing_colors"));
             }
         }
     }

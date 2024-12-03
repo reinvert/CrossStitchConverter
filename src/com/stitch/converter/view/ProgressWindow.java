@@ -9,6 +9,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class ProgressWindow {
 
@@ -20,13 +21,19 @@ public class ProgressWindow {
         stage = new Stage();
         stage.initOwner(owner);
         stage.initModality(Modality.WINDOW_MODAL);
+        stage.initStyle(StageStyle.UNDECORATED);
         stage.setTitle(Resources.getString("conversion_progress"));
 
         progressBar = new ProgressBar();
         progressLabel = new Label(Resources.getString("conversion_starting"));
 
         VBox layout = new VBox(10, progressBar, progressLabel);
-        layout.setStyle("-fx-padding: 10; -fx-alignment: center;");
+        layout.setStyle(
+                "-fx-padding: 10; " +
+                "-fx-alignment: center; " +
+                "-fx-border-color: gray; " +        // Outline color
+                "-fx-border-width: 1;"               // Outline width
+            );
         Scene scene = new Scene(layout);
 
         stage.setScene(scene);

@@ -163,7 +163,7 @@ final class ImageTools {
 	 * @throws IOException occurs when the image file can't read.
 	 */
 	static BufferedImage readImage(final File file, final int width, final int height)
-			throws IOException {
+			throws IOException, NullPointerException {
 		BufferedImage image = ImageIO.read(file);
 		final double scaleFactor = Math.min(1d, ImageTools.getScaleFactorToFit(
 				new Dimension(image.getWidth(), image.getHeight()), new Dimension(width, height)));

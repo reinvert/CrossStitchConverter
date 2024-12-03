@@ -3,20 +3,22 @@ package com.stitch.converter.view;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.stitch.converter.GraphicsEngine;
 import com.stitch.converter.LogPrinter;
@@ -24,7 +26,6 @@ import com.stitch.converter.Preferences;
 import com.stitch.converter.Resources;
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.model.Pixel;
-import com.stitch.converter.model.PixelList;
 import com.stitch.converter.model.StitchColor;
 import com.stitch.converter.model.StitchList;
 
@@ -69,7 +70,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 public class OverviewController extends Controller {
-	private Stage overviewStage;
+	private Stage overviewStage, settingStage;
 	@FXML
 	public BorderPane borderPane;
 	@FXML
@@ -86,7 +87,7 @@ public class OverviewController extends Controller {
 	@FXML
 	public TableColumn<StitchList, Integer> indexColumn, totalNumberColumn;
 	@FXML
-	public MenuItem save, saveAs, exportConvertedImage, exportStitchList, exportBlueprint;
+	public MenuItem save, saveAs, exportConvertedImage, exportBlueprint;
 	@FXML
 	public CheckMenuItem showNumberItem, toggleColorTableItem, toggleLogItem;
 	@FXML
@@ -97,33 +98,60 @@ public class OverviewController extends Controller {
 	private int x = -1, y = -1;
 	
 	private String css, style;
+	
+    // Executor for managing threads
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-	public void setStage(final Stage overviewStage) {
-		try {
-			css = new File("resources/Style.css").toURI().toURL().toExternalForm();
-			final int fontSize = Preferences.getInteger("fontSize", 13);
-			final String fontType = Preferences.getValue("fontType", "Malgun Gothic");
-			style = new StringBuilder("-fx-font: ").append(fontSize).append("px \"").append(fontType).append("\";").toString();
-		} catch (MalformedURLException e) {
-			LogPrinter.print(e);
-		}
-		if (Preferences.getBoolean("showColorTable", true) == false) {
-			setColorTable(false);
-		}
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				overviewStage.getScene().getWindow().addEventHandler(WindowEvent.WINDOW_CLOSE_REQUEST,
-						(event) -> closeWindowEvent(event));
-				autoLoad();
-			}
-		});
-		checkUpdate();
-		this.overviewStage = overviewStage;
+    public void setStage(final Stage overviewStage) {
+        try {
+            initializeStyle();
+        } catch (MalformedURLException e) {
+            LogPrinter.print(e);
+        }
+
+        setColorTable(Preferences.getBoolean("showColorTable", true));
+        setupStageCloseEvent(overviewStage);
+        autoLoad();
+
+        updateApplication();
+        this.overviewStage = overviewStage;
+    }
+
+    private void initializeStyle() throws MalformedURLException {
+        css = new File("resources/Style.css").toURI().toURL().toExternalForm();
+        int fontSize = Preferences.getInteger("fontSize", 13);
+        String fontType = Preferences.getValue("fontType", "Malgun Gothic");
+        style = String.format("-fx-font: %dpx \"%s\";", fontSize, fontType);
+    }
+
+    private void setupStageCloseEvent(final Stage overviewStage) {
+        Platform.runLater(() -> overviewStage.getScene().getWindow().addEventHandler(
+                WindowEvent.WINDOW_CLOSE_REQUEST, 
+                this::closeWindowEvent));
+    }
+
+    private void updateApplication() {
+        UpdateChecker updateChecker = new UpdateChecker();
+        updateChecker.checkUpdate();
+    }
+
+	
+	private void setColorTable(boolean enable) {
+	    toggleColorTableItem.setSelected(enable);
+	    Preferences.setValue("showColorTable", Boolean.toString(enable));
+	    if (enable) {
+	        if (!borderPane.getChildren().contains(colorTable)) {
+	            borderPane.setRight(colorTable);
+	        }
+	    } else {
+	        if (borderPane.getChildren().contains(colorTable)) {
+	            borderPane.setRight(null);
+	        }
+	    }
 	}
 
 	private void autoLoad() {
-		if (Preferences.getBoolean("autoLoad", false) == true) {
+		if (Preferences.getBoolean("autoLoad", false)) {
 			try {
 				loadDmc(new File(Preferences.getValue("autoLoadFile", "")));
 			} catch (final NoSuchElementException e) {
@@ -131,92 +159,41 @@ public class OverviewController extends Controller {
 			}
 		}
 	}
-
-	private void checkUpdate() {
-		if (Preferences.getBoolean("updateNeverRemind", false) == false) {
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					if(hasUpdate() == true) {
-						Platform.runLater(new Runnable() {
-							@Override
-							public void run() {
-								final ButtonType update = new ButtonType(Resources.getString("update"), ButtonData.YES);
-								final ButtonType notUpdate = new ButtonType(Resources.getString("update_no"), ButtonData.NO);
-								final ButtonType neverRemind = new ButtonType(Resources.getString("update_never_remind"),
-										ButtonData.OTHER);
-								final Alert alert = new Alert(AlertType.INFORMATION);
-								alert.getDialogPane().getStylesheets().add(css);
-								alert.setTitle(Resources.getString("information"));
-								alert.setHeaderText(Resources.getString("update_header"));
-								alert.setContentText(Resources.getString("update_content"));
-								
-								final Image icon = new Image("file:resources/icon/update.png");
-								alert.setGraphic(new ImageView(icon));
-								((Stage)alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-								
-								alert.getButtonTypes().setAll(update, notUpdate, neverRemind);
-								final Optional<ButtonType> result = alert.showAndWait();
-								if (result.get() == update) {
-									final String url = new StringBuilder(Resources.getString("url")).append("/releases").toString();
-									main.getHostServices().showDocument(url);
-								} else if (result.get() == neverRemind) {
-									Preferences.setValue("updateNeverRemind", true);
-								}
-							}
-						});
-					}
-				}
-			}).start();
-		}
-	}
-	
-	static boolean hasUpdate() {
-		try {
-			final URL url = new URL(Resources.getString("update_url"));
-			final HttpURLConnection httpUrlConnection = (HttpURLConnection) url.openConnection();
-			try (final InputStreamReader inputStreamReader = new InputStreamReader(
-					httpUrlConnection.getInputStream())) {
-				try (final BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-					final StringBuilder stringBuilder = new StringBuilder();
-					String temp;
-					while ((temp = bufferedReader.readLine()) != null) {
-						stringBuilder.append(temp).append("\n");
-					}
-					final JSONParser jsonParser = new JSONParser();
-					final JSONObject jsonObject = (JSONObject) jsonParser.parse(stringBuilder.toString());
-					final int version = Integer.parseInt(jsonObject.get("tag_name").toString());
-					return version > Integer.parseInt(Resources.getString("version"));
-				}
-			} finally {
-				httpUrlConnection.disconnect();
-			}
-		} catch (final Exception e) {
-
-		}
-		return false;
-	}
 	
 	@FXML
 	public void initialize() {
+	    setupHighlightColumn();
+	    setupCompleteColumn();
+	    setupIndexColumn();
+	    setupTotalNumberColumn();
+	    setupColorColumn();
+	    setupNameColumn();
+	    setupZoomHandler();
+	    setupCanvasMouseHandlers();
+	    setupDistanceCircleDrawing();
+
+	    canvas.requestFocus();
+	}
+
+	private void setupHighlightColumn() {
 	    highlightColumn.setCellFactory(column -> new CheckBoxTableCell<>());
 	    highlightColumn.setCellValueFactory(cellData -> {
 	        StitchList cellValue = cellData.getValue();
 	        BooleanProperty property = cellValue.highlightProperty();
 	        cellValue.setHighlight(property.get());
 	        property.addListener((observable, oldValue, newValue) -> {
-	            if (newValue.equals(cellValue.isHighlighted())) {
-	                cellValue.setHighlight(newValue);
-	                cellValue.getPixelList().setHighlighted(newValue);
-	                if (newValue && cellValue.isCompleted()) {
-	                    cellValue.setCompleted(false);
-	                }
-	                setTitleChanged(true);
+	            cellValue.setHighlight(newValue);
+	            cellValue.getPixelList().setHighlighted(newValue);
+	            if (newValue && cellValue.isCompleted()) {
+	                cellValue.setCompleted(false);
 	            }
+	            setTitleChanged(true);
 	        });
 	        return property;
 	    });
+	}
 
+	private void setupCompleteColumn() {
 	    completeColumn.setCellFactory(column -> new CheckBoxTableCell<>());
 	    completeColumn.setCellValueFactory(cellData -> {
 	        StitchList cellValue = cellData.getValue();
@@ -232,11 +209,17 @@ public class OverviewController extends Controller {
 	        });
 	        return property;
 	    });
+	}
 
+	private void setupIndexColumn() {
 	    indexColumn.setCellValueFactory(cellData -> cellData.getValue().indexProperty().asObject());
+	}
 
+	private void setupTotalNumberColumn() {
 	    totalNumberColumn.setCellValueFactory(cellData -> cellData.getValue().totalNumberProperty().asObject());
+	}
 
+	private void setupColorColumn() {
 	    colorColumn.setCellFactory(column -> new TableCell<StitchList, String>() {
 	        @Override
 	        protected void updateItem(String item, boolean empty) {
@@ -247,8 +230,13 @@ public class OverviewController extends Controller {
 	        }
 	    });
 	    colorColumn.setCellValueFactory(cellData -> cellData.getValue().colorStringProperty());
+	}
+	
+	private void setupNameColumn() {
+	    nameColumn.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+	}
 
-	    // Handle zoom input
+	private void setupZoomHandler() {
 	    zoom.setOnKeyPressed(event -> {
 	        if (event.getCode() == KeyCode.ENTER) {
 	            event.consume();
@@ -256,8 +244,9 @@ public class OverviewController extends Controller {
 	            invalidate();
 	        }
 	    });
+	}
 
-	    // Mouse events on canvas
+	private void setupCanvasMouseHandlers() {
 	    canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
 	        if (event.getButton().equals(MouseButton.PRIMARY)) {
 	            highlightPixel(event.getX(), event.getY());
@@ -265,8 +254,9 @@ public class OverviewController extends Controller {
 	            getClickedColor(event.getX(), event.getY());
 	        }
 	    });
+	}
 
-	    // Handling distance circle drawing
+	private void setupDistanceCircleDrawing() {
 	    if (Preferences.getBoolean("showDistanceCircle", false)) {
 	        EventHandler<MouseEvent> drawHandler = event -> {
 	            canvasController.startDrawDistanceCircle(event.getX(), event.getY());
@@ -279,10 +269,63 @@ public class OverviewController extends Controller {
 	            invalidate();
 	        });
 	    }
-
-	    canvas.requestFocus();
 	}
 
+	
+	public boolean setZoom(String scale) {
+	    double ratioByWidth = calculateWidthRatio();
+	    double ratioByHeight = calculateHeightRatio();
+
+	    scale = scale.toUpperCase();
+
+	    switch (scale) {
+	        case "MATCH_WIDTH":
+	            return applyScale(ratioByWidth, scale);
+	        case "MATCH_HEIGHT":
+	            return applyScale(ratioByHeight, scale);
+	        case "MATCH_SCREEN":
+	            return applyScale(Math.min(ratioByWidth, ratioByHeight), scale);
+	        default:
+	            return parseAndSetScale(scale, ratioByWidth);
+	    }
+	}
+
+	private double calculateWidthRatio() {
+	    double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
+	    double imageWidth = canvasController.getImage().getWidth();
+	    return Math.max(2.0, screenWidth / imageWidth);
+	}
+
+	private double calculateHeightRatio() {
+	    double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
+	    double imageHeight = canvasController.getImage().getHeight();
+	    return Math.max(2.0, screenHeight / imageHeight);
+	}
+
+	private boolean applyScale(double scaleValue, String scale) {
+	    canvasController.setScale(scaleValue);
+	    zoom.setText(scale);
+	    Preferences.setValue("scale", zoom.getText());
+	    canvas.requestFocus();
+	    return true;
+	}
+
+	private boolean parseAndSetScale(String scale, double defaultRatio) {
+	    try {
+	        double scaleRatio = Double.parseDouble(scale.replace("X", ""));
+	        scaleRatio = Math.max(2d, Math.min(15d, scaleRatio));
+	        canvasController.setScale(scaleRatio);
+	        zoom.setText(Double.toString(scaleRatio));
+	    } catch (NumberFormatException e) {
+	        canvasController.setScale(defaultRatio);
+	        zoom.setText(Preferences.getValue("scale", "MATCH_WIDTH"));
+	        return false;
+	    }
+	    
+	    Preferences.setValue("scale", zoom.getText());
+	    canvas.requestFocus();
+	    return true;
+	}
 	
 	public void setImage(final StitchImage stitchImage) {
 	    canvasController = new CanvasController(stitchImage, canvas);
@@ -313,7 +356,6 @@ public class OverviewController extends Controller {
 	    save.setDisable(false);
 	    saveAs.setDisable(false);
 	    exportConvertedImage.setDisable(false);
-	    exportStitchList.setDisable(false);
 	    exportBlueprint.setDisable(false);
 
 	    showNumberItem.setSelected(Preferences.getBoolean("drawGridNumber", true));
@@ -403,291 +445,284 @@ public class OverviewController extends Controller {
 	    if (!confirmExit()) {
 	        event.consume();
 	    }
+	    System.exit(0);
+	}
+
+	public void setTitleChanged(final boolean changed) {
+		canvasController.getImage().setChanged(changed);
+		if (changed == true) {
+			overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
+		} else {
+			overviewStage.setTitle(dmcFile.getName());
+		}
 	}
 	
 	private File dmcFile, csvFile;
 	private String name;
-	private FileChooser loadFileChooser;
-	private FileChooser.ExtensionFilter dmcFilter;
-	
-	@FXML
-	public void loadMenu() {
-		if (confirmExit() == false) {
-			return;
-		}
-
-		if (csvFile == null) {
-			csvFile = new File(Preferences.getValue("csvFile", "resources/dmc.csv"));
-		}
-
-		if (loadFileChooser == null) {
-			loadFileChooser = new FileChooser();
-			loadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-			dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"), "*.dmc");
-			final FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(
-					Resources.getString("filter_all"), "*.*");
-			final FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(
-					Resources.getString("filter_image"), "*.bmp", "*.jpg", "*.jpeg", "*.gif", "*.png", "*.apng");
-			loadFileChooser.getExtensionFilters().add(allFileFilter);
-			loadFileChooser.getExtensionFilters().add(dmcFilter);
-			loadFileChooser.getExtensionFilters().add(imageFilter);
-		}
-		final File file = loadFileChooser.showOpenDialog(overviewStage);
-
-		if (file != null) {
-			final String extension = getExtension(file);
-			try {
-				if (extension != null && extension.equals(".dmc")) {
-					loadDmc(file);
-				} else {
-					makeNewFile(file);
-				}
-			} catch(Exception e) {
-				LogPrinter.error(Resources.getString("cant_read_image"));
-			}
-		}
-	}
-
-	private void loadDmc(final File file) {
-		dmcFile = file;
-		overviewStage.setTitle(dmcFile.getName());
-		main.load(new GraphicsEngine.Builder(csvFile, dmcFile));
-		name = dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf("."));
-	}
-
-	private void makeNewFile(final File file) {
-		Preferences.setValue("scrollX", "0");
-		Preferences.setValue("scrollY", "0");
-		final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(csvFile, file);
-		builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0));
-		builder.setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")));
-		builder.setThreadCount(Preferences.getInteger("workingThread", 0));
-		builder.setScaled(Preferences.getBoolean("resizeImage", true));
-		dmcFile = new File(new StringBuilder(file.getParent()).append(File.separator)
-				.append(file.getName().substring(0, file.getName().lastIndexOf("."))).append(".dmc").toString());
-		overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
-		main.startConversion(builder);
-		name = dmcFile.getName().substring(0, dmcFile.getName().lastIndexOf("."));
-	}
-	
-	private static String getExtension(final File file) {
-		final String name = file.getName();
-		final int lastIndexOf = name.lastIndexOf(".");
-		if (lastIndexOf == -1) {
-			return null;
-		}
-		return name.substring(lastIndexOf);
-	}
-	
-
-	@FXML
-	public boolean saveMenu() {
-		if (save.isDisable() == true) {
-			return false;
-		}
-		setTitleChanged(false);
-		Resources.writeObject(dmcFile, canvasController.getImage());
-		Preferences.setValue("autoLoadFile", dmcFile.getPath());
-		return true;
-	}
-
-	private FileChooser saveToFileChooser;
-	@FXML
-	public void saveAsMenu() {
-		if (saveAs.isDisable() == true) {
-			return;
-		}
-		if(saveToFileChooser == null) {
-			saveToFileChooser = new FileChooser();
-			saveToFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-			saveToFileChooser.getExtensionFilters().add(dmcFilter);
-		}
-		final File saveFile = saveToFileChooser.showSaveDialog(overviewStage);
-		if (saveFile != null) {
-			dmcFile = saveFile;
-			saveMenu();
-		}
-	}
-	
-
+	private FileChooser loadFileChooser, saveToFileChooser, blueprintFileChooser, convertedImageFileChooser;
+	private FileChooser.ExtensionFilter dmcFilter, pngExtensionFilter;
 	private Alert confirmExitAlert;
 	private ButtonType saveButton, notSaveButton;
-
-	private boolean confirmExit() {
-		if (canvasController != null && canvasController.getImage().isChanged() == true) {
-			if (confirmExitAlert == null) {
-				saveButton = new ButtonType(Resources.getString("save"), ButtonData.YES);
-				notSaveButton = new ButtonType(Resources.getString("save_no"), ButtonData.NO);
-				final ButtonType cancelButton = new ButtonType(Resources.getString("cancel_button"),
-						ButtonData.CANCEL_CLOSE);
-				confirmExitAlert = new Alert(AlertType.CONFIRMATION);
-				confirmExitAlert.getDialogPane().getStylesheets().add(css);
-				confirmExitAlert.setTitle(Resources.getString("warning"));
-				confirmExitAlert.setHeaderText(Resources.getString("file_changed_header"));
-				confirmExitAlert.setContentText(Resources.getString("file_changed"));
-				
-				final Image icon = new Image("file:resources/icon/information.png");
-				confirmExitAlert.setGraphic(new ImageView(icon));
-				((Stage)confirmExitAlert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-				
-				confirmExitAlert.getButtonTypes().setAll(saveButton, notSaveButton, cancelButton);
-			}
-			final Optional<ButtonType> result = confirmExitAlert.showAndWait();
-			if (result.get() == saveButton) {
-				saveMenu();
-				return true;
-			} else if (result.get() == notSaveButton) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private FileChooser blueprintFileChooser;
-	private FileChooser.ExtensionFilter pngExtensionFilter;
 	private Canvas blueprintCanvas;
 	private CanvasController blueprintController;
 	private Blueprint blueprint;
 	private WritableImage blueprintWritableImage;
+	
+	@FXML
+	public void loadMenu() {
+	    if (!confirmExit()) return;
+
+	    initializeCsvFile();
+	    initializeLoadFileChooser();
+
+	    File file = loadFileChooser.showOpenDialog(overviewStage);
+
+	    if (file != null) {
+	        handleFileLoad(file);
+	    }
+	}
+
+	private void initializeCsvFile() {
+	    if (csvFile == null) {
+	        csvFile = new File(Preferences.getValue("csvFile", "resources/dmc.csv"));
+	    }
+	}
+
+	private void initializeLoadFileChooser() {
+	    if (loadFileChooser == null) {
+	        loadFileChooser = new FileChooser();
+	        loadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+	        dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"), "*.dmc");
+	        
+	        FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_all"), "*.*");
+	        FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_image"), "*.bmp", "*.jpg", "*.jpeg", "*.gif", "*.png", "*.apng");
+
+	        loadFileChooser.getExtensionFilters().addAll(allFileFilter, dmcFilter, imageFilter);
+	    }
+	}
+
+	private void handleFileLoad(File file) {
+	    String extension = getExtension(file);
+
+	    try {
+	        if (".dmc".equals(extension)) {
+	            loadDmc(file);
+	        } else {
+	            makeNewFile(file);
+	        }
+	    } catch (Exception e) {
+	        LogPrinter.error(Resources.getString("cant_read_image"));
+	    }
+	}
+
+	private void loadDmc(File file) {
+	    dmcFile = file;
+	    overviewStage.setTitle(dmcFile.getName());
+	    main.load(new GraphicsEngine.Builder(csvFile, dmcFile), GraphicsEngine.Mode.LOAD);
+	    name = extractFileNameWithoutExtension(dmcFile);
+	}
+
+	private void makeNewFile(File file) {
+	    resetScrollPreferences();
+
+	    GraphicsEngine.Builder builder = new GraphicsEngine.Builder(csvFile, file);
+	    builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0))
+	           .setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")))
+	           .setThreadCount(Preferences.getInteger("workingThread", 0))
+	           .setScaled(Preferences.getBoolean("resizeImage", true));
+
+	    dmcFile = new File(file.getParent(), extractFileNameWithoutExtension(file) + ".dmc");
+	    overviewStage.setTitle(dmcFile.getName() + "(*)");
+	    main.load(new GraphicsEngine.Builder(csvFile, file), GraphicsEngine.Mode.NEW_FILE);
+
+	    name = extractFileNameWithoutExtension(dmcFile);
+	}
+
+	private String extractFileNameWithoutExtension(File file) {
+	    return file.getName().substring(0, file.getName().lastIndexOf("."));
+	}
+
+	private void resetScrollPreferences() {
+	    Preferences.setValue("scrollX", "0");
+	    Preferences.setValue("scrollY", "0");
+	}
+
+	private String getExtension(File file) {
+	    String name = file.getName();
+	    int lastIndexOf = name.lastIndexOf(".");
+	    return (lastIndexOf == -1) ? null : name.substring(lastIndexOf);
+	}
+
+	@FXML
+	public boolean saveMenu() {
+	    if (!save.isDisable()) {
+	        setTitleChanged(false);
+	        Resources.writeObject(dmcFile, canvasController.getImage());
+	        Preferences.setValue("autoLoadFile", dmcFile.getPath());
+	        return true;
+	    }
+	    return false;
+	}
+
+	@FXML
+	public void saveAsMenu() {
+	    if (!saveAs.isDisable()) {
+	        initializeSaveToFileChooser();
+	        File saveFile = saveToFileChooser.showSaveDialog(overviewStage);
+	        if (saveFile != null) {
+	            dmcFile = saveFile;
+	            saveMenu();
+	        }
+	    }
+	}
+
+	private void initializeSaveToFileChooser() {
+	    if (saveToFileChooser == null) {
+	        saveToFileChooser = new FileChooser();
+	        saveToFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
+	        saveToFileChooser.getExtensionFilters().add(dmcFilter);
+	    }
+	}
+
+	private boolean confirmExit() {
+	    if (canvasController != null && canvasController.getImage().isChanged()) {
+	        initializeConfirmExitAlert();
+	        Optional<ButtonType> result = confirmExitAlert.showAndWait();
+
+	        if (result.isPresent()) {
+	            if (result.get() == saveButton) {
+	                saveMenu();
+	                return true;
+	            } else if (result.get() == notSaveButton) {
+	                return true;
+	            }
+	        }
+	        return false;
+	    }
+	    return true;
+	}
+
+	private void initializeConfirmExitAlert() {
+	    if (confirmExitAlert == null) {
+	        saveButton = new ButtonType(Resources.getString("save"), ButtonData.YES);
+	        notSaveButton = new ButtonType(Resources.getString("save_no"), ButtonData.NO);
+	        ButtonType cancelButton = new ButtonType(Resources.getString("cancel_button"), ButtonData.CANCEL_CLOSE);
+
+	        confirmExitAlert = new Alert(AlertType.CONFIRMATION);
+	        confirmExitAlert.getDialogPane().getStylesheets().add(css);
+	        confirmExitAlert.setTitle(Resources.getString("warning"));
+	        confirmExitAlert.setHeaderText(Resources.getString("file_changed_header"));
+	        confirmExitAlert.setContentText(Resources.getString("file_changed"));
+
+	        Image icon = new Image("file:resources/icon/information.png");
+	        confirmExitAlert.setGraphic(new ImageView(icon));
+	        ((Stage) confirmExitAlert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+
+	        confirmExitAlert.getButtonTypes().setAll(saveButton, notSaveButton, cancelButton);
+	    }
+	}
 
 	@FXML
 	public void exportBlueprintMenu() {
-		if (exportBlueprint.isDisable() == true) {
-			return;
-		}
-		if (blueprintFileChooser == null) {
-			blueprintFileChooser = new FileChooser();
-			blueprintFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-			blueprintFileChooser.setInitialFileName(new StringBuilder(name).append("_blueprint.png").toString());
-			if(pngExtensionFilter == null) {
-				pngExtensionFilter = new FileChooser.ExtensionFilter(Resources.getString("png_file"), "*.png");
-			}
-			blueprintFileChooser.getExtensionFilters().add(pngExtensionFilter);
-
-			blueprintCanvas = new Canvas(canvasController.getCanvas().getWidth(),
-					canvasController.getCanvas().getHeight());
-			blueprintController = new CanvasController(canvasController.getImage(), blueprintCanvas);
-			blueprint = new Blueprint(canvasController.getImage(), blueprintCanvas);
-			blueprint.setScale(Preferences.getDouble("blueprintScale", 20d));
-			blueprint.setListScale(Preferences.getDouble("blueprintListScale", 20d));
-			blueprintWritableImage = new WritableImage((int) blueprint.getCanvas().getWidth(),
-					(int) blueprint.getCanvas().getHeight());
-		}
-		final File blueprintFile = blueprintFileChooser.showSaveDialog(overviewStage);
-		if (blueprintFile != null) {
-			blueprintController.invalidate();
-			blueprint.invalidate();
-			blueprint.getCanvas().snapshot(null, blueprintWritableImage);
-			try {
-				ImageIO.write(SwingFXUtils.fromFXImage(blueprintWritableImage, null), "png", blueprintFile);
-			} catch (final IOException e) {
-				LogPrinter.print(e);
-				LogPrinter.error(Resources.getString("save_failed", Resources.getString("blueprint_file")));
-			}
-		}
+	    if (!exportBlueprint.isDisable()) {
+	        initializeBlueprintFileChooser();
+	        File blueprintFile = blueprintFileChooser.showSaveDialog(overviewStage);
+	        
+	        if (blueprintFile != null) {
+	            exportBlueprintToFile(blueprintFile);
+	        }
+	    }
 	}
-	
-	private FileChooser convertedImageFileChooser;
+
+	private void initializeBlueprintFileChooser() {
+	    if (blueprintFileChooser == null) {
+	        blueprintFileChooser = new FileChooser();
+	        blueprintFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
+	        blueprintFileChooser.setInitialFileName(name + "_blueprint.png");
+
+	        if (pngExtensionFilter == null) {
+	            pngExtensionFilter = new FileChooser.ExtensionFilter(Resources.getString("png_file"), "*.png");
+	        }
+	        blueprintFileChooser.getExtensionFilters().add(pngExtensionFilter);
+	    }
+
+	    if (blueprintCanvas == null) {
+	        blueprintCanvas = new Canvas(canvasController.getCanvas().getWidth(), canvasController.getCanvas().getHeight());
+	        blueprintController = new CanvasController(canvasController.getImage(), blueprintCanvas);
+	        blueprint = new Blueprint(canvasController.getImage(), blueprintCanvas);
+	        blueprint.setScale(Preferences.getDouble("blueprintScale", 20d));
+	        blueprint.setListScale(Preferences.getDouble("blueprintListScale", 20d));
+	        blueprintWritableImage = new WritableImage((int) blueprint.getCanvas().getWidth(), (int) blueprint.getCanvas().getHeight());
+	    }
+	}
+
+	private void exportBlueprintToFile(File blueprintFile) {
+	    blueprintController.invalidate();
+	    blueprint.invalidate();
+	    blueprint.getCanvas().snapshot(null, blueprintWritableImage);
+
+	    try {
+	        ImageIO.write(SwingFXUtils.fromFXImage(blueprintWritableImage, null), "png", blueprintFile);
+	    } catch (IOException e) {
+	        LogPrinter.print(e);
+	        LogPrinter.error(Resources.getString("save_failed", Resources.getString("blueprint_file")));
+	    }
+	}
 
 	@FXML
 	public void exportConvertedImageMenu() {
-		if (exportConvertedImage.isDisable() == true) {
-			return;
-		}
-		if(convertedImageFileChooser == null) {
-			convertedImageFileChooser = new FileChooser();
-			convertedImageFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-			convertedImageFileChooser.setInitialFileName(new StringBuilder(name).append(".png").toString());
-			if(pngExtensionFilter == null) {
-				pngExtensionFilter = new FileChooser.ExtensionFilter(Resources.getString("png_file"), "*.png");
-			}
-			convertedImageFileChooser.getExtensionFilters().add(pngExtensionFilter);
-		}
-		final File imageFile = convertedImageFileChooser.showSaveDialog(overviewStage);
-		if (imageFile != null) {
-			final BufferedImage bufferedImage = SwingFXUtils.fromFXImage(canvasController.getImage().getFXImage(),
-					null);
-			try {
-				ImageIO.write(bufferedImage, "png", imageFile);
-			} catch (final IOException e) {
-				LogPrinter.print(e);
-				LogPrinter.error(Resources.getString("save_failed", Resources.getString("image_file")));
-			}
-		}
+	    if (!exportConvertedImage.isDisable()) {
+	        initializeConvertedImageFileChooser();
+	        File imageFile = convertedImageFileChooser.showSaveDialog(overviewStage);
+
+	        if (imageFile != null) {
+	            exportConvertedImageToFile(imageFile);
+	        }
+	    }
 	}
 
-	private FileChooser exportStitchFileChooser;
+	private void initializeConvertedImageFileChooser() {
+	    if (convertedImageFileChooser == null) {
+	        convertedImageFileChooser = new FileChooser();
+	        convertedImageFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
+	        convertedImageFileChooser.setInitialFileName(name + ".png");
+	        convertedImageFileChooser.getExtensionFilters().add(pngExtensionFilter);
+	    }
+	}
 
+	private void exportConvertedImageToFile(File imageFile) {
+	    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(canvasController.getImage().getFXImage(), null);
+
+	    try {
+	        ImageIO.write(bufferedImage, "png", imageFile);
+	    } catch (IOException e) {
+	        LogPrinter.print(e);
+	        LogPrinter.error(Resources.getString("save_failed", Resources.getString("image_file")));
+	    }
+	}
+	
 	@FXML
-	public void exportStitchListMenu() {
-		if (exportStitchList.isDisable() == true) {
-			return;
-		}
-		if (exportStitchFileChooser == null) {
-			exportStitchFileChooser = new FileChooser();
-			exportStitchFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-			exportStitchFileChooser.setInitialFileName(new StringBuilder(name).append(".act").toString());
-			final FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter(
-					Resources.getString("filter_act"), "*.act");
-			exportStitchFileChooser.getExtensionFilters().add(extensionFilter);
-		}
-		final File actFile = exportStitchFileChooser.showSaveDialog(overviewStage);
-		if (actFile != null) {
-			if (actFile.exists()) {
-				actFile.delete();
-			}
-			try (final OutputStream outputStream = new FileOutputStream(actFile)) {
-				actFile.createNewFile();
-				int totalNumber = 0;
-				for (final StitchColor color : canvasController.getImage().getColorList()) {
-					if (totalNumber == 256) {
-						break;
-					}
-					totalNumber++;
-					byte red = (byte) (color.getRed() & 0xff);
-					byte green = (byte) (color.getGreen() & 0xff);
-					byte blue = (byte) (color.getBlue() & 0xff);
-					outputStream.write(red);
-					outputStream.write(green);
-					outputStream.write(blue);
-
-				}
-				for (final StitchColor color : canvasController.getImage().getAlternate()) {
-					if (totalNumber == 256) {
-						break;
-					}
-					totalNumber++;
-					byte red = (byte) (color.getRed() & 0xff);
-					byte green = (byte) (color.getGreen() & 0xff);
-					byte blue = (byte) (color.getBlue() & 0xff);
-					outputStream.write(red);
-					outputStream.write(green);
-					outputStream.write(blue);
-				}
-				for (; totalNumber <= 255; totalNumber++) {
-					outputStream.write(0x00);
-					outputStream.write(0x00);
-					outputStream.write(0x00);
-				}
-			} catch (final IOException e) {
-				LogPrinter.print(e);
-				LogPrinter.error(Resources.getString("save_failed", Resources.getString("act_file")));
-			}
-		}
+	public void exitMenu() {
+	    if (confirmExit()) {
+	        overviewStage.close();
+	    }
 	}
 
+	public void close() {
+	    if (confirmExit()) {
+	        overviewStage.close();
+	    }
+	}
+	
 	@FXML
-	public void onShowNumberItemClicked() {
-		Preferences.setValue("drawGridNumber", Boolean.toString(showNumberItem.isSelected()));
-		if(canvasController != null) {
-			canvasController.invalidate();
+	public void toggleWindowColorTable() {
+		if (toggleColorTableItem.isSelected() == true) {
+			setColorTable(true);
+		} else {
+			setColorTable(false);
 		}
 	}
-
-	private Stage settingStage;
-
+	
 	@FXML
 	public void setting() {
 		if (settingStage == null) {
@@ -721,82 +756,15 @@ public class OverviewController extends Controller {
 		}
 		settingStage.showAndWait();
 	}
-
-	public void setTitleChanged(final boolean changed) {
-		canvasController.getImage().setChanged(changed);
-		if (changed == true) {
-			overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
-		} else {
-			overviewStage.setTitle(dmcFile.getName());
-		}
-	}
-
-	public boolean setZoom(final String scale) {
-		double scaleRatio = 0d;
-		
-		final double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
-		final double imageWidth = canvasController.getImage().getWidth();
-		final double ratioByWidth = Math.max(2.0, screenWidth / imageWidth);
-		final double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
-		final double imageHeight = canvasController.getImage().getHeight();
-		final double ratioByHeight = Math.max(2.0, screenHeight / imageHeight);
-
-		if (scale.equals("MATCH_WIDTH")) {
-			canvasController.setScale(ratioByWidth);
-			zoom.setText(scale);
-		} else if (scale.equals("MATCH_HEIGHT")) {
-			canvasController.setScale(ratioByHeight);
-			zoom.setText(scale);
-		} else if (scale.equals("MATCH_SCREEN")) {
-			canvasController.setScale(Math.min(ratioByWidth, ratioByHeight));
-			zoom.setText(scale);
-		} else {
-			try {
-				scaleRatio = Double.parseDouble(scale.replace("x", ""));
-				if(scaleRatio <= 0) {
-					scaleRatio = 2d;
-				}
-				if(scaleRatio >= 15) {
-					scaleRatio = 15d;
-				}
-				canvasController.setScale(Double.parseDouble(scale));
-				zoom.setText(Double.toString(scaleRatio));
-			} catch (final NumberFormatException e) {
-				canvasController.setScale(ratioByWidth);
-				zoom.setText(Preferences.getValue("scale", "MATCH_WIDTH"));
-				return false;
-			}
-		}
-		Preferences.setValue("scale", zoom.getText());
-		canvas.requestFocus();
-		return true;
-	}
-
+	
 	@FXML
-	public void toggleWindowColorTable() {
-		if (toggleColorTableItem.isSelected() == true) {
-			setColorTable(true);
-		} else {
-			setColorTable(false);
+	public void onShowNumberItemClicked() {
+		Preferences.setValue("drawGridNumber", Boolean.toString(showNumberItem.isSelected()));
+		if(canvasController != null) {
+			canvasController.invalidate();
 		}
 	}
-
-	private void setColorTable(boolean enable) {
-		if (enable == true) {
-			toggleColorTableItem.setSelected(true);
-			Preferences.setValue("showColorTable", "true");
-			if (borderPane.getChildren().contains(colorTable) == false) {
-				borderPane.setRight(colorTable);
-			}
-		} else {
-			toggleColorTableItem.setSelected(false);
-			Preferences.setValue("showColorTable", "false");
-			if (borderPane.getChildren().contains(colorTable) == true) {
-				borderPane.setRight(null);
-			}
-		}
-	}
-
+	
 	private Stage authorStage;
 
 	@FXML
@@ -834,5 +802,140 @@ public class OverviewController extends Controller {
 			controller.setApp(main);
 		}
 		authorStage.showAndWait();
+	}
+	
+	private class UpdateChecker {
+		
+	    private static final String TAG_NAME_KEY = "tag_name";
+	    private static final String VERSION_KEY = "version";
+
+	    private void checkUpdate() {
+	        if (!Preferences.getBoolean("updateNeverRemind", false)) {
+	            executorService.submit(() -> {
+	                if (hasUpdate()) {
+	                    Platform.runLater(this::showUpdateDialog);
+	                }
+	            });
+	        }
+	    }
+	    
+	    private boolean hasUpdate() {
+	        try {
+	            // Step 1: Retrieve update URL from resources
+	            final URL updateUrl = getUpdateURL();
+	            // Step 2: Fetch latest version number from the server
+	            final Optional<Integer> latestVersion = fetchLatestVersion(updateUrl);
+
+	            // Step 3: Compare with current version
+	            if (latestVersion.isPresent()) {
+	                int currentVersion = Integer.parseInt(Resources.getString(VERSION_KEY));
+	                return latestVersion.get() > currentVersion;
+	            }
+	        } catch (Exception e) {
+	        }
+	        return false;
+	    }
+	    
+	    private URL getUpdateURL() throws Exception {
+	        URI uri = new URI(Resources.getString("update_url"));
+	        return uri.toURL();
+	    }
+
+	    // Fetches the latest version from the server and parses the response
+	    private static Optional<Integer> fetchLatestVersion(URL url) {
+	        HttpURLConnection httpUrlConnection = null;
+	        try {
+	            httpUrlConnection = (HttpURLConnection) url.openConnection();
+	            httpUrlConnection.setRequestMethod("GET");
+	            httpUrlConnection.setConnectTimeout(1000);  // Set timeout for the connection
+	            httpUrlConnection.setReadTimeout(1000);
+
+	            if (httpUrlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+	                try (InputStreamReader inputStreamReader = new InputStreamReader(httpUrlConnection.getInputStream());
+	                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+	                    String jsonResponse = readResponse(bufferedReader);
+	                    return parseVersionFromResponse(jsonResponse);
+	                }
+	            } else {
+	                System.err.println("Failed to fetch update, HTTP code: " + httpUrlConnection.getResponseCode());
+	            }
+	        } catch (Exception e) {
+	        } finally {
+	            if (httpUrlConnection != null) {
+	                httpUrlConnection.disconnect();
+	            }
+	        }
+	        return Optional.empty();
+	    }
+
+	    // Reads the full response from the BufferedReader
+	    private static String readResponse(BufferedReader bufferedReader) throws Exception {
+	        StringBuilder stringBuilder = new StringBuilder();
+	        String line;
+	        while ((line = bufferedReader.readLine()) != null) {
+	            stringBuilder.append(line).append("\n");
+	        }
+	        return stringBuilder.toString();
+	    }
+
+	    // Parses the version number from the JSON response
+	    private static Optional<Integer> parseVersionFromResponse(String jsonResponse) {
+	        try {
+	            JSONParser jsonParser = new JSONParser();
+	            JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonResponse);
+	            return Optional.of(Integer.parseInt(jsonObject.get(TAG_NAME_KEY).toString()));
+	        } catch (ParseException | NumberFormatException e) {
+	            System.err.println("Error parsing version from response: " + e.getMessage());
+	        }
+	        return Optional.empty();
+	    }
+
+
+
+	    // Method to show the update dialog
+	    private void showUpdateDialog() {
+	        final ButtonType update = new ButtonType(Resources.getString("update"), ButtonData.YES);
+	        final ButtonType notUpdate = new ButtonType(Resources.getString("update_no"), ButtonData.NO);
+	        final ButtonType neverRemind = new ButtonType(Resources.getString("update_never_remind"), ButtonData.OTHER);
+
+	        final Alert alert = createAlert(update, notUpdate, neverRemind);
+	        final Optional<ButtonType> result = alert.showAndWait();
+
+	        result.ifPresent(buttonType -> handleDialogResult(buttonType, update, neverRemind));
+	    }
+
+	    // Method to create the update alert dialog
+	    private Alert createAlert(ButtonType update, ButtonType notUpdate, ButtonType neverRemind) {
+	        final Alert alert = new Alert(AlertType.INFORMATION);
+	        alert.getDialogPane().getStylesheets().add(css);
+	        alert.setTitle(Resources.getString("information"));
+	        alert.setHeaderText(Resources.getString("update_header"));
+	        alert.setContentText(Resources.getString("update_content"));
+
+	        // Set icon for the alert
+	        final Image icon = new Image("file:resources/icon/update.png");
+	        alert.setGraphic(new ImageView(icon));
+	        ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+
+	        // Set available button types
+	        alert.getButtonTypes().setAll(update, notUpdate, neverRemind);
+
+	        return alert;
+	    }
+
+	    // Handle the result of the dialog
+	    private void handleDialogResult(ButtonType result, ButtonType update, ButtonType neverRemind) {
+	        if (result == update) {
+	            openUpdatePage();
+	        } else if (result == neverRemind) {
+	            Preferences.setValue("updateNeverRemind", true);
+	        }
+	    }
+
+	    // Opens the update page in the user's default browser
+	    private void openUpdatePage() {
+	        final String url = new StringBuilder(Resources.getString("url")).append("/releases").toString();
+	        main.getHostServices().showDocument(url);
+	    }
 	}
 }

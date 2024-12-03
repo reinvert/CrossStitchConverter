@@ -60,11 +60,6 @@
                                     <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="exportStitchList" disable="true" mnemonicParsing="false" onAction="#exportStitchListMenu" text="%export_stitch_list">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="C" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
-                                 </accelerator>
-                              </MenuItem>
                               <MenuItem fx:id="exportBlueprint" disable="true" mnemonicParsing="false" onAction="#exportBlueprintMenu" text="%export_blueprint">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="B" control="UP" meta="UP" shift="UP" shortcut="DOWN" />

@@ -6,13 +6,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.stitch.converter.model.StitchColor;
 
@@ -24,7 +24,7 @@ public class Preferences {
     static {
         try {
             Path configPath = Paths.get(CONFIG_FILE);
-            if (!Files.exists(configPath)) {
+            if (Files.notExists(configPath)) {
                 Files.createFile(configPath);
             }
             load();
@@ -37,24 +37,27 @@ public class Preferences {
     private static void load() throws IOException {
         Path configPath = Paths.get(CONFIG_FILE);
         try (BufferedReader bufferedReader = Files.newBufferedReader(configPath)) {
-            bufferedReader.lines().forEach(line -> {
-                try {
-                    String[] splitLine = line.trim().split("=");
-                    if (splitLine.length == 2) {
-                        keyStore.put(splitLine[0].trim(), splitLine[1].trim());
-                    }
-                } catch (ArrayIndexOutOfBoundsException ignored) {
-                }
-            });
+            keyStore.putAll(bufferedReader.lines()
+                .map(line -> line.split("="))
+                .filter(splitLine -> splitLine.length == 2)
+                .collect(Collectors.toMap(
+                    splitLine -> splitLine[0].trim(),
+                    splitLine -> splitLine[1].trim()
+                )));
         }
     }
 
     private static final Runnable storeAction = () -> {
         Path configPath = Paths.get(CONFIG_FILE);
         try (BufferedWriter bufferedWriter = Files.newBufferedWriter(configPath)) {
-            for (var entry : keyStore.entrySet()) {
-                bufferedWriter.write(entry.getKey() + "=" + entry.getValue() + "\n");
-            }
+            keyStore.forEach((key, value) -> {
+                try {
+                    bufferedWriter.write(key + "=" + value + "\n");
+                } catch (IOException e) {
+                    LogPrinter.print(e);
+                    LogPrinter.error(Resources.getString("write_failed", Resources.getString("setting_file")));
+                }
+            });
         } catch (IOException e) {
             LogPrinter.print(e);
             LogPrinter.error(Resources.getString("write_failed", Resources.getString("setting_file")));
@@ -65,7 +68,6 @@ public class Preferences {
         executor.submit(storeAction);
     }
 
-    // Shuts down the ExecutorService gracefully
     public static void shutdown() {
         executor.shutdown();
         try {
@@ -77,76 +79,61 @@ public class Preferences {
         }
     }
 
-    public static boolean getBoolean(final String key) throws NoSuchElementException {
-        return Boolean.parseBoolean(getValue(key).orElseThrow());
-    }
-
-    public static boolean getBoolean(final String key, final boolean defaultValue) {
-        return getValue(key).map(Boolean::parseBoolean).orElse(defaultValue);
-    }
-
-    public static StitchColor getColor(final String key) throws NoSuchElementException, ClassCastException {
-        return stringToColor(getValue(key).orElseThrow());
-    }
-
-    public static StitchColor getColor(final String key, final StitchColor defaultValue) {
-        return getValue(key).map(Preferences::stringToColor).orElse(defaultValue);
-    }
-
-    public static double getDouble(final String key) throws NoSuchElementException, NumberFormatException {
-        return Double.parseDouble(getValue(key).orElseThrow());
-    }
-
-    public static double getDouble(final String key, final double defaultValue) {
-        return getValue(key).map(Double::parseDouble).orElse(defaultValue);
-    }
-
-    public static int getInteger(final String key) throws NoSuchElementException, NumberFormatException {
-        return Integer.parseInt(getValue(key).orElseThrow());
-    }
-
-    public static int getInteger(final String key, final int defaultValue) {
-        return getValue(key).map(Integer::parseInt).orElse(defaultValue);
-    }
-
     public static SortedMap<String, String> getKeyStore() {
-        return new TreeMap<>(keyStore);  // Immutable
+        return new TreeMap<>(keyStore); // Immutable copy
     }
 
-    public static Optional<String> getValue(final String key) {
-        return Optional.ofNullable(keyStore.get(key));
+    public static boolean getBoolean(String key, boolean defaultValue) {
+        return getOrDefault(key, defaultValue, Boolean::parseBoolean, Preferences::setValue);
     }
 
-    public static String getValue(final String key, final String defaultValue) {
-        return getValue(key).orElse(defaultValue);
+    public static StitchColor getColor(String key, StitchColor defaultValue) {
+        return getOrDefault(key, defaultValue, Preferences::stringToColor, Preferences::setValue);
     }
 
-    public static boolean setValue(final String key, final boolean value) {
-        keyStore.put(key, Boolean.toString(value));
-        return true;
+    public static double getDouble(String key, double defaultValue) {
+        return getOrDefault(key, defaultValue, Double::parseDouble, Preferences::setValue);
     }
 
-    public static boolean setValue(final String key, final double value) {
-        keyStore.put(key, String.format("%.4f", value));
-        return true;
+    public static int getInteger(String key, int defaultValue) {
+        return getOrDefault(key, defaultValue, Integer::parseInt, Preferences::setValue);
     }
 
-    public static boolean setValue(final String key, final int value) {
-        keyStore.put(key, Integer.toString(value));
-        return true;
+    public static String getValue(String key, String defaultValue) {
+        return keyStore.computeIfAbsent(key, k -> defaultValue);
     }
 
-    public static boolean setValue(final String key, final StitchColor value) {
-        keyStore.put(key, colorToString(value));
-        return true;
+    private static <T> T getOrDefault(String key, T defaultValue, java.util.function.Function<String, T> parser, java.util.function.BiConsumer<String, T> setter) {
+        return Optional.ofNullable(keyStore.get(key))
+            .map(parser)
+            .orElseGet(() -> {
+                setter.accept(key, defaultValue);
+                return defaultValue;
+            });
     }
 
-    public static boolean setValue(final String key, final String value) {
+    public static boolean setValue(String key, boolean value) {
+        return setValue(key, Boolean.toString(value));
+    }
+
+    public static boolean setValue(String key, double value) {
+        return setValue(key, String.format("%.4f", value));
+    }
+
+    public static boolean setValue(String key, int value) {
+        return setValue(key, Integer.toString(value));
+    }
+
+    public static boolean setValue(String key, StitchColor value) {
+        return setValue(key, colorToString(value));
+    }
+
+    public static boolean setValue(String key, String value) {
         keyStore.put(key, value);
         return true;
     }
 
-    private static StitchColor stringToColor(final String colorCode) throws ClassCastException {
+    private static StitchColor stringToColor(String colorCode) throws ClassCastException {
         try {
             int red = Integer.parseInt(colorCode.substring(1, 3), 16);
             int green = Integer.parseInt(colorCode.substring(3, 5), 16);
@@ -157,7 +144,7 @@ public class Preferences {
         }
     }
 
-    private static String colorToString(final StitchColor color) {
+    private static String colorToString(StitchColor color) {
         return String.format("#%02X%02X%02X", color.getRed(), color.getGreen(), color.getBlue());
     }
 
