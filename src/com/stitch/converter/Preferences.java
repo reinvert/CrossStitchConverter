@@ -104,7 +104,7 @@ public class Preferences {
     }
 
     private static <T> T getOrDefault(String key, T defaultValue, java.util.function.Function<String, T> parser, java.util.function.BiConsumer<String, T> setter) {
-        return Optional.ofNullable(keyStore.get(key))
+    	return Optional.ofNullable(keyStore.get(key))
             .map(parser)
             .orElseGet(() -> {
                 setter.accept(key, defaultValue);
@@ -130,6 +130,7 @@ public class Preferences {
 
     public static boolean setValue(String key, String value) {
         keyStore.put(key, value);
+        store();
         return true;
     }
 
