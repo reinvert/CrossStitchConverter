@@ -152,11 +152,17 @@ public class OverviewController extends Controller {
 
 	private void autoLoad() {
 		if (Preferences.getBoolean("autoLoad", false)) {
-			try {
-				loadDmc(new File(Preferences.getValue("autoLoadFile", "")));
-			} catch (final NoSuchElementException e) {
-				LogPrinter.error(Resources.getString("auto_load_file_not_found"));
-			}
+		Platform.runLater(new Runnable() {
+			@Override
+			public void run() {
+					try {
+						loadDmc(new File(Preferences.getValue("autoLoadFile", "")));
+					} catch (final NoSuchElementException e) {
+						LogPrinter.error(Resources.getString("auto_load_file_not_found"));
+					}
+				}
+			
+		});
 		}
 	}
 	
