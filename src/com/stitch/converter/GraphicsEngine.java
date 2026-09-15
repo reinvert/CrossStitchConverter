@@ -223,6 +223,30 @@ public final class GraphicsEngine implements Runnable{
 
     private static List<StitchColor> readColorList(final List<String[]> csv) {
         List<StitchColor> colors = new ArrayList<>();
+        try {
+            for (String[] row : csv) {
+            	if(row[0].equals("ID")) continue;
+                String name = row[0];
+                if(row[2].equals("GrayLevel[1]")) {
+                	colors.add(new StitchColor(1.0f, 1.0f, 1.0f, name));
+                	continue;
+                }
+                String valuesStr = row[2].substring(row[2].indexOf("[") + 1, row[2].indexOf("]"));
+                String[] rgbValues = valuesStr.split(",\\s*");
+                float red = Float.parseFloat(rgbValues[0]);
+                float green = Float.parseFloat(rgbValues[1]);
+                float blue = Float.parseFloat(rgbValues[2]);
+                colors.add(new StitchColor(red, green, blue, name));
+            }
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+        	e.printStackTrace();
+            return readColorListAsInteger(csv);
+        }
+        return colors;
+    }
+    
+    private static List<StitchColor> readColorListAsInteger(final List<String[]> csv) {
+        List<StitchColor> colors = new ArrayList<>();
         int lineNumber = 0;
         try {
             for (String[] row : csv) {

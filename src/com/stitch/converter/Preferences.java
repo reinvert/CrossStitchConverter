@@ -2,7 +2,10 @@ package com.stitch.converter;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +52,9 @@ public class Preferences {
 
     private static final Runnable storeAction = () -> {
         Path configPath = Paths.get(CONFIG_FILE);
-        try (BufferedWriter bufferedWriter = Files.newBufferedWriter(configPath)) {
+        try (FileOutputStream fos = new FileOutputStream(configPath.toFile(), false);
+                OutputStreamWriter osw = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+        		BufferedWriter bufferedWriter = new BufferedWriter(osw)){
             keyStore.forEach((key, value) -> {
                 try {
                     bufferedWriter.write(key + "=" + value + "\n");
@@ -58,6 +63,8 @@ public class Preferences {
                     LogPrinter.error(Resources.getString("write_failed", Resources.getString("setting_file")));
                 }
             });
+            bufferedWriter.flush();
+            fos.getFD().sync();
         } catch (IOException e) {
             LogPrinter.print(e);
             LogPrinter.error(Resources.getString("write_failed", Resources.getString("setting_file")));

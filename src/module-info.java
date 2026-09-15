@@ -17,4 +17,7 @@ module CrossStitchConverter {
 	requires transitive javafx.swing;
 	requires transitive json.simple;
 	requires com.opencsv;
+	
+    opens com.stitch.converter.view to javafx.fxml;
+
 }

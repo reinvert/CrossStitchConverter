@@ -61,7 +61,7 @@ public class Resources {
     public static String getString(final String id) throws MissingResourceException {
         try {
             return bundle.getString(id);
-        } catch (NullPointerException | ClassCastException | MissingResourceException e) {
+        } catch (NullPointerException | ClassCastException e) {
             LogPrinter.print(e);
             LogPrinter.error("Exception on reading resource for id: " + id);
             return null;

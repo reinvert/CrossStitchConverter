@@ -112,17 +112,25 @@ class ColorConverter implements Runnable {
         }
 
         private StitchColor findSecondClosestColor(StitchColor targetColor, List<StitchColor> colorList, StitchColor outputColor) {
-            colorList.remove(outputColor);
+            if (colorList.size() <= 1) {
+                return outputColor;
+            }
+
             double alternateDifference = Double.MAX_VALUE;
             StitchColor alternateColor = null;
+
             for (final StitchColor listColor : colorList) {
+                if (listColor.equals(outputColor)) {
+                    continue;
+                }
+
                 double calculatedDifference = ImageTools.calculateDifference(listColor, targetColor);
                 if (calculatedDifference < alternateDifference) {
                     alternateColor = listColor;
                     alternateDifference = calculatedDifference;
                 }
             }
-            return alternateColor;
+            return (alternateColor != null) ? alternateColor : outputColor;
         }
     }
 
@@ -146,7 +154,6 @@ class ColorConverter implements Runnable {
                     stitchImage.addAlternateColor(pixelEntry.getValue());
                     double progress = 1.0 - (double) count++ / imageSize;
                     progressListener.onProgress(progress, Resources.getString("conversion_processing_colors"));
-                    System.out.println(Resources.getString("conversion_processing_colors") + progress);
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                     LogPrinter.print(e);
