@@ -16,10 +16,9 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
+import com.github.cliftonlabs.json_simple.JsonException;
+import com.github.cliftonlabs.json_simple.JsonObject;
+import com.github.cliftonlabs.json_simple.Jsoner;
 import com.stitch.converter.GraphicsEngine;
 import com.stitch.converter.LogPrinter;
 import com.stitch.converter.Preferences;
@@ -887,10 +886,9 @@ public class OverviewController extends Controller {
 	    // Parses the version number from the JSON response
 	    private static Optional<Integer> parseVersionFromResponse(String jsonResponse) {
 	        try {
-	            JSONParser jsonParser = new JSONParser();
-	            JSONObject jsonObject = (JSONObject) jsonParser.parse(jsonResponse);
+	        	JsonObject jsonObject = (JsonObject) Jsoner.deserialize(jsonResponse);
 	            return Optional.of(Integer.parseInt(jsonObject.get(TAG_NAME_KEY).toString()));
-	        } catch (ParseException | NumberFormatException e) {
+	        } catch (JsonException | NumberFormatException e) {
 	            System.err.println("Error parsing version from response: " + e.getMessage());
 	        }
 	        return Optional.empty();
