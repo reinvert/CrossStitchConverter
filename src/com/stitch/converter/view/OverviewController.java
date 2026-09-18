@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,7 +31,6 @@ import com.stitch.converter.model.StitchList;
 
 import javafx.application.Platform;
 import javafx.beans.Observable;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -86,7 +86,7 @@ public class OverviewController extends Controller {
 	@FXML
 	public TableColumn<StitchList, Integer> indexColumn, totalNumberColumn;
 	@FXML
-	public MenuItem save, saveAs, exportConvertedImage, exportBlueprint;
+	public MenuItem load, save, saveAs, exportConvertedImage, exportBlueprint;
 	@FXML
 	public CheckMenuItem showNumberItem, toggleColorTableItem, toggleLogItem;
 	@FXML
@@ -110,6 +110,8 @@ public class OverviewController extends Controller {
 
         setColorTable(Preferences.getBoolean("showColorTable", true));
         setupStageCloseEvent(overviewStage);
+
+        initializeCsvFile();
         autoLoad();
 
         updateApplication();
@@ -176,44 +178,23 @@ public class OverviewController extends Controller {
 	    setupZoomHandler();
 	    setupCanvasMouseHandlers();
 	    setupDistanceCircleDrawing();
+	    setupCanvasScrollPaneResizeHandlers();
 
 	    canvas.requestFocus();
 	}
 
 	private void setupHighlightColumn() {
 	    highlightColumn.setCellFactory(column -> new CheckBoxTableCell<>());
-	    highlightColumn.setCellValueFactory(cellData -> {
-	        StitchList cellValue = cellData.getValue();
-	        BooleanProperty property = cellValue.highlightProperty();
-	        cellValue.setHighlight(property.get());
-	        property.addListener((observable, oldValue, newValue) -> {
-	            cellValue.setHighlight(newValue);
-	            cellValue.getPixelList().setHighlighted(newValue);
-	            if (newValue && cellValue.isCompleted()) {
-	                cellValue.setCompleted(false);
-	            }
-	            setTitleChanged(true);
-	        });
-	        return property;
-	    });
+	    highlightColumn.setCellValueFactory(
+	            cellData -> cellData.getValue().highlightProperty()
+	    );
 	}
 
 	private void setupCompleteColumn() {
 	    completeColumn.setCellFactory(column -> new CheckBoxTableCell<>());
-	    completeColumn.setCellValueFactory(cellData -> {
-	        StitchList cellValue = cellData.getValue();
-	        BooleanProperty property = cellValue.completeProperty();
-	        cellValue.setCompleted(property.get());
-	        property.addListener((observable, oldValue, newValue) -> {
-	            cellValue.setCompleted(newValue);
-	            cellValue.getPixelList().setCompleted(newValue);
-	            if (newValue && cellValue.isHighlighted()) {
-	                cellValue.setHighlight(false);
-	            }
-	            setTitleChanged(true);
-	        });
-	        return property;
-	    });
+	    completeColumn.setCellValueFactory(
+	            cellData -> cellData.getValue().completeProperty()
+	    );
 	}
 
 	private void setupIndexColumn() {
@@ -274,6 +255,16 @@ public class OverviewController extends Controller {
 	            invalidate();
 	        });
 	    }
+	}
+	
+	private void setupCanvasScrollPaneResizeHandlers() {
+	    canvasScrollPane.widthProperty().addListener(
+	            createSizeChangeListener()
+	    );
+
+	    canvasScrollPane.heightProperty().addListener(
+	            createSizeChangeListener()
+	    );
 	}
 
 	
@@ -339,7 +330,13 @@ public class OverviewController extends Controller {
 	        stitchList -> new Observable[]{stitchList.highlightProperty(), stitchList.completeProperty()}
 	    );
 
-	    stitchImage.getPixelLists().forEach(pixelList -> stitchListArrayList.add(new StitchList(pixelList)));
+	    stitchImage.getPixelLists().forEach(pixelList -> {
+	        final StitchList stitchList = new StitchList(pixelList);
+
+	        setupStitchListListeners(stitchList);
+
+	        stitchListArrayList.add(stitchList);
+	    });
 
 	    stitchListArrayList.addListener((ListChangeListener<StitchList>) c -> {
 	        if (c.next() && c.wasUpdated()) {
@@ -351,6 +348,32 @@ public class OverviewController extends Controller {
 	    setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
 
 	    enableCanvasInteraction();
+	}
+	
+	private void setupStitchListListeners(final StitchList stitchList) {
+	    stitchList.highlightProperty().addListener(
+	            (observable, oldValue, newValue) -> {
+	                stitchList.setHighlight(newValue);
+
+	                if (newValue && stitchList.isCompleted()) {
+	                    stitchList.setCompleted(false);
+	                }
+
+	                setTitleChanged(true);
+	            }
+	    );
+
+	    stitchList.completeProperty().addListener(
+	            (observable, oldValue, newValue) -> {
+	                stitchList.setCompleted(newValue);
+
+	                if (newValue && stitchList.isHighlighted()) {
+	                    stitchList.setHighlight(false);
+	                }
+
+	                setTitleChanged(true);
+	            }
+	    );
 	}
 	
 	private void enableCanvasInteraction() {
@@ -370,13 +393,14 @@ public class OverviewController extends Controller {
 	        canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
 	        canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
 	    }
-
-	    canvasScrollPane.widthProperty().addListener(createSizeChangeListener());
-	    canvasScrollPane.heightProperty().addListener(createSizeChangeListener());
 	}
 	
 	private ChangeListener<Number> createSizeChangeListener() {
 	    return (observable, oldValue, newValue) -> {
+	        if (canvasController == null) {
+	            return;
+	        }
+
 	        if (Preferences.getValue("scale", "MATCH_SCREEN").contains("MATCH")) {
 	            setZoom(Preferences.getValue("scale", "MATCH_SCREEN"));
 	            invalidate();
@@ -430,8 +454,10 @@ public class OverviewController extends Controller {
 	        .filter(stitchList -> stitchList.getPixelList().hasPixel(pixel))
 	        .findFirst()
 	        .ifPresent(stitchList -> {
-	            this.x = (this.x == x && this.y == y) ? -1 : x;
-	            this.y = (this.x == x && this.y == y) ? -1 : y;
+	            final boolean samePixel = this.x == x && this.y == y;
+
+	            this.x = samePixel ? -1 : x;
+	            this.y = samePixel ? -1 : y;
 
 	            Platform.runLater(() -> {
 	                canvasController.setHighlightPixel(this.x, this.y);
@@ -440,16 +466,31 @@ public class OverviewController extends Controller {
 	        });
 	}
 
-	private void closeWindowEvent(WindowEvent event) {
-	    if (Preferences.getBoolean("autoLoad", false)) {
-	        Preferences.setValue("scrollX", canvasScrollPane.getHvalue());
-	        Preferences.setValue("scrollY", canvasScrollPane.getVvalue());
+	private void closeWindowEvent(final WindowEvent event) {
+	    if (saveInProgress) {
+	        event.consume();
+	        return;
 	    }
+
+	    if (Preferences.getBoolean("autoLoad", false)) {
+	        Preferences.setValue(
+	                "scrollX",
+	                canvasScrollPane.getHvalue()
+	        );
+
+	        Preferences.setValue(
+	                "scrollY",
+	                canvasScrollPane.getVvalue()
+	        );
+	    }
+
 	    Preferences.store();
 
 	    if (!confirmExit()) {
 	        event.consume();
+	        return;
 	    }
+
 	    System.exit(0);
 	}
 
@@ -532,13 +573,23 @@ public class OverviewController extends Controller {
 
 	    GraphicsEngine.Builder builder = new GraphicsEngine.Builder(csvFile, file);
 	    builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0))
-	           .setBackground(Preferences.getColor("backgroundColor", new StitchColor(Color.WHITE, "")))
+	           .setBackground(
+	               Preferences.getColor(
+	                   "backgroundColor",
+	                   new StitchColor(Color.WHITE, "")
+	               )
+	           )
 	           .setThreadCount(Preferences.getInteger("workingThread", 0))
 	           .setScaled(Preferences.getBoolean("resizeImage", true));
 
-	    dmcFile = new File(file.getParent(), extractFileNameWithoutExtension(file) + ".dmc");
+	    dmcFile = new File(
+	        file.getParent(),
+	        extractFileNameWithoutExtension(file) + ".dmc"
+	    );
+
 	    overviewStage.setTitle(dmcFile.getName() + "(*)");
-	    main.load(new GraphicsEngine.Builder(csvFile, file), GraphicsEngine.Mode.NEW_FILE);
+
+	    main.load(builder, GraphicsEngine.Mode.NEW_FILE);
 
 	    name = extractFileNameWithoutExtension(dmcFile);
 	}
@@ -558,25 +609,100 @@ public class OverviewController extends Controller {
 	    return (lastIndexOf == -1) ? null : name.substring(lastIndexOf);
 	}
 
+	private boolean saveInProgress;
+
 	@FXML
-	public boolean saveMenu() {
-	    if (!save.isDisable()) {
-	        setTitleChanged(false);
-	        Resources.writeObject(dmcFile, canvasController.getImage());
-	        Preferences.setValue("autoLoadFile", dmcFile.getPath());
-	        return true;
+	public void saveMenu() {
+	    saveDocumentAsync(null);
+	}
+	
+	private void saveDocumentAsync(final Runnable onSuccess) {
+	    if (saveInProgress || save.isDisable()) {
+	        return;
 	    }
-	    return false;
+
+	    final File targetFile = dmcFile;
+	    final StitchImage image = canvasController.getImage();
+
+	    saveInProgress = true;
+	    setDocumentBusy(true);
+
+	    CompletableFuture
+	            .supplyAsync(() ->
+	                    Resources.writeObject(targetFile, image)
+	            )
+	            .whenComplete((saved, throwable) ->
+	                    Platform.runLater(() -> {
+	                        saveInProgress = false;
+	                        setDocumentBusy(false);
+
+	                        if (throwable != null ||
+	                                !Boolean.TRUE.equals(saved)) {
+
+	                            showSaveFailureAlert(targetFile);
+	                            return;
+	                        }
+
+	                        // 실제 파일 저장이 성공한 뒤에만
+	                        // dirty 상태를 해제한다.
+	                        setTitleChanged(false);
+
+	                        Preferences.setValue(
+	                                "autoLoadFile",
+	                                targetFile.getPath()
+	                        );
+
+	                        if (onSuccess != null) {
+	                            onSuccess.run();
+	                        }
+	                    })
+	            );
+	}
+	
+	private void setDocumentBusy(final boolean busy) {
+	    load.setDisable(busy);
+	    save.setDisable(busy);
+	    saveAs.setDisable(busy);
+	    exportConvertedImage.setDisable(busy);
+	    exportBlueprint.setDisable(busy);
+
+	    canvas.setDisable(busy);
+	    colorTable.setDisable(busy);
+	    zoom.setDisable(busy);
+	}
+	
+	private void showSaveFailureAlert(final File targetFile) {
+	    final Alert alert = new Alert(AlertType.ERROR);
+
+	    alert.getDialogPane()
+	            .getStylesheets()
+	            .add(css);
+
+	    alert.setTitle(Resources.getString("warning"));
+	    alert.setHeaderText(
+	            Resources.getString("error")
+	    );
+	    alert.setContentText(
+	    		Resources.getString(
+	                    "save_failed",
+	                    targetFile.getAbsolutePath()
+	            )
+	    );
+
+	    alert.showAndWait();
 	}
 
 	@FXML
 	public void saveAsMenu() {
 	    if (!saveAs.isDisable()) {
 	        initializeSaveToFileChooser();
-	        File saveFile = saveToFileChooser.showSaveDialog(overviewStage);
+
+	        File saveFile =
+	                saveToFileChooser.showSaveDialog(overviewStage);
+
 	        if (saveFile != null) {
 	            dmcFile = saveFile;
-	            saveMenu();
+	            saveDocumentAsync(null);
 	        }
 	    }
 	}
@@ -584,26 +710,46 @@ public class OverviewController extends Controller {
 	private void initializeSaveToFileChooser() {
 	    if (saveToFileChooser == null) {
 	        saveToFileChooser = new FileChooser();
-	        saveToFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
 	        saveToFileChooser.getExtensionFilters().add(dmcFilter);
 	    }
+
+	    saveToFileChooser.setInitialDirectory(
+	            new File(dmcFile.getParent())
+	    );
 	}
 
 	private boolean confirmExit() {
-	    if (canvasController != null && canvasController.getImage().isChanged()) {
+	    if (saveInProgress) {
+	        return false;
+	    }
+
+	    if (canvasController != null &&
+	            canvasController.getImage().isChanged()) {
+
 	        initializeConfirmExitAlert();
-	        Optional<ButtonType> result = confirmExitAlert.showAndWait();
+
+	        Optional<ButtonType> result =
+	                confirmExitAlert.showAndWait();
 
 	        if (result.isPresent()) {
+
 	            if (result.get() == saveButton) {
-	                saveMenu();
-	                return true;
+
+	                saveDocumentAsync(
+	                        () -> overviewStage.close()
+	                );
+
+	                return false;
+
 	            } else if (result.get() == notSaveButton) {
+
 	                return true;
 	            }
 	        }
+
 	        return false;
 	    }
+
 	    return true;
 	}
 
@@ -640,25 +786,50 @@ public class OverviewController extends Controller {
 	}
 
 	private void initializeBlueprintFileChooser() {
+	    initializePngExtensionFilter();
+
 	    if (blueprintFileChooser == null) {
 	        blueprintFileChooser = new FileChooser();
-	        blueprintFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-	        blueprintFileChooser.setInitialFileName(name + "_blueprint.png");
-
-	        if (pngExtensionFilter == null) {
-	            pngExtensionFilter = new FileChooser.ExtensionFilter(Resources.getString("png_file"), "*.png");
-	        }
 	        blueprintFileChooser.getExtensionFilters().add(pngExtensionFilter);
 	    }
 
-	    if (blueprintCanvas == null) {
-	        blueprintCanvas = new Canvas(canvasController.getCanvas().getWidth(), canvasController.getCanvas().getHeight());
-	        blueprintController = new CanvasController(canvasController.getImage(), blueprintCanvas);
-	        blueprint = new Blueprint(canvasController.getImage(), blueprintCanvas);
-	        blueprint.setScale(Preferences.getDouble("blueprintScale", 20d));
-	        blueprint.setListScale(Preferences.getDouble("blueprintListScale", 20d));
-	        blueprintWritableImage = new WritableImage((int) blueprint.getCanvas().getWidth(), (int) blueprint.getCanvas().getHeight());
-	    }
+	    blueprintFileChooser.setInitialDirectory(
+	            new File(dmcFile.getParent())
+	    );
+
+	    blueprintFileChooser.setInitialFileName(
+	            name + "_blueprint.png"
+	    );
+
+	    // Always recreate the blueprint objects so they reference
+	    // the currently loaded StitchImage.
+	    blueprintCanvas = new Canvas(
+	            canvasController.getCanvas().getWidth(),
+	            canvasController.getCanvas().getHeight()
+	    );
+
+	    blueprintController = new CanvasController(
+	            canvasController.getImage(),
+	            blueprintCanvas
+	    );
+
+	    blueprint = new Blueprint(
+	            canvasController.getImage(),
+	            blueprintCanvas
+	    );
+
+	    blueprint.setScale(
+	            Preferences.getDouble("blueprintScale", 20d)
+	    );
+
+	    blueprint.setListScale(
+	            Preferences.getDouble("blueprintListScale", 20d)
+	    );
+
+	    blueprintWritableImage = new WritableImage(
+	            (int) blueprintCanvas.getWidth(),
+	            (int) blueprintCanvas.getHeight()
+	    );
 	}
 
 	private void exportBlueprintToFile(File blueprintFile) {
@@ -687,11 +858,30 @@ public class OverviewController extends Controller {
 	}
 
 	private void initializeConvertedImageFileChooser() {
+	    initializePngExtensionFilter();
+
 	    if (convertedImageFileChooser == null) {
 	        convertedImageFileChooser = new FileChooser();
-	        convertedImageFileChooser.setInitialDirectory(new File(dmcFile.getParent()));
-	        convertedImageFileChooser.setInitialFileName(name + ".png");
-	        convertedImageFileChooser.getExtensionFilters().add(pngExtensionFilter);
+	        convertedImageFileChooser.getExtensionFilters().add(
+	                pngExtensionFilter
+	        );
+	    }
+
+	    convertedImageFileChooser.setInitialDirectory(
+	            new File(dmcFile.getParent())
+	    );
+
+	    convertedImageFileChooser.setInitialFileName(
+	            name + ".png"
+	    );
+	}
+	
+	private void initializePngExtensionFilter() {
+	    if (pngExtensionFilter == null) {
+	        pngExtensionFilter = new FileChooser.ExtensionFilter(
+	                Resources.getString("png_file"),
+	                "*.png"
+	        );
 	    }
 	}
 

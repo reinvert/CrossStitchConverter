@@ -23,7 +23,6 @@ public final class GraphicsEngine implements Runnable{
         private int colorLimit = 0;
         private int threadCount;
         private int convertMode = Preferences.getInteger("convertMode", 0);
-        private boolean isGammaBased = Preferences.getBoolean("isGammaBased", true);
         private ProgressListener progressListener;
 
         private final File csvFile;
@@ -74,11 +73,6 @@ public final class GraphicsEngine implements Runnable{
             return this;
         }
 
-        public Builder setGammaBased(final boolean isGammaBased) {
-            this.isGammaBased = isGammaBased;
-            return this;
-        }
-
         public Builder setConvertMode(final int convertMode) {
             if (convertMode == FLOYD || convertMode == SIERRA) {
                 this.convertMode = convertMode;
@@ -105,7 +99,6 @@ public final class GraphicsEngine implements Runnable{
     private final List<Listener> listeners;
     private final Mode loadMode;
     private final boolean scaled;
-    private final boolean isGammaBased;
     private final ProgressListener progressListener;
 
     private GraphicsEngine(final Builder builder) {
@@ -117,7 +110,6 @@ public final class GraphicsEngine implements Runnable{
         this.loadMode = builder.loadMode;
         this.threadCount = builder.threadCount;
         this.listeners = builder.listeners;
-        this.isGammaBased = builder.isGammaBased;
         this.convertMode = builder.convertMode;
         this.progressListener = builder.progressListener;
     }
@@ -211,7 +203,6 @@ public final class GraphicsEngine implements Runnable{
     private ColorConverter createColorConverter(BufferedImage image, StitchImage stitchImage, List<StitchColor> colorList) {
         ColorConverter.Builder builder = new ColorConverter.Builder(image, stitchImage, colorList)
                 .setThreadCount(threadCount)
-                .setGammaBased(isGammaBased)
                 .setConvertMode(convertMode)
                 .setProgressListener(progressListener);
 

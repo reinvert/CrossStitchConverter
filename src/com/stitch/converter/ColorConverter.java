@@ -26,7 +26,6 @@ class ColorConverter implements Runnable {
 			}
         };
         int convertMode = GraphicsEngine.FLOYD;
-        boolean isGammaBased = true;
 
         Builder(final BufferedImage image, final StitchImage stitchImage, final Collection<StitchColor> colorList) {
             this.image = image;
@@ -55,12 +54,7 @@ class ColorConverter implements Runnable {
             this.convertMode = convertMode;
             return this;
         }
-
-        Builder setGammaBased(final boolean isGammaBased) {
-            this.isGammaBased = isGammaBased;
-            return this;
-        }
-
+        
         Builder setProgressListener(final ProgressListener progressListener) {
             this.progressListener = progressListener;
             return this;

@@ -84,14 +84,17 @@ public class Resources {
         }
     }
 
-    public static void writeObject(final File file, final Object object) {
-        CompletableFuture.runAsync(() -> {
-            try (FileOutputStream fos = new FileOutputStream(file); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-                oos.writeObject(object);
-            } catch (IOException e) {
-                LogPrinter.print(e);
-            }
-        });
+    public static boolean writeObject(final File file, final Object object) {
+        try (
+            FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)
+        ) {
+            oos.writeObject(object);
+            return true;
+        } catch (IOException e) {
+            LogPrinter.print(e);
+            return false;
+        }
     }
 
     public static boolean writeText(final File file, final String text) throws IOException {
