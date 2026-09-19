@@ -9,6 +9,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -323,6 +326,12 @@ public class OverviewController extends Controller {
 	    return true;
 	}
 	
+	private final Map<Long, StitchList> stitchListByPixel = new HashMap<>();
+	
+	private long pixelKey(final int x, final int y) {
+	    return ((long) x << 32) | (y & 0xffffffffL);
+	}
+	
 	public void setImage(final StitchImage stitchImage) {
 	    canvasController = new CanvasController(stitchImage, canvas);
 
@@ -330,12 +339,21 @@ public class OverviewController extends Controller {
 	        stitchList -> new Observable[]{stitchList.highlightProperty(), stitchList.completeProperty()}
 	    );
 
+	    stitchListByPixel.clear();
+
 	    stitchImage.getPixelLists().forEach(pixelList -> {
 	        final StitchList stitchList = new StitchList(pixelList);
 
 	        setupStitchListListeners(stitchList);
 
 	        stitchListArrayList.add(stitchList);
+
+	        for (final Pixel pixel : pixelList.getPixelSet()) {
+	            stitchListByPixel.put(
+	                    pixelKey(pixel.getX(), pixel.getY()),
+	                    stitchList
+	            );
+	        }
 	    });
 
 	    stitchListArrayList.addListener((ListChangeListener<StitchList>) c -> {
@@ -408,19 +426,26 @@ public class OverviewController extends Controller {
 	    };
 	}
 
-	private void getClickedColor(double originalX, double originalY) {
-	    int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
-	    int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
-	    Pixel pixel = new Pixel(x, y, null);
+	private void getClickedColor(
+	        final double originalX,
+	        final double originalY) {
 
-	    colorTable.getItems().stream()
-	        .filter(stitchList -> stitchList.getPixelList().hasPixel(pixel))
-	        .findFirst()
-	        .ifPresent(stitchList -> Platform.runLater(() -> {
-	            colorTable.requestFocus();
-	            colorTable.getSelectionModel().select(stitchList);
-	            colorTable.scrollTo(stitchList);
-	        }));
+	    final int x = (int) ((originalX - canvasController.getMargin())
+	            / canvasController.getScale());
+
+	    final int y = (int) ((originalY - canvasController.getMargin())
+	            / canvasController.getScale());
+
+	    final StitchList stitchList =
+	            stitchListByPixel.get(pixelKey(x, y));
+
+	    if (stitchList == null) {
+	        return;
+	    }
+
+	    colorTable.requestFocus();
+	    colorTable.getSelectionModel().select(stitchList);
+	    colorTable.scrollTo(stitchList);
 	}
 	
 	public void invalidate() {
@@ -445,25 +470,28 @@ public class OverviewController extends Controller {
 	    highlightPixel(x, y);
 	}
 
-	private void highlightPixel(int x, int y) {
-	    if (x == -1 || y == -1) return;
+	private void highlightPixel(final int x, final int y) {
+	    if (x == -1 || y == -1) {
+	        return;
+	    }
 
-	    Pixel pixel = new Pixel(x, y, new StitchColor(0, null));
+	    final StitchList stitchList =
+	            stitchListByPixel.get(pixelKey(x, y));
 
-	    colorTable.getItems().stream()
-	        .filter(stitchList -> stitchList.getPixelList().hasPixel(pixel))
-	        .findFirst()
-	        .ifPresent(stitchList -> {
-	            final boolean samePixel = this.x == x && this.y == y;
+	    if (stitchList == null) {
+	        return;
+	    }
 
-	            this.x = samePixel ? -1 : x;
-	            this.y = samePixel ? -1 : y;
+	    if (this.x == x && this.y == y) {
+	        this.x = -1;
+	        this.y = -1;
+	    }
 
-	            Platform.runLater(() -> {
-	                canvasController.setHighlightPixel(this.x, this.y);
-	                canvasController.invalidate();
-	            });
-	        });
+	    this.x = x;
+	    this.y = y;
+
+	    canvasController.setHighlightPixel(this.x, this.y);
+	    canvasController.invalidate();
 	}
 
 	private void closeWindowEvent(final WindowEvent event) {
@@ -595,7 +623,14 @@ public class OverviewController extends Controller {
 	}
 
 	private String extractFileNameWithoutExtension(File file) {
-	    return file.getName().substring(0, file.getName().lastIndexOf("."));
+	    String fileName = file.getName();
+	    int extensionIndex = fileName.lastIndexOf('.');
+
+	    if (extensionIndex <= 0) {
+	        return fileName;
+	    }
+
+	    return fileName.substring(0, extensionIndex);
 	}
 
 	private void resetScrollPreferences() {
@@ -604,24 +639,31 @@ public class OverviewController extends Controller {
 	}
 
 	private String getExtension(File file) {
-	    String name = file.getName();
-	    int lastIndexOf = name.lastIndexOf(".");
-	    return (lastIndexOf == -1) ? null : name.substring(lastIndexOf);
+	    String fileName = file.getName();
+	    int extensionIndex = fileName.lastIndexOf('.');
+
+	    if (extensionIndex <= 0) {
+	        return "";
+	    }
+
+	    return fileName.substring(extensionIndex).toLowerCase(Locale.ROOT);
 	}
 
 	private boolean saveInProgress;
 
 	@FXML
 	public void saveMenu() {
-	    saveDocumentAsync(null);
+	    saveDocumentAsync(dmcFile, null);
 	}
 	
-	private void saveDocumentAsync(final Runnable onSuccess) {
+	private void saveDocumentAsync(
+	        final File targetFile,
+	        final Runnable onSuccess) {
+
 	    if (saveInProgress || save.isDisable()) {
 	        return;
 	    }
 
-	    final File targetFile = dmcFile;
 	    final StitchImage image = canvasController.getImage();
 
 	    saveInProgress = true;
@@ -702,7 +744,7 @@ public class OverviewController extends Controller {
 
 	        if (saveFile != null) {
 	            dmcFile = saveFile;
-	            saveDocumentAsync(null);
+	            saveDocumentAsync(saveFile, null);
 	        }
 	    }
 	}
@@ -736,6 +778,7 @@ public class OverviewController extends Controller {
 	            if (result.get() == saveButton) {
 
 	                saveDocumentAsync(
+	                        dmcFile, 
 	                        () -> overviewStage.close()
 	                );
 

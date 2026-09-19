@@ -79,7 +79,12 @@ public class Resources {
     }
 
     public static Object readObject(final File file) throws IOException, ClassNotFoundException {
-        try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
+        try
+        (
+        		FileInputStream fis = new FileInputStream(file);
+        		ObjectInputStream ois = new ObjectInputStream(fis)
+        				)
+        {
             return ois.readObject();
         }
     }

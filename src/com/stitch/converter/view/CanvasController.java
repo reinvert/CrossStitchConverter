@@ -93,45 +93,69 @@ public class CanvasController {
 	}
 
 	private void drawIndex() {
-		context.setFill(Color.BLACK);
-		context.setTextAlign(TextAlignment.CENTER);
-		context.setTextBaseline(VPos.CENTER);
-		for (final PixelList pixelList : image.getPixelLists()) {
-			if (pixelList.isCompleted() == true) {
-				continue;
-			}
-			for (final Pixel pixel : pixelList.getPixelSet()) {
-				if (pixel.getColor().equals(image.getBackground())) {
-					continue;
-				}
-				if (isHighlightExist == false) {
-					if (pixel.getColor().getRed() + pixel.getColor().getBlue() + pixel.getColor().getGreen() < 128
-							* 3) {
-						context.setFill(Color.WHITE);
-					} else {
-						context.setFill(Color.BLACK);
-					}
-				} else {
-					context.setFill(Color.BLACK);
-				}
-				drawString(pixel.getX(), pixel.getY(), Integer.toString(pixelList.getIndex()));
-			}
-		}
+	    context.setFill(Color.BLACK);
+	    context.setTextAlign(TextAlignment.CENTER);
+	    context.setTextBaseline(VPos.CENTER);
+
+	    for (final PixelList pixelList : image.getPixelLists()) {
+	        if (pixelList.isCompleted() == true) {
+	            continue;
+	        }
+
+	        final String indexText = Integer.toString(pixelList.getIndex());
+	        final Font indexFont = getFontForText(indexText);
+
+	        for (final Pixel pixel : pixelList.getPixelSet()) {
+	            if (pixel.getColor().equals(image.getBackground())) {
+	                continue;
+	            }
+
+	            if (isHighlightExist == false) {
+	                if (pixel.getColor().getRed() + pixel.getColor().getBlue() + pixel.getColor().getGreen() < 128 * 3) {
+	                    context.setFill(Color.WHITE);
+	                } else {
+	                    context.setFill(Color.BLACK);
+	                }
+	            } else {
+	                context.setFill(Color.BLACK);
+	            }
+
+	            drawString(pixel.getX(), pixel.getY(), indexText, indexFont);
+	        }
+	    }
 	}
 
-	private void drawString(final int x, final int y, final String text) {
-		context.setFont(originalFont);
-		if (getTextWidth(originalFont, text) > scale) {
-			final double textScale = scale / getTextWidth(originalFont, text);
-			int fontSize = (int)(context.getFont().getSize() * textScale);
-			Font newFont = fontBySize.get(fontSize);
-			if(newFont == null) {
-				newFont = new Font(fontName, fontSize);
-				fontBySize.put(fontSize, newFont);
-			}
-			context.setFont(newFont);
-		}
-		context.fillText(text, x * scale + (scale / 2) + margin, y * scale + (scale / 2) + margin);
+	private Font getFontForText(final String text) {
+		final double textWidth = getTextWidth(originalFont, text);
+	    if (textWidth <= scale) {
+	        return originalFont;
+	    }
+
+	    final double textScale = scale / textWidth;
+	    final int fontSize = (int) (originalFont.getSize() * textScale);
+
+	    Font newFont = fontBySize.get(fontSize);
+
+	    if (newFont == null) {
+	        newFont = new Font(fontName, fontSize);
+	        fontBySize.put(fontSize, newFont);
+	    }
+
+	    return newFont;
+	}
+
+	private void drawString(
+	        final int x,
+	        final int y,
+	        final String text,
+	        final Font font) {
+
+	    context.setFont(font);
+	    context.fillText(
+	            text,
+	            x * scale + (scale / 2) + margin,
+	            y * scale + (scale / 2) + margin
+	    );
 	}
 
 	public Canvas getCanvas() {
@@ -174,46 +198,60 @@ public class CanvasController {
 	}
 
 	private void renderImage() {
-		context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-		image.setNumberVisible(Preferences.getBoolean("drawGridNumber", true));
-		isHighlightExist = false;
-		final Collection<PixelList> pixelLists = image.getPixelLists();
-		for (final PixelList pixelList : pixelLists) {
-			if (pixelList.isHighlighted()) {
-				isHighlightExist = true;
-				break;
-			}
-		}
-		if (isHighlightExist == true) {
-			context.setFill(darkerColor);
-			context.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-		}
-		for (final PixelList pixelList : pixelLists) {
-			final Color pixelColor = pixelList.getColor().asFX();
-			for (final Pixel pixel : pixelList.getPixelSet()) {
-				if (pixelList.isCompleted() == true) {
-					context.setFill(background);
-					context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
-				} else if (isHighlightExist == true) {
-					if (pixelList.isHighlighted() == true) {
-						if(isHighlightAlternate == true && (pixel.getX() + pixel.getY()) %2 == 0) {
-							context.setFill(highlightAlternateColor);
-						} else {
-							context.setFill(Color.WHITE);
-						}
-						context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
-					} else {
-						context.setFill(pixelColor);
-						context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
-						context.setFill(darkerColor);
-						context.fillRect(pixel.getX() * scale + margin, pixel.getY() * scale + margin, scale, scale);
-					}
-				} else {
-					context.setFill(pixelList.getColor().asFX());
-					context.fillRect(margin + pixel.getX() * scale, margin + pixel.getY() * scale, scale, scale);
-				}
-			}
-		}
+	    context.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+	    image.setNumberVisible(Preferences.getBoolean("drawGridNumber", true));
+
+	    isHighlightExist = false;
+
+	    final Collection<PixelList> pixelLists = image.getPixelLists();
+
+	    for (final PixelList pixelList : pixelLists) {
+	        if (pixelList.isHighlighted()) {
+	            isHighlightExist = true;
+	            break;
+	        }
+	    }
+
+	    if (isHighlightExist == true) {
+	        context.setFill(darkerColor);
+	        context.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+	    }
+
+	    for (final PixelList pixelList : pixelLists) {
+	        final Color pixelColor = pixelList.getColor().asFX();
+	        final boolean isCompleted = pixelList.isCompleted();
+	        final boolean isHighlighted = pixelList.isHighlighted();
+
+	        for (final Pixel pixel : pixelList.getPixelSet()) {
+	            final double pixelX = margin + pixel.getX() * scale;
+	            final double pixelY = margin + pixel.getY() * scale;
+
+	            if (isCompleted == true) {
+	                context.setFill(background);
+	                context.fillRect(pixelX, pixelY, scale, scale);
+	            } else if (isHighlightExist == true) {
+	                if (isHighlighted == true) {
+	                    if (isHighlightAlternate == true
+	                            && (pixel.getX() + pixel.getY()) % 2 == 0) {
+	                        context.setFill(highlightAlternateColor);
+	                    } else {
+	                        context.setFill(Color.WHITE);
+	                    }
+
+	                    context.fillRect(pixelX, pixelY, scale, scale);
+	                } else {
+	                    context.setFill(pixelColor);
+	                    context.fillRect(pixelX, pixelY, scale, scale);
+
+	                    context.setFill(darkerColor);
+	                    context.fillRect(pixelX, pixelY, scale, scale);
+	                }
+	            } else {
+	                context.setFill(pixelColor);
+	                context.fillRect(pixelX, pixelY, scale, scale);
+	            }
+	        }
+	    }
 	}
 
 	public void setMargin(final double margin) {
