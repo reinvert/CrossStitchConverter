@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
@@ -99,18 +98,12 @@ public class OverviewController extends Controller {
 
 	private int x = -1, y = -1;
 	
-	private String css, style;
+	//private String style;
 	
     // Executor for managing threads
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     public void setStage(final Stage overviewStage) {
-        try {
-            initializeStyle();
-        } catch (MalformedURLException e) {
-            LogPrinter.print(e);
-        }
-
         setColorTable(Preferences.getBoolean("showColorTable", true));
         setupStageCloseEvent(overviewStage);
 
@@ -119,13 +112,6 @@ public class OverviewController extends Controller {
 
         updateApplication();
         this.overviewStage = overviewStage;
-    }
-
-    private void initializeStyle() throws MalformedURLException {
-        css = new File("resources/Style.css").toURI().toURL().toExternalForm();
-        int fontSize = Preferences.getInteger("fontSize", 13);
-        String fontType = Preferences.getValue("fontType", "Malgun Gothic");
-        style = String.format("-fx-font: %dpx \"%s\";", fontSize, fontType);
     }
 
     private void setupStageCloseEvent(final Stage overviewStage) {
@@ -160,7 +146,11 @@ public class OverviewController extends Controller {
 			@Override
 			public void run() {
 					try {
-						loadDmc(new File(Preferences.getValue("autoLoadFile", "")));
+						String dir = Preferences.getValue("autoLoadFile", "");
+						if(dir.equals("")) {
+							return;
+						}
+						loadDmc(new File(dir));
 					} catch (final NoSuchElementException e) {
 						LogPrinter.error(Resources.getString("auto_load_file_not_found"));
 					}
@@ -302,8 +292,14 @@ public class OverviewController extends Controller {
 	}
 
 	private boolean applyScale(double scaleValue, String scale) {
-	    canvasController.setScale(scaleValue);
-	    zoom.setText(scale);
+	    final double actualScale = canvasController.setScale(scaleValue);
+
+	    if (scale.startsWith("MATCH_")) {
+	        zoom.setText(scale);
+	    } else {
+	        zoom.setText(String.format("%.2f", actualScale));
+	    }
+
 	    Preferences.setValue("scale", zoom.getText());
 	    canvas.requestFocus();
 	    return true;
@@ -313,14 +309,14 @@ public class OverviewController extends Controller {
 	    try {
 	        double scaleRatio = Double.parseDouble(scale.replace("X", ""));
 	        scaleRatio = Math.max(2d, Math.min(15d, scaleRatio));
-	        canvasController.setScale(scaleRatio);
-	        zoom.setText(Double.toString(scaleRatio));
+
+	        zoom.setText(String.format("%.2f", canvasController.setScale(scaleRatio)));
 	    } catch (NumberFormatException e) {
 	        canvasController.setScale(defaultRatio);
-	        zoom.setText(Preferences.getValue("scale", "MATCH_WIDTH"));
+	        zoom.setText(String.format("%.2f", canvasController.setScale(defaultRatio)));
 	        return false;
 	    }
-	    
+
 	    Preferences.setValue("scale", zoom.getText());
 	    canvas.requestFocus();
 	    return true;
@@ -369,17 +365,18 @@ public class OverviewController extends Controller {
 	}
 	
 	private void setupStitchListListeners(final StitchList stitchList) {
-	    stitchList.highlightProperty().addListener(
-	            (observable, oldValue, newValue) -> {
-	                stitchList.setHighlight(newValue);
+		stitchList.highlightProperty().addListener(
+		        (observable, oldValue, newValue) -> {
+		            stitchList.setHighlight(newValue);
+		            canvasController.updateHighlighted(newValue);
 
-	                if (newValue && stitchList.isCompleted()) {
-	                    stitchList.setCompleted(false);
-	                }
+		            if (newValue && stitchList.isCompleted()) {
+		                stitchList.setCompleted(false);
+		            }
 
-	                setTitleChanged(true);
-	            }
-	    );
+		            setTitleChanged(true);
+		        }
+		);
 
 	    stitchList.completeProperty().addListener(
 	            (observable, oldValue, newValue) -> {
@@ -538,7 +535,6 @@ public class OverviewController extends Controller {
 	private Alert confirmExitAlert;
 	private ButtonType saveButton, notSaveButton;
 	private Canvas blueprintCanvas;
-	private CanvasController blueprintController;
 	private Blueprint blueprint;
 	private WritableImage blueprintWritableImage;
 	
@@ -594,6 +590,10 @@ public class OverviewController extends Controller {
 	    overviewStage.setTitle(dmcFile.getName());
 	    main.load(new GraphicsEngine.Builder(csvFile, dmcFile), GraphicsEngine.Mode.LOAD);
 	    name = extractFileNameWithoutExtension(dmcFile);
+	    Preferences.setValue(
+                "autoLoadFile",
+                dmcFile.getAbsolutePath()
+        );
 	}
 
 	private void makeNewFile(File file) {
@@ -718,7 +718,7 @@ public class OverviewController extends Controller {
 
 	    alert.getDialogPane()
 	            .getStylesheets()
-	            .add(css);
+	            .add(Resources.getCSS());
 
 	    alert.setTitle(Resources.getString("warning"));
 	    alert.setHeaderText(
@@ -803,7 +803,7 @@ public class OverviewController extends Controller {
 	        ButtonType cancelButton = new ButtonType(Resources.getString("cancel_button"), ButtonData.CANCEL_CLOSE);
 
 	        confirmExitAlert = new Alert(AlertType.CONFIRMATION);
-	        confirmExitAlert.getDialogPane().getStylesheets().add(css);
+	        confirmExitAlert.getDialogPane().getStylesheets().add(Resources.getCSS());
 	        confirmExitAlert.setTitle(Resources.getString("warning"));
 	        confirmExitAlert.setHeaderText(Resources.getString("file_changed_header"));
 	        confirmExitAlert.setContentText(Resources.getString("file_changed"));
@@ -850,12 +850,7 @@ public class OverviewController extends Controller {
 	            canvasController.getCanvas().getWidth(),
 	            canvasController.getCanvas().getHeight()
 	    );
-
-	    blueprintController = new CanvasController(
-	            canvasController.getImage(),
-	            blueprintCanvas
-	    );
-
+	    
 	    blueprint = new Blueprint(
 	            canvasController.getImage(),
 	            blueprintCanvas
@@ -876,7 +871,6 @@ public class OverviewController extends Controller {
 	}
 
 	private void exportBlueprintToFile(File blueprintFile) {
-	    blueprintController.invalidate();
 	    blueprint.invalidate();
 	    blueprint.getCanvas().snapshot(null, blueprintWritableImage);
 
@@ -970,7 +964,7 @@ public class OverviewController extends Controller {
 				loader.setLocation(new File("resources/Setting.fxml").toURI().toURL());
 				loader.setResources(Resources.getBundle());
 				page = (ScrollPane) loader.load();
-				page.setStyle(style);
+				page.setStyle(Resources.getStyle());
 			} catch (final IOException e) {
 				LogPrinter.print(e);
 				LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
@@ -1015,7 +1009,7 @@ public class OverviewController extends Controller {
 				loader.setLocation(new File("resources/Author.fxml").toURI().toURL());
 				loader.setResources(Resources.getBundle());
 				page = (AnchorPane) loader.load();
-				page.setStyle(style);
+				page.setStyle(Resources.getStyle());
 			} catch (final IOException e) {
 				LogPrinter.print(e);
 				LogPrinter.error(Resources.getString("read_failed", Resources.getString("layout")));
@@ -1144,7 +1138,7 @@ public class OverviewController extends Controller {
 	    // Method to create the update alert dialog
 	    private Alert createAlert(ButtonType update, ButtonType notUpdate, ButtonType neverRemind) {
 	        final Alert alert = new Alert(AlertType.INFORMATION);
-	        alert.getDialogPane().getStylesheets().add(css);
+	        alert.getDialogPane().getStylesheets().add(Resources.getCSS());
 	        alert.setTitle(Resources.getString("information"));
 	        alert.setHeaderText(Resources.getString("update_header"));
 	        alert.setContentText(Resources.getString("update_content"));

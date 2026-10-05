@@ -67,6 +67,7 @@ public final class Pixel implements Serializable, Comparable<Pixel> {
 
 	public void setColor(final StitchColor color) {
 		this.color = color;
+		toString = null;
 	}
 
 	@Override

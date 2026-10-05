@@ -10,8 +10,10 @@ import com.stitch.converter.view.ProgressWindow;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.MenuBar;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -27,6 +29,8 @@ public class Main extends Application {
     private ProgressWindow progressWindow;
     private ProgressListener progressListener;
     private Stage primaryStage;
+    @FXML
+	public MenuBar menuBar;
 
     /**
      * Receives completed GraphicsEngine results.
@@ -47,12 +51,8 @@ public class Main extends Application {
     };
 
     public static void main(final String[] args) {
-        /*
-         * Preserve the application's existing JavaFX text-rendering
-         * configuration.
-         */
+        LogPrinter.installDefaultExceptionHandler();
         System.setProperty("prism.lcdtext", "false");
-
         launch(args);
     }
 
@@ -63,9 +63,6 @@ public class Main extends Application {
         this.primaryStage.setTitle(
                 Resources.getString("title")
         );
-
-        this.primaryStage.setMaximized(true);
-
         initRootLayout();
     }
 
@@ -98,14 +95,10 @@ public class Main extends Application {
 
             progressListener = createProgressListener();
 
+            primaryStage.setMaximized(true);
             primaryStage.show();
 
-        } catch (final IOException e) {
-            LogPrinter.print(e);
-            LogPrinter.error(
-                    Resources.getString("error_has_occurred")
-            );
-        } catch (final RuntimeException e) {
+        } catch (final IOException | RuntimeException e) {
             LogPrinter.print(e);
             LogPrinter.error(
                     Resources.getString("error_has_occurred")
@@ -121,7 +114,7 @@ public class Main extends Application {
      */
     private FXMLLoader createFXMLLoader() throws IOException {
         final URL fxmlLocation =
-                ResourceFiles.url(OVERVIEW_FXML);
+                Resources.url(OVERVIEW_FXML);
 
         final FXMLLoader loader =
                 new FXMLLoader(fxmlLocation);
@@ -161,7 +154,7 @@ public class Main extends Application {
     private void loadApplicationIcon() {
         try {
             final URL iconLocation =
-                    ResourceFiles.url(APPLICATION_ICON);
+                    Resources.url(APPLICATION_ICON);
 
             final Image icon =
                     new Image(iconLocation.toExternalForm());
@@ -184,17 +177,40 @@ public class Main extends Application {
      */
     private ProgressListener createProgressListener() {
         return new ProgressListener() {
+            private double latestProgress;
+            private String latestMessage;
+            private boolean updateScheduled;
 
             @Override
             public void onProgress(
                     final double progress,
                     final String message) {
 
+                synchronized (this) {
+                    latestProgress = progress;
+                    latestMessage = message;
+
+                    if (updateScheduled) {
+                        return;
+                    }
+
+                    updateScheduled = true;
+                }
+
                 Platform.runLater(() -> {
+                    final double currentProgress;
+                    final String currentMessage;
+
+                    synchronized (this) {
+                        currentProgress = latestProgress;
+                        currentMessage = latestMessage;
+                        updateScheduled = false;
+                    }
+
                     if (progressWindow != null) {
                         progressWindow.updateProgress(
-                                progress,
-                                message
+                                currentProgress,
+                                currentMessage
                         );
                     }
                 });

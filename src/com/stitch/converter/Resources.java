@@ -1,8 +1,12 @@
 package com.stitch.converter;
 
 import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -10,6 +14,7 @@ import javafx.scene.control.Alert.AlertType;
 public class Resources {
     private static final ResourceBundle bundle;
     private static final List<Locale> supportedLocales = Collections.unmodifiableList(Arrays.asList(Locale.KOREAN, Locale.ENGLISH));
+    private static final Path ROOT = Paths.get("resources");
 
     static {
         bundle = initializeResourceBundle();
@@ -45,12 +50,15 @@ public class Resources {
         // Allow application to handle error instead of forcing exit
     }
 
-    private static void logException(Throwable t) {
-        try (StringWriter stringWriter = new StringWriter(); PrintWriter printWriter = new PrintWriter(stringWriter)) {
-            t.printStackTrace(printWriter);
-            writeText(new File("log.txt"), stringWriter.toString());
+    private static void logException(final Throwable throwable) {
+        try (
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter)
+        ) {
+            throwable.printStackTrace(printWriter);
+            appendText(new File("log.txt"), stringWriter.toString());
         } catch (IOException e) {
-            e.printStackTrace(); // Fallback to standard logging
+            e.printStackTrace();
         }
     }
 
@@ -58,41 +66,27 @@ public class Resources {
         return bundle;
     }
 
-    public static String getString(final String id) throws MissingResourceException {
-        try {
-            return bundle.getString(id);
-        } catch (NullPointerException | ClassCastException e) {
-            LogPrinter.print(e);
-            LogPrinter.error("Exception on reading resource for id: " + id);
-            return null;
-        }
+    public static String getString(final String id) throws NullPointerException, ClassCastException, MissingResourceException {
+        return bundle.getString(id);
     }
 
-    public static String getString(final String id, final Object... args) {
-        try {
-            return String.format(getString(id), args);
-        } catch (NullPointerException | IllegalFormatException | MissingResourceException e) {
-            LogPrinter.print(e);
-            LogPrinter.error("Exception on reading resource for id: " + id + ", args: " + Arrays.toString(args));
-            return null;
-        }
+    public static String getString(final String id, final Object... args) throws NullPointerException, ClassCastException, MissingResourceException {
+        return String.format(getString(id), args);
     }
 
-    public static Object readObject(final File file) throws IOException, ClassNotFoundException {
-        try
-        (
-        		FileInputStream fis = new FileInputStream(file);
-        		ObjectInputStream ois = new ObjectInputStream(fis)
-        				)
-        {
+    public static Object readObject(final File file)
+            throws IOException, ClassNotFoundException {
+
+        try (ObjectInputStream ois =
+                 new ObjectInputStream(new FileInputStream(file))) {
             return ois.readObject();
         }
     }
 
     public static boolean writeObject(final File file, final Object object) {
         try (
-            FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)
+            ObjectOutputStream oos =
+                new ObjectOutputStream(new FileOutputStream(file))
         ) {
             oos.writeObject(object);
             return true;
@@ -101,14 +95,87 @@ public class Resources {
             return false;
         }
     }
+    
+    public static synchronized boolean appendText(
+            final File file, final String text) throws IOException {
 
-    public static boolean writeText(final File file, final String text) throws IOException {
-        try (PrintWriter printWriter = new PrintWriter(file)) {
+        try (
+            PrintWriter printWriter = new PrintWriter(
+                new OutputStreamWriter(
+                    new FileOutputStream(file, true),
+                    StandardCharsets.UTF_8
+                )
+            )
+        ) {
             printWriter.println(text);
             return true;
         }
     }
+    
+    private static String css, style;
 
+    public static String getCSS() {
+    	if (css == null) {
+			css = path("Style.css")
+			        .toUri()
+			        .toString();
+    	}
+    	return css;
+    }
+
+    public static String getStyle() {
+    	if (style == null) {
+    		int fontSize = Preferences.getInteger("fontSize", 13);
+            String fontType = Preferences.getValue("fontType", "Malgun Gothic");
+            style = String.format("-fx-font: %dpx \"%s\";", fontSize, fontType);
+    	}
+    	return style;
+    }
+    
+    /**
+     * Returns the path of an external resource.
+     *
+     * @param relativePath path relative to the resources directory
+     * @return external resource path
+     */
+    public static Path path(final String relativePath) {
+        return ROOT.resolve(relativePath);
+    }
+
+    /**
+     * Returns the URL of an external resource.
+     *
+     * @param relativePath path relative to the resources directory
+     * @return resource URL
+     * @throws IOException if the resource URL cannot be created
+     */
+    public static URL url(final String relativePath) throws IOException {
+        return path(relativePath).toUri().toURL();
+    }
+
+    /**
+     * Opens an external resource as an input stream.
+     *
+     * @param relativePath path relative to the resources directory
+     * @return resource input stream
+     * @throws IOException if the resource does not exist or cannot be opened
+     */
+    public static InputStream open(final String relativePath)
+            throws IOException {
+
+        return Files.newInputStream(path(relativePath));
+    }
+
+    /**
+     * Checks whether an external resource exists.
+     *
+     * @param relativePath path relative to the resources directory
+     * @return true when the resource exists
+     */
+    public static boolean exists(final String relativePath) {
+        return Files.isRegularFile(path(relativePath));
+    }
+    
     // Prevent instantiation
     private Resources() {
         throw new AssertionError("Utility class should not be instantiated.");

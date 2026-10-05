@@ -15,7 +15,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 
-<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/18" fx:controller="com.stitch.converter.view.OverviewController">
+<BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/27" fx:controller="com.stitch.converter.view.OverviewController">
    <right>
       <TableView id="colorTable" fx:id="colorTable" disable="true" editable="true" maxWidth="330.0" minWidth="330.0" prefWidth="330.0" tableMenuButtonVisible="true" BorderPane.alignment="CENTER">
       <placeholder><Label text="" /></placeholder>

@@ -1,3 +1,9 @@
+. {
+	-fx-font-family: Malgun Gothic;
+	-fx-font-size: 13px;
+}
+
+
 .root {
     -fx-accent: transparent;
     -fx-focus-color: transparent;

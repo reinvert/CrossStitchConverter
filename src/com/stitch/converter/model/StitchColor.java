@@ -262,7 +262,7 @@ public class StitchColor implements Serializable, Cloneable, Comparable<StitchCo
 	@Override
 	public Object clone() {
 		try {
-			return super.clone();
+			return (StitchColor) super.clone();
 		} catch (CloneNotSupportedException e) {
 			throw new AssertionError();
 		}

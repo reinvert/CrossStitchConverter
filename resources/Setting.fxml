@@ -5,7 +5,7 @@
 <?import javafx.scene.control.TableView?>
 
 <ScrollPane
-    xmlns="http://javafx.com/javafx/16"
+    xmlns="http://javafx.com/javafx/27"
     xmlns:fx="http://javafx.com/fxml/1"
     fx:controller="com.stitch.converter.view.SettingController"
     fitToHeight="true"

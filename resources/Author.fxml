@@ -5,14 +5,13 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="400.0" prefWidth="600.0" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.AuthorController">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/27" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stitch.converter.view.AuthorController">
    <children>
       <VBox>
          <children>
             <Hyperlink fx:id="hyperlink" text="%url" />
             <Hyperlink fx:id="iconlink" text="%icon_author" />
             <Hyperlink fx:id="googleiconlink" text="%google_icon_author" />
-            <Hyperlink fx:id="flossdatalink" layoutX="10.0" layoutY="52.0" text="%floss_data_author" />
             <TextArea fx:id="copyright" editable="false" prefHeight="340.0" prefWidth="600.0" text="%copyright" wrapText="true" />
          </children>
       </VBox>

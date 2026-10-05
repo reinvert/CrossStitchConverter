@@ -7,9 +7,23 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import com.stitch.converter.model.*;
 
-class ColorConverter implements Runnable {
+class ColorConverter implements Runnable {	
+	protected static class PaletteEntry {
+        final StitchColor stitchColor;
+        final ImageTools.Lab lab;
+        final double chroma;
+
+        PaletteEntry(final StitchColor stitchColor, final ImageTools.Lab lab) {
+            this.stitchColor = stitchColor;
+            this.lab = lab;
+            chroma = Math.hypot(lab.a, lab.b);
+        }
+    }
+	
     static class Builder {
         private final Collection<StitchColor> colorList;
         private final BufferedImage image;
@@ -63,6 +77,8 @@ class ColorConverter implements Runnable {
 
     private class Converter implements Runnable {
         private final int x, y, width, height;
+        private StitchColor outputColor;
+        private StitchColor alternateColor;
 
         private Converter(final int x, final int y, final int width, final int height) {
             this.x = x;
@@ -73,13 +89,13 @@ class ColorConverter implements Runnable {
 
         @Override
         public void run() {
-            final List<StitchColor> alternateList = new ArrayList<>(colorList);
             for (int x = this.x; x < this.x + width; x++) {
                 for (int y = this.y; y < this.y + height; y++) {
-                    final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), null));
-                    StitchColor targetColor = pixel.getColor();
-                    StitchColor outputColor = findClosestColor(targetColor, alternateList);
-                    StitchColor alternateColor = findSecondClosestColor(targetColor, alternateList, outputColor);
+                	final Pixel pixel = new Pixel(x, y, new StitchColor(image.getRGB(x, y), null));
+                	final StitchColor targetColor = pixel.getColor();
+                	final ImageTools.Lab targetLab = ImageTools.rgbToLab(targetColor.asFX());
+
+                	findClosestColors(targetLab);
                     pixel.setColor(outputColor);
                     try {
                         outputQueue.put(new AbstractMap.SimpleEntry<>(pixel, alternateColor));
@@ -87,44 +103,46 @@ class ColorConverter implements Runnable {
                         Thread.currentThread().interrupt();
                         LogPrinter.error(Resources.getString("error_has_occurred"));
                         LogPrinter.print(e);
+                        return;
                     }
                 }
             }
         }
 
-        private StitchColor findClosestColor(StitchColor targetColor, List<StitchColor> colorList) {
+        private void findClosestColors(final ImageTools.Lab targetLab) {
             double difference = Double.MAX_VALUE;
-            StitchColor outputColor = null;
-            for (final StitchColor listColor : colorList) {
-                double calculatedDifference = ImageTools.calculateDifference(listColor, targetColor);
-                if (calculatedDifference < difference) {
-                    outputColor = listColor;
-                    difference = calculatedDifference;
-                }
-            }
-            return outputColor;
-        }
-
-        private StitchColor findSecondClosestColor(StitchColor targetColor, List<StitchColor> colorList, StitchColor outputColor) {
-            if (colorList.size() <= 1) {
-                return outputColor;
-            }
-
             double alternateDifference = Double.MAX_VALUE;
-            StitchColor alternateColor = null;
 
-            for (final StitchColor listColor : colorList) {
-                if (listColor.equals(outputColor)) {
-                    continue;
-                }
+            outputColor = null;
+            alternateColor = null;
 
-                double calculatedDifference = ImageTools.calculateDifference(listColor, targetColor);
-                if (calculatedDifference < alternateDifference) {
-                    alternateColor = listColor;
+            final double targetChroma = Math.hypot(targetLab.a, targetLab.b);
+
+            for (final PaletteEntry entry : cachedPalette) {
+                final double calculatedDifference =
+                        ImageTools.calculateCIEDE2000Squared(
+                                targetLab,
+                                entry.lab,
+                                targetChroma,
+                                targetChroma
+                        );
+
+                if (calculatedDifference < difference) {
+                    alternateColor = outputColor;
+                    alternateDifference = difference;
+
+                    outputColor = entry.stitchColor;
+                    difference = calculatedDifference;
+                } else if (!entry.stitchColor.equals(outputColor)
+                        && calculatedDifference < alternateDifference) {
+                    alternateColor = entry.stitchColor;
                     alternateDifference = calculatedDifference;
                 }
             }
-            return (alternateColor != null) ? alternateColor : outputColor;
+
+            if (alternateColor == null) {
+                alternateColor = outputColor;
+            }
         }
     }
 
@@ -146,7 +164,7 @@ class ColorConverter implements Runnable {
                     image.setRGB(x, y, color);
                     stitchImage.add(pixel);
                     stitchImage.addAlternateColor(pixelEntry.getValue());
-                    double progress = 1.0 - (double) count++ / imageSize;
+                    double progress = (double) count++ / imageSize;
                     progressListener.onProgress(progress, Resources.getString("conversion_processing_colors"));
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -157,7 +175,8 @@ class ColorConverter implements Runnable {
             }
         }
     }
-
+    
+    protected final List<PaletteEntry> cachedPalette;
     protected final Collection<StitchColor> colorList;
     protected final BufferedImage image;
     protected final StitchImage stitchImage;
@@ -173,15 +192,22 @@ class ColorConverter implements Runnable {
         this.colorList = builder.colorList;
         this.thread = builder.thread;
         this.progressListener = builder.progressListener;
+
+        cachedPalette = new ArrayList<>(colorList.size());
+
+        for (final StitchColor color : colorList) {
+            final ImageTools.Lab lab = ImageTools.rgbToLab(color.asFX());
+            cachedPalette.add(new PaletteEntry(color, lab));
+        }
     }
 
     @Override
     public void run() {
-        ExecutorService executorService = Executors.newFixedThreadPool(thread);
+        final ExecutorService executorService = Executors.newFixedThreadPool(thread);
         try {
-            int width = image.getWidth();
-            int height = image.getHeight();
-            int dividedWidth = width / thread;
+            final int width = image.getWidth();
+            final int height = image.getHeight();
+            final int dividedWidth = width / thread;
 
             for (int i = 0; i < thread; i++) {
                 int threadWidth = dividedWidth * i;
@@ -189,14 +215,12 @@ class ColorConverter implements Runnable {
                 executorService.execute(new Converter(threadWidth, 0, actualWidth, height));
             }
 
-            Thread writeThread = new Thread(new ImageWriter());
+            final Thread writeThread = new Thread(new ImageWriter());
             writeThread.setDaemon(true);
             writeThread.start();
 
             executorService.shutdown();
-            while (!executorService.isTerminated()) {
-                // Wait for all threads to finish
-            }
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
             outputQueue.put(poisonPill);
             writeThread.join();
@@ -209,5 +233,29 @@ class ColorConverter implements Runnable {
             LogPrinter.print(e);
             LogPrinter.error(Resources.getString("error_has_occurred"));
         }
+    }
+    
+    protected StitchColor findClosestColor(final ImageTools.Lab colorLab) {
+        double difference = Double.MAX_VALUE;
+        StitchColor closestColor = null;
+        final double colorChroma =
+                Math.sqrt(colorLab.a * colorLab.a + colorLab.b * colorLab.b);
+        
+        for (final PaletteEntry entry : cachedPalette) {
+        	final double calculatedDifference =
+        	        ImageTools.calculateCIEDE2000Squared(
+        	                colorLab,
+        	                entry.lab,
+        	                colorChroma,
+        	                entry.chroma);
+            
+
+            if (calculatedDifference < difference) {
+                closestColor = entry.stitchColor;
+                difference = calculatedDifference;
+            }
+        }
+
+        return closestColor;
     }
 }

@@ -14,98 +14,89 @@ import javafx.stage.Stage;
 
 public final class LogPrinter {
 
-	public interface Logger {
-		public void alert(final String str);
-
-		public void error(final String str);
-
-		public void print(final String str);
-
-		public void print(final Throwable throwable);
-	}
-
 	private static File logFile = new File(Preferences.getValue("logFile", "log.txt"));
+	private static Alert alert, error;
+    
+    public static void installDefaultExceptionHandler() {
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
+            LogPrinter.print(throwable);
+            LogPrinter.error(throwable.getMessage());
+        });
+    }
+    
+    private static Alert createAlert(
+            final AlertType alertType,
+            final String iconPath,
+            final String title) {
 
-	private static Logger logger = new Logger() {
-		
-		private Alert alert, error;
-		
-		@Override
-		public void alert(final String content) {
-			Platform.runLater(() -> {
-                if (alert == null) {
-                    alert = createAlert(AlertType.INFORMATION, "file:resources/icon/information.png", Resources.getString("information"));
-                }
-                alert.setContentText(content);
-                alert.show();
-			});
-		}
+        final Alert alert = new Alert(alertType);
+        final Image icon = new Image(iconPath);
 
-        @Override
-        public void error(String content) {
-            Platform.runLater(() -> {
-                if (error == null) {
-                    error = createAlert(AlertType.ERROR, "file:resources/icon/error.png", Resources.getString("error"));
-                }
-                error.setContentText(content);
-                error.show();
-            });
-        }
+        alert.setGraphic(new ImageView(icon));
+        ((Stage) alert.getDialogPane().getScene().getWindow())
+            .getIcons()
+            .add(icon);
+        alert.setTitle(title);
 
-        @Override
-        public void print(String str) {
-            try {
-                Resources.writeText(logFile, str);
-            } catch (IOException e) {
-                e.printStackTrace();
+        return alert;
+    }
+
+    public static void alert(final String content) {
+        Platform.runLater(() -> {
+            if (alert == null) {
+                alert = createAlert(
+                    AlertType.INFORMATION,
+                    "file:resources/icon/information.png",
+                    Resources.getString("information")
+                );
             }
-        }
+            alert.setContentText(content);
+            alert.show();
+        });
+    }
 
-        @Override
-        public void print(Throwable throwable) {
-            throwable.printStackTrace();
-            try (StringWriter stringWriter = new StringWriter(); PrintWriter printWriter = new PrintWriter(stringWriter)) {
-                throwable.printStackTrace(printWriter);
-                Resources.writeText(logFile, stringWriter.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
+    public static void error(final String content) {
+        Platform.runLater(() -> {
+            if (error == null) {
+                error = createAlert(
+                    AlertType.ERROR,
+                    "file:resources/icon/error.png",
+                    Resources.getString("error")
+                );
             }
+            error.setContentText(content);
+            error.show();
+        });
+    }
+
+    public static void print(final String str) {
+        try {
+            Resources.appendText(logFile, str);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+    }
 
-        private Alert createAlert(AlertType alertType, String iconPath, String title) {
-            Alert alert = new Alert(alertType);
-            Image icon = new Image(iconPath);
-            alert.setGraphic(new ImageView(icon));
-            ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-            alert.setTitle(title);
-            return alert;
+    public static void print(final Throwable throwable) {
+        try (
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter)
+        ) {
+            throwable.printStackTrace(printWriter);
+
+            final String stackTrace = stringWriter.toString();
+
+            System.err.print(stackTrace);
+            Resources.appendText(logFile, stackTrace);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    };
-
-    public static void alert(String content) {
-        logger.alert(content);
     }
 
-    public static void error(String content) {
-        logger.error(content);
-    }
-
-    public static void print(String str) {
-        logger.print(str);
-    }
-
-    public static void print(Throwable throwable) {
-        logger.print(throwable);
-    }
-
-    public static void setLogFile(File file) {
+    public static void setLogFile(final File file) {
         logFile = file;
     }
-
-    public static void setPrinter(Logger newLogger) {
-        throw new UnsupportedOperationException("Logger cannot be replaced at runtime");
-    }
-
+    
     private LogPrinter() {
         throw new AssertionError("Singleton class should not be accessed by constructor.");
     }

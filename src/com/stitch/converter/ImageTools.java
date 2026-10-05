@@ -28,6 +28,13 @@ import com.stitch.converter.model.StitchColor;
  *
  */
 final class ImageTools {
+	
+	private static final double TWENTY_FIVE_7 = Math.pow(25.0, 7.0);
+	private static final double RAD_6 = Math.toRadians(6.0);
+	private static final double RAD_30 = Math.toRadians(30.0);
+	private static final double RAD_63 = Math.toRadians(63.0);
+	private static final double RAD_TO_DEG = 180.0 / Math.PI;
+	
     /*
      * CIELAB color.
      *
@@ -56,10 +63,13 @@ final class ImageTools {
      *   -> CIELAB
      */
     public static Lab rgbToLab(Color color) {
-        double r = srgbToLinear(color.getRed());
-        double g = srgbToLinear(color.getGreen());
-        double b = srgbToLinear(color.getBlue());
-
+        return rgbToLab(color.getRed(), color.getGreen(), color.getBlue());
+    }
+    
+    public static Lab rgbToLab(double red, double green, double blue) {
+    	double r = srgbToLinear(red);
+        double g = srgbToLinear(green);
+        double b = srgbToLinear(blue);
         // sRGB D65 -> XYZ
         double x = r * 0.4124564
                  + g * 0.3575761
@@ -151,7 +161,51 @@ final class ImageTools {
         return calculateCIEDE2000(color1, color2);
     }
 
-    public static double calculateCIEDE2000(Lab c1, Lab c2) {
+    public static double calculateCIEDE2000(
+            final Lab c1,
+            final Lab c2) {
+
+        return calculateCIEDE2000(
+                c1,
+                c2,
+                Math.hypot(c2.a, c2.b));
+    }
+
+    public static double calculateCIEDE2000(
+            final Lab c1,
+            final Lab c2,
+            final double color2Chroma) {
+
+        return calculateCIEDE2000(
+                c1,
+                c2,
+                Math.hypot(c2.a, c2.b),
+                color2Chroma);
+    }
+
+    public static double calculateCIEDE2000(
+            final Lab c1,
+            final Lab c2,
+            final double color1Chroma,
+            final double color2Chroma) {
+
+        return Math.sqrt(
+                calculateCIEDE2000Squared(
+                        c1,
+                        c2,
+                        color1Chroma,
+                        color2Chroma)
+        );
+    }
+
+    static double calculateCIEDE2000Squared(
+            final Lab c1,
+            final Lab c2,
+            final double color1Chroma,
+            final double color2Chroma) {
+
+        // ↓ 여기에는 현재 4-인자 calculateCIEDE2000()의 본문을
+        //    return Math.sqrt(deltaE2); 직전까지 그대로 옮깁니다.
 
         final double L1 = c1.L;
         final double a1 = c1.a;
@@ -165,25 +219,21 @@ final class ImageTools {
         final double kC = 1.0;
         final double kH = 1.0;
 
-        final double C1 = Math.hypot(a1, b1);
-        final double C2 = Math.hypot(a2, b2);
-
-        final double Cbar = (C1 + C2) / 2.0;
-
-        final double Cbar7 = Math.pow(Cbar, 7.0);
-        final double twentyFive7 = Math.pow(25.0, 7.0);
+        final double C1 = color1Chroma;
+        final double C2 = color2Chroma;
 
         final double G = 0.5 * (
                 1.0 - Math.sqrt(
-                        Cbar7 / (Cbar7 + twentyFive7)
+                        ((C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2)) / 
+                        (((C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2) * (C1 + C2)) + (128.0 * TWENTY_FIVE_7))
                 )
         );
 
         final double a1Prime = (1.0 + G) * a1;
         final double a2Prime = (1.0 + G) * a2;
 
-        final double C1Prime = Math.hypot(a1Prime, b1);
-        final double C2Prime = Math.hypot(a2Prime, b2);
+        final double C1Prime = Math.sqrt(a1Prime * a1Prime + b1 * b1);
+        final double C2Prime = Math.sqrt(a2Prime * a2Prime + b2 * b2);
 
         final double h1Prime = calculateHue(a1Prime, b1, C1Prime);
         final double h2Prime = calculateHue(a2Prime, b2, C2Prime);
@@ -193,7 +243,7 @@ final class ImageTools {
 
         final double deltaHuePrime;
 
-        if (C1Prime * C2Prime == 0.0) {
+        if (C1Prime == 0.0 || C2Prime == 0.0) {
             deltaHuePrime = 0.0;
         } else {
             double dh = h2Prime - h1Prime;
@@ -207,7 +257,7 @@ final class ImageTools {
             }
         }
 
-        final double deltaHPrime =
+        double deltaHPrime =
                 2.0
                 * Math.sqrt(C1Prime * C2Prime)
                 * Math.sin(Math.toRadians(deltaHuePrime / 2.0));
@@ -217,7 +267,7 @@ final class ImageTools {
 
         final double hbarPrime;
 
-        if (C1Prime * C2Prime == 0.0) {
+        if (C1Prime == 0.0 || C2Prime == 0.0) {
             hbarPrime = h1Prime + h2Prime;
         } else {
             double dh = Math.abs(h1Prime - h2Prime);
@@ -239,28 +289,29 @@ final class ImageTools {
 
         final double T =
                 1.0
-                - 0.17 * Math.cos(hbarRad - Math.toRadians(30.0))
+                - 0.17 * Math.cos(hbarRad - RAD_30)
                 + 0.24 * Math.cos(2.0 * hbarRad)
-                + 0.32 * Math.cos(3.0 * hbarRad + Math.toRadians(6.0))
-                - 0.20 * Math.cos(4.0 * hbarRad - Math.toRadians(63.0));
+                + 0.32 * Math.cos(3.0 * hbarRad + RAD_6)
+                - 0.20 * Math.cos(4.0 * hbarRad - RAD_63);
+
+        final double deltaThetaDifference =
+                (hbarPrime - 275.0) / 25.0;
 
         final double deltaTheta =
                 30.0
                 * Math.exp(
-                        -Math.pow(
-                                (hbarPrime - 275.0) / 25.0,
-                                2.0
-                        )
+                        -(deltaThetaDifference * deltaThetaDifference)
                 );
+
+        final double CbarPrime7 =
+                CbarPrime * CbarPrime * CbarPrime
+                * CbarPrime * CbarPrime * CbarPrime
+                * CbarPrime;
 
         final double RC =
                 2.0 * Math.sqrt(
-                        Math.pow(CbarPrime, 7.0)
-                        /
-                        (
-                                Math.pow(CbarPrime, 7.0)
-                                + Math.pow(25.0, 7.0)
-                        )
+                        CbarPrime7
+                        / (CbarPrime7 + TWENTY_FIVE_7)
                 );
 
         final double RT =
@@ -275,9 +326,8 @@ final class ImageTools {
                     0.015
                     * LMinus50
                     * LMinus50
-                  )
-                /
-                Math.sqrt(
+                )
+                / Math.sqrt(
                         20.0
                         + LMinus50 * LMinus50
                 );
@@ -309,8 +359,9 @@ final class ImageTools {
             deltaE2 = 0.0;
         }
 
-        return Math.sqrt(deltaE2);
+        return deltaE2;
     }
+    
 
     private static double calculateHue(
             double aPrime,
@@ -321,9 +372,7 @@ final class ImageTools {
             return 0.0;
         }
 
-        double hue = Math.toDegrees(
-                Math.atan2(b, aPrime)
-        );
+        double hue = Math.atan2(b, aPrime) * RAD_TO_DEG;
 
         if (hue < 0.0) {
             hue += 360.0;

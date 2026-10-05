@@ -1,6 +1,6 @@
 package com.stitch.converter.view;
 
-import java.util.SortedMap;
+import java.util.MissingResourceException;
 
 import com.stitch.converter.Preferences;
 import com.stitch.converter.Resources;
@@ -34,37 +34,18 @@ public class SettingController extends Controller {
             this.key.set(key);
             this.value.set(value);
             this.description.set(description);
-
-            // UI에서 값이 변경되면 Preferences에도 즉시 반영한다.
-            this.value.addListener((observable, oldValue, newValue) -> {
-                if (!java.util.Objects.equals(oldValue, newValue)) {
-                    Preferences.setValue(this.key.get(), newValue);
-                }
-            });
         }
 
         public String getKey() {
             return key.get();
         }
-
-        public StringProperty keyProperty() {
-            return key;
-        }
-
-        public String getValue() {
-            return value.get();
-        }
-
+        
         public void setValue(String value) {
             this.value.set(value);
         }
 
         public StringProperty valueProperty() {
             return value;
-        }
-
-        public String getDescription() {
-            return description.get();
         }
 
         public StringProperty descriptionProperty() {
@@ -99,11 +80,8 @@ public class SettingController extends Controller {
     }
 
     private void setupKeyColumn() {
-        key.setCellValueFactory(cellData ->
-                cellData.getValue().keyProperty());
-
-        key.setCellFactory(TextFieldTableCell.forTableColumn());
-        key.setEditable(false);
+    	key.setCellValueFactory(cellData ->
+        new SimpleStringProperty(cellData.getValue().getKey()));
     }
 
     private void setupValueColumn() {
@@ -122,7 +100,10 @@ public class SettingController extends Controller {
             SettingItem item = event.getRowValue();
 
             if (item != null) {
-                item.setValue(event.getNewValue());
+                String newValue = event.getNewValue();
+
+                item.setValue(newValue);
+                Preferences.setValue(item.getKey(), newValue);
             }
         });
 
@@ -145,7 +126,6 @@ public class SettingController extends Controller {
             {
                 text.wrappingWidthProperty()
                         .bind(widthProperty().subtract(8));
-                setGraphic(text);
                 setPrefHeight(TableCell.USE_COMPUTED_SIZE);
             }
 
@@ -166,22 +146,23 @@ public class SettingController extends Controller {
         return cell;
     }
 
-    private String getDescription(String key) {
+    private String getDescription(final String key) {
+        String description;
         try {
-            return Resources.getString(key + "_description");
-        } catch (java.util.MissingResourceException e) {
-            return "";
+        	description = Resources.getString(key + "_description");
+        } catch(final NullPointerException | ClassCastException | MissingResourceException e) {
+        	description = "";
         }
+
+        return description;
     }
 
     private void loadTableData() {
-        SortedMap<String, String> keyStore = Preferences.getKeyStore();
+        ObservableList<SettingItem> items =
+            FXCollections.observableArrayList();
 
-        ObservableList<SettingItem> items = FXCollections.observableArrayList();
-
-        for (var entry : keyStore.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
+        for (String key : Preferences.getKeys().stream().sorted().toList()) {
+            String value = Preferences.getValue(key, "");
             String description = getDescription(key);
 
             items.add(new SettingItem(key, value, description));

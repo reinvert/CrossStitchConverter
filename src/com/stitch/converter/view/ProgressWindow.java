@@ -49,10 +49,10 @@ public class ProgressWindow {
         Platform.runLater(stage::hide);
     }
 
-    public void updateProgress(double progress, String message) {
-        Platform.runLater(() -> {
-            progressBar.setProgress(progress);
-            progressLabel.setText(message);
-        });
+    public void updateProgress(
+            final double progress,
+            final String message) {
+        progressBar.setProgress(progress);
+        progressLabel.setText(message);
     }
 }

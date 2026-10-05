@@ -8,6 +8,7 @@ module CrossStitchConverter {
 
     requires json.simple;
     requires com.opencsv;
+	requires javafx.graphics;
 
     opens com.stitch.converter.view to javafx.fxml;
 }
