@@ -1,13 +1,8 @@
 package com.stitch.converter.view;
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -19,18 +14,17 @@ import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 
-import com.github.cliftonlabs.json_simple.JsonException;
-import com.github.cliftonlabs.json_simple.JsonObject;
-import com.github.cliftonlabs.json_simple.Jsoner;
 import com.stitch.converter.GraphicsEngine;
 import com.stitch.converter.LogPrinter;
 import com.stitch.converter.Preferences;
 import com.stitch.converter.Resources;
+import com.stitch.converter.UpdateChecker;
 import com.stitch.converter.model.StitchImage;
 import com.stitch.converter.model.Pixel;
 import com.stitch.converter.model.StitchColor;
 import com.stitch.converter.model.StitchList;
 
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -119,12 +113,24 @@ public class OverviewController extends Controller {
                 WindowEvent.WINDOW_CLOSE_REQUEST, 
                 this::closeWindowEvent));
     }
-
-    private void updateApplication() {
-        UpdateChecker updateChecker = new UpdateChecker();
-        updateChecker.checkUpdate();
+    
+    private HostServices hostServices;
+        
+    public void setHostServices(final HostServices hostServices) {
+        this.hostServices = hostServices;
     }
 
+    private void updateApplication() {
+        if (Preferences.getBoolean("updateNeverRemind", false)) {
+            return;
+        }
+
+        executorService.submit(() -> {
+            if (UpdateChecker.hasUpdate()) {
+                Platform.runLater(() -> UpdateDialog.show(hostServices));
+            }
+        });
+    }
 	
 	private void setColorTable(boolean enable) {
 	    toggleColorTableItem.setSelected(enable);
@@ -311,9 +317,11 @@ public class OverviewController extends Controller {
 	        scaleRatio = Math.max(2d, Math.min(15d, scaleRatio));
 
 	        zoom.setText(String.format("%.2f", canvasController.setScale(scaleRatio)));
-	    } catch (NumberFormatException e) {
-	        canvasController.setScale(defaultRatio);
-	        zoom.setText(String.format("%.2f", canvasController.setScale(defaultRatio)));
+	    } catch (final NumberFormatException e) {
+	        final double actualScale =
+	                canvasController.setScale(defaultRatio);
+
+	        zoom.setText(String.format("%.2f", actualScale));
 	        return false;
 	    }
 
@@ -467,7 +475,7 @@ public class OverviewController extends Controller {
 	    highlightPixel(x, y);
 	}
 
-	private void highlightPixel(final int x, final int y) {
+	private void highlightPixel(int x, int y) {
 	    if (x == -1 || y == -1) {
 	        return;
 	    }
@@ -480,12 +488,12 @@ public class OverviewController extends Controller {
 	    }
 
 	    if (this.x == x && this.y == y) {
-	        this.x = -1;
-	        this.y = -1;
+	        x = -1;
+	        y = -1;
 	    }
-
-	    this.x = x;
-	    this.y = y;
+	    
+		this.x = x;
+		this.y = y;
 
 	    canvasController.setHighlightPixel(this.x, this.y);
 	    canvasController.invalidate();
@@ -516,16 +524,16 @@ public class OverviewController extends Controller {
 	        return;
 	    }
 
-	    System.exit(0);
+	    executorService.shutdown();
 	}
 
 	public void setTitleChanged(final boolean changed) {
 		canvasController.getImage().setChanged(changed);
-		if (changed == true) {
-			overviewStage.setTitle(new StringBuilder(dmcFile.getName()).append("(*)").toString());
-		} else {
-			overviewStage.setTitle(dmcFile.getName());
+		String title = dmcFile.getName();
+		if (changed) {
+			title = title + "(*)";
 		}
+		overviewStage.setTitle(title);
 	}
 	
 	private File dmcFile, csvFile;
@@ -540,8 +548,14 @@ public class OverviewController extends Controller {
 	
 	@FXML
 	public void loadMenu() {
-	    if (!confirmExit()) return;
+	    if (!confirmExit(this::showLoadDialog)) {
+	        return;
+	    }
 
+	    showLoadDialog();
+	}
+
+	private void showLoadDialog() {
 	    initializeCsvFile();
 	    initializeLoadFileChooser();
 
@@ -739,12 +753,15 @@ public class OverviewController extends Controller {
 	    if (!saveAs.isDisable()) {
 	        initializeSaveToFileChooser();
 
-	        File saveFile =
+	        final File saveFile =
 	                saveToFileChooser.showSaveDialog(overviewStage);
 
 	        if (saveFile != null) {
-	            dmcFile = saveFile;
-	            saveDocumentAsync(saveFile, null);
+	            saveDocumentAsync(saveFile, () -> {
+	                dmcFile = saveFile;
+	                name = extractFileNameWithoutExtension(saveFile);
+	                overviewStage.setTitle(dmcFile.getName());
+	            });
 	        }
 	    }
 	}
@@ -761,31 +778,27 @@ public class OverviewController extends Controller {
 	}
 
 	private boolean confirmExit() {
+	    return confirmExit(this::closeOverview);
+	}
+
+	private boolean confirmExit(final Runnable onSaveSuccess) {
 	    if (saveInProgress) {
 	        return false;
 	    }
 
-	    if (canvasController != null &&
-	            canvasController.getImage().isChanged()) {
+	    if (canvasController != null
+	            && canvasController.getImage().isChanged()) {
 
 	        initializeConfirmExitAlert();
 
-	        Optional<ButtonType> result =
+	        final Optional<ButtonType> result =
 	                confirmExitAlert.showAndWait();
 
 	        if (result.isPresent()) {
-
 	            if (result.get() == saveButton) {
-
-	                saveDocumentAsync(
-	                        dmcFile, 
-	                        () -> overviewStage.close()
-	                );
-
+	                saveDocumentAsync(dmcFile, onSaveSuccess);
 	                return false;
-
 	            } else if (result.get() == notSaveButton) {
-
 	                return true;
 	            }
 	        }
@@ -936,13 +949,13 @@ public class OverviewController extends Controller {
 	@FXML
 	public void exitMenu() {
 	    if (confirmExit()) {
-	        overviewStage.close();
+	        closeOverview();
 	    }
 	}
 
 	public void close() {
 	    if (confirmExit()) {
-	        overviewStage.close();
+	        closeOverview();
 	    }
 	}
 	
@@ -1036,137 +1049,8 @@ public class OverviewController extends Controller {
 		authorStage.showAndWait();
 	}
 	
-	private class UpdateChecker {
-		
-	    private static final String TAG_NAME_KEY = "tag_name";
-	    private static final String VERSION_KEY = "version";
-
-	    private void checkUpdate() {
-	        if (!Preferences.getBoolean("updateNeverRemind", false)) {
-	            executorService.submit(() -> {
-	                if (hasUpdate()) {
-	                    Platform.runLater(this::showUpdateDialog);
-	                }
-	            });
-	        }
-	    }
-	    
-	    private boolean hasUpdate() {
-	        try {
-	            // Step 1: Retrieve update URL from resources
-	            final URL updateUrl = getUpdateURL();
-	            // Step 2: Fetch latest version number from the server
-	            final Optional<Integer> latestVersion = fetchLatestVersion(updateUrl);
-
-	            // Step 3: Compare with current version
-	            if (latestVersion.isPresent()) {
-	                int currentVersion = Integer.parseInt(Resources.getString(VERSION_KEY));
-	                return latestVersion.get() > currentVersion;
-	            }
-	        } catch (Exception e) {
-	        }
-	        return false;
-	    }
-	    
-	    private URL getUpdateURL() throws Exception {
-	        URI uri = new URI(Resources.getString("update_url"));
-	        return uri.toURL();
-	    }
-
-	    // Fetches the latest version from the server and parses the response
-	    private static Optional<Integer> fetchLatestVersion(URL url) {
-	        HttpURLConnection httpUrlConnection = null;
-	        try {
-	            httpUrlConnection = (HttpURLConnection) url.openConnection();
-	            httpUrlConnection.setRequestMethod("GET");
-	            httpUrlConnection.setConnectTimeout(1000);  // Set timeout for the connection
-	            httpUrlConnection.setReadTimeout(1000);
-
-	            if (httpUrlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-	                try (InputStreamReader inputStreamReader = new InputStreamReader(httpUrlConnection.getInputStream());
-	                     BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-	                    String jsonResponse = readResponse(bufferedReader);
-	                    return parseVersionFromResponse(jsonResponse);
-	                }
-	            } else {
-	                System.err.println("Failed to fetch update, HTTP code: " + httpUrlConnection.getResponseCode());
-	            }
-	        } catch (Exception e) {
-	        } finally {
-	            if (httpUrlConnection != null) {
-	                httpUrlConnection.disconnect();
-	            }
-	        }
-	        return Optional.empty();
-	    }
-
-	    // Reads the full response from the BufferedReader
-	    private static String readResponse(BufferedReader bufferedReader) throws Exception {
-	        StringBuilder stringBuilder = new StringBuilder();
-	        String line;
-	        while ((line = bufferedReader.readLine()) != null) {
-	            stringBuilder.append(line).append("\n");
-	        }
-	        return stringBuilder.toString();
-	    }
-
-	    // Parses the version number from the JSON response
-	    private static Optional<Integer> parseVersionFromResponse(String jsonResponse) {
-	        try {
-	        	JsonObject jsonObject = (JsonObject) Jsoner.deserialize(jsonResponse);
-	            return Optional.of(Integer.parseInt(jsonObject.get(TAG_NAME_KEY).toString()));
-	        } catch (JsonException | NumberFormatException e) {
-	            System.err.println("Error parsing version from response: " + e.getMessage());
-	        }
-	        return Optional.empty();
-	    }
-
-
-
-	    // Method to show the update dialog
-	    private void showUpdateDialog() {
-	        final ButtonType update = new ButtonType(Resources.getString("update"), ButtonData.YES);
-	        final ButtonType notUpdate = new ButtonType(Resources.getString("update_no"), ButtonData.NO);
-	        final ButtonType neverRemind = new ButtonType(Resources.getString("update_never_remind"), ButtonData.OTHER);
-
-	        final Alert alert = createAlert(update, notUpdate, neverRemind);
-	        final Optional<ButtonType> result = alert.showAndWait();
-
-	        result.ifPresent(buttonType -> handleDialogResult(buttonType, update, neverRemind));
-	    }
-
-	    // Method to create the update alert dialog
-	    private Alert createAlert(ButtonType update, ButtonType notUpdate, ButtonType neverRemind) {
-	        final Alert alert = new Alert(AlertType.INFORMATION);
-	        alert.getDialogPane().getStylesheets().add(Resources.getCSS());
-	        alert.setTitle(Resources.getString("information"));
-	        alert.setHeaderText(Resources.getString("update_header"));
-	        alert.setContentText(Resources.getString("update_content"));
-
-	        // Set icon for the alert
-	        final Image icon = new Image("file:resources/icon/update.png");
-	        alert.setGraphic(new ImageView(icon));
-	        ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
-
-	        // Set available button types
-	        alert.getButtonTypes().setAll(update, notUpdate, neverRemind);
-
-	        return alert;
-	    }
-
-	    // Handle the result of the dialog
-	    private void handleDialogResult(ButtonType result, ButtonType update, ButtonType neverRemind) {
-	        if (result == update) {
-	            openUpdatePage();
-	        } else if (result == neverRemind) {
-	            Preferences.setValue("updateNeverRemind", true);
-	        }
-	    }
-
-	    // Opens the update page in the user's default browser
-	    private void openUpdatePage() {
-	        final String url = new StringBuilder(Resources.getString("url")).append("/releases").toString();
-	        main.getHostServices().showDocument(url);
-	    }
+	private void closeOverview() {
+	    executorService.shutdown();
+	    overviewStage.close();
 	}
 }

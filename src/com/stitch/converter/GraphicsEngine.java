@@ -2,8 +2,9 @@ package com.stitch.converter;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 
 import com.opencsv.CSVReader;
@@ -23,7 +24,17 @@ public final class GraphicsEngine implements Runnable{
         private int colorLimit = 0;
         private int threadCount;
         private int convertMode = Preferences.getInteger("convertMode", 0);
-        private ProgressListener progressListener;
+        private ProgressListener progressListener = new ProgressListener() {
+            @Override
+            public void onProgress(
+                    final double progress,
+                    final String message) {
+            }
+
+            @Override
+            public void finished() {
+            }
+        };
 
         private final File csvFile;
         private final File imageFile;
@@ -109,7 +120,7 @@ public final class GraphicsEngine implements Runnable{
         this.backgroundColor = builder.backgroundColor;
         this.loadMode = builder.loadMode;
         this.threadCount = builder.threadCount;
-        this.listeners = builder.listeners;
+        this.listeners = new ArrayList<>(builder.listeners);
         this.convertMode = builder.convertMode;
         this.progressListener = builder.progressListener;
     }
@@ -134,7 +145,10 @@ public final class GraphicsEngine implements Runnable{
         List<StitchColor> colorList;
         StitchImage stitchImage;
         BufferedImage image;
-        try (CSVReader csvReader = new CSVReader(new FileReader(csvFile))) {
+        try (final CSVReader csvReader = new CSVReader(
+                Files.newBufferedReader(
+                        csvFile.toPath(),
+                        StandardCharsets.UTF_8))) {
             colorList = readColorList(csvReader.readAll());
         } catch (CsvException | NoSuchElementException | IllegalArgumentException | NullPointerException e) {
             LogPrinter.print(e);
@@ -154,7 +168,7 @@ public final class GraphicsEngine implements Runnable{
         
         boolean firstRun = true;
         StitchColor colorToRemove = null;
-        Map<String, Integer> usedColorCount = new HashMap<>();
+        final Map<String, Integer> usedColorCount = new HashMap<>();
 
         do {
             stitchImage.setSize(image.getWidth(), image.getHeight());
@@ -163,17 +177,7 @@ public final class GraphicsEngine implements Runnable{
             }
             usedColorCount.clear();
 
-            ColorConverter converter = createColorConverter(image, stitchImage, colorList);
-            Thread converterThread = new Thread(converter);
-            converterThread.setDaemon(true);
-            converterThread.start();
-            try {
-                converterThread.join();
-            } catch (InterruptedException e) {
-                LogPrinter.print(e);
-                LogPrinter.error(Resources.getString("error_has_occurred"));
-                return;
-            }
+            createColorConverter(image, stitchImage, colorList).run();
 
             stitchImage.setBackground(backgroundColor);
             for (PixelList pixelList : stitchImage.getPixelLists()) {
@@ -212,45 +216,127 @@ public final class GraphicsEngine implements Runnable{
         colorList.removeIf(color -> color.equals(toRemove));
     }
 
-    private static List<StitchColor> readColorList(final List<String[]> csv) {
-        List<StitchColor> colors = new ArrayList<>();
-        try {
-            for (String[] row : csv) {
-            	if(row[0].equals("ID")) continue;
-                String name = row[0];
-                if(row[2].equals("GrayLevel[1]")) {
-                	colors.add(new StitchColor(1.0f, 1.0f, 1.0f, name));
-                	continue;
-                }
-                String valuesStr = row[2].substring(row[2].indexOf("[") + 1, row[2].indexOf("]"));
-                String[] rgbValues = valuesStr.split(",\\s*");
-                float red = Float.parseFloat(rgbValues[0]);
-                float green = Float.parseFloat(rgbValues[1]);
-                float blue = Float.parseFloat(rgbValues[2]);
-                colors.add(new StitchColor(red, green, blue, name));
+    private static List<StitchColor> readColorList(
+            final List<String[]> csv) {
+
+        for (final String[] row : csv) {
+            if (row.length > 0 && "ID".equals(row[0])) {
+                continue;
             }
-        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
-        	e.printStackTrace();
+
+            if (row.length > 2 && row[2].contains("[")) {
+                return readColorListFromExpressions(csv);
+            }
+
             return readColorListAsInteger(csv);
         }
+
+        return new ArrayList<>();
+    }
+    
+    private static List<StitchColor> readColorListFromExpressions(
+            final List<String[]> csv) {
+
+        final List<StitchColor> colors = new ArrayList<>();
+
+        for (int i = 0; i < csv.size(); i++) {
+            final String[] row = csv.get(i);
+
+            if (row.length > 0 && "ID".equals(row[0])) {
+                continue;
+            }
+
+            if (row.length < 3) {
+                throw new IllegalArgumentException(
+                        "Invalid color row at record " + (i + 1));
+            }
+
+            final String name = row[0];
+            final String expression = row[2].trim();
+
+            if (expression.startsWith("RGBColor[")) {
+                final float[] rgb = parseColorComponents(
+                        expression, "RGBColor[", 3);
+
+                colors.add(new StitchColor(
+                        rgb[0], rgb[1], rgb[2], name));
+
+            } else if (expression.startsWith("GrayLevel[")) {
+                final float[] gray = parseColorComponents(
+                        expression, "GrayLevel[", 1);
+
+                colors.add(new StitchColor(
+                        gray[0], gray[0], gray[0], name));
+
+            } else {
+                throw new IllegalArgumentException(
+                        "Unsupported color expression: " + expression);
+            }
+        }
+
         return colors;
+    }
+
+    private static float[] parseColorComponents(
+            final String expression,
+            final String prefix,
+            final int expectedCount) {
+
+        if (!expression.startsWith(prefix)
+                || !expression.endsWith("]")) {
+            throw new IllegalArgumentException(
+                    "Invalid color expression: " + expression);
+        }
+
+        final String values = expression.substring(
+                prefix.length(), expression.length() - 1);
+
+        final String[] components = values.split(",", -1);
+
+        if (components.length != expectedCount) {
+            throw new IllegalArgumentException(
+                    "Expected " + expectedCount
+                            + " components: " + expression);
+        }
+
+        final float[] result = new float[expectedCount];
+
+        for (int i = 0; i < expectedCount; i++) {
+            final float value = Float.parseFloat(components[i].trim());
+
+            if (!Float.isFinite(value) || value < 0.0f || value > 1.0f) {
+                throw new IllegalArgumentException(
+                        "Color component must be between 0 and 1: "
+                                + components[i]);
+            }
+
+            result[i] = value;
+        }
+
+        return result;
     }
     
     private static List<StitchColor> readColorListAsInteger(final List<String[]> csv) {
-        List<StitchColor> colors = new ArrayList<>();
-        int lineNumber = 0;
-        try {
-            for (String[] row : csv) {
-                String name = row[0];
-                int red = Integer.parseInt(row[1]);
-                int green = Integer.parseInt(row[2]);
-                int blue = Integer.parseInt(row[3]);
+        final List<StitchColor> colors = new ArrayList<>();
+
+        for (int i = 0; i < csv.size(); i++) {
+        	 final String[] row = csv.get(i);
+
+            try {
+                if (row[0].equals("ID")) continue;
+
+                final String name = row[0];
+                final int red = Integer.parseInt(row[1]);
+                final int green = Integer.parseInt(row[2]);
+                final int blue = Integer.parseInt(row[3]);
+
                 colors.add(new StitchColor(red, green, blue, name));
-                lineNumber++;
+            } catch (final IndexOutOfBoundsException | IllegalArgumentException e) {
+                throw new IllegalArgumentException(
+                        "Error at line " + (i + 1), e);
             }
-        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
-            throw new IllegalArgumentException("Error at line " + (lineNumber + 1), e);
         }
+
         return colors;
     }
 }

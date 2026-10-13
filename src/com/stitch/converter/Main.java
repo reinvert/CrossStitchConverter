@@ -10,10 +10,8 @@ import com.stitch.converter.view.ProgressWindow;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.MenuBar;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -29,8 +27,6 @@ public class Main extends Application {
     private ProgressWindow progressWindow;
     private ProgressListener progressListener;
     private Stage primaryStage;
-    @FXML
-	public MenuBar menuBar;
 
     /**
      * Receives completed GraphicsEngine results.
@@ -81,6 +77,7 @@ public class Main extends Application {
             final Scene scene = new Scene(rootLayout);
 
             controller = loader.getController();
+            controller.setHostServices(getHostServices());
             controller.setStage(primaryStage);
             controller.setApp(this);
 
@@ -250,5 +247,10 @@ public class Main extends Application {
                         .addListener(listener)
                         .build()
         ).start();
+    }
+    
+    @Override
+    public void stop() {
+        Preferences.shutdown();
     }
 }

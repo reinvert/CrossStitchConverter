@@ -30,9 +30,7 @@ public class StitchImage implements Serializable {
 	private double width = -1, height = -1;
 
 	public StitchImage() {
-	    pixelListSet = new TreeSet<>(
-	        Comparator.comparing(PixelList::getColor)
-	    );
+	    pixelListSet = new TreeSet<>(new PixelListComparator());
 	    alternateColors = new TreeMap<StitchColor, Integer>();
 	}
 	
@@ -82,7 +80,7 @@ public class StitchImage implements Serializable {
 		this.width = width + 1;
 		this.height = height + 1;
 	}
-
+	
 	public List<StitchColor> getAlternate() {
 	    final List<Entry<StitchColor, Integer>> list =
 	            new ArrayList<>(alternateColors.entrySet());
@@ -171,4 +169,18 @@ public class StitchImage implements Serializable {
 		this.width = width;
 		this.height = height;
 	}
+	
+	private static final class PixelListComparator implements Comparator<PixelList>, Serializable {
+	
+		private static final long serialVersionUID = 1L;
+		
+		@Override
+		public int compare(
+		        final PixelList first,
+		        final PixelList second) {
+		    return first.getColor().compareTo(second.getColor());
+		}
+	}
 }
+
+
