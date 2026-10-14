@@ -12,12 +12,12 @@ import java.util.concurrent.TimeUnit;
 import com.stitch.converter.model.*;
 
 class ColorConverter implements Runnable {	
-	protected static class PaletteEntry {
+	private static class PaletteEntry {
         final StitchColor stitchColor;
         final ImageTools.Lab lab;
         final double chroma;
 
-        PaletteEntry(final StitchColor stitchColor, final ImageTools.Lab lab) {
+        private PaletteEntry(final StitchColor stitchColor, final ImageTools.Lab lab) {
             this.stitchColor = stitchColor;
             this.lab = lab;
             chroma = Math.hypot(lab.a, lab.b);
@@ -31,7 +31,7 @@ class ColorConverter implements Runnable {
         private int thread = Runtime.getRuntime().availableProcessors() + 1;
         private ProgressListener progressListener = new ProgressListener() {
 			@Override
-			public void onProgress(double progress, String message) {
+			public void onProgress(final double progress, final String message) {
 				
 			}
 			
@@ -154,9 +154,7 @@ class ColorConverter implements Runnable {
             while (true) {
                 try {
                     final Entry<Pixel, StitchColor> pixelEntry = outputQueue.take();
-                    if (pixelEntry == poisonPill) {
-                        return;
-                    }
+                    if (pixelEntry == poisonPill) return;
                     final Pixel pixel = pixelEntry.getKey();
                     final int x = pixel.getX();
                     final int y = pixel.getY();

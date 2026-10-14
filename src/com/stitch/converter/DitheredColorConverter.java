@@ -77,7 +77,7 @@ public class DitheredColorConverter extends ColorConverter {
 
            int count = 0;
               
-           double[][][] workingImage = new double[width][height][3];
+           final double[][][] workingImage = new double[width][height][3];
 
            for (int x = 0; x < width; x++) {
                for (int y = 0; y < height; y++) {
@@ -233,12 +233,11 @@ public class DitheredColorConverter extends ColorConverter {
            return x >= 0 && x < image.length && y >= 0 && y < image[0].length;
        }
 
-       private double srgbToLinear(double value) {
+       private double srgbToLinear(final double value) {
            if (value <= 0.04045) {
                return value / 12.92;
-           } else {
-               return Math.pow((value + 0.055) / 1.055, 2.4);
            }
+           return Math.pow((value + 0.055) / 1.055, 2.4);
        }
 
        private double linearToSrgbClamped(double value) {
@@ -246,8 +245,7 @@ public class DitheredColorConverter extends ColorConverter {
 
            if (value <= 0.0031308) {
                return value * 12.92;
-           } else {
-               return 1.055 * Math.pow(value, 1.0 / 2.4) - 0.055;
            }
+           return 1.055 * Math.pow(value, 1.0 / 2.4) - 0.055;
        }
 }

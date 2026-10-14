@@ -132,7 +132,7 @@ public class OverviewController extends Controller {
         });
     }
 	
-	private void setColorTable(boolean enable) {
+	private void setColorTable(final boolean enable) {
 	    toggleColorTableItem.setSelected(enable);
 	    Preferences.setValue("showColorTable", Boolean.toString(enable));
 	    if (enable) {
@@ -152,7 +152,7 @@ public class OverviewController extends Controller {
 			@Override
 			public void run() {
 					try {
-						String dir = Preferences.getValue("autoLoadFile", "");
+						final String dir = Preferences.getValue("autoLoadFile", "");
 						if(dir.equals("")) {
 							return;
 						}
@@ -242,18 +242,17 @@ public class OverviewController extends Controller {
 	}
 
 	private void setupDistanceCircleDrawing() {
-	    if (Preferences.getBoolean("showDistanceCircle", false)) {
-	        EventHandler<MouseEvent> drawHandler = event -> {
-	            canvasController.startDrawDistanceCircle(event.getX(), event.getY());
-	            invalidate();
-	        };
-	        canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, drawHandler);
-	        canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, drawHandler);
-	        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
-	            canvasController.stopDrawDistanceCircle();
-	            invalidate();
-	        });
-	    }
+	    if (!Preferences.getBoolean("showDistanceCircle", false)) return;
+    	final EventHandler<MouseEvent> drawHandler = event -> {
+            canvasController.startDrawDistanceCircle(event.getX(), event.getY());
+            invalidate();
+        };
+        canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, drawHandler);
+        canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, drawHandler);
+        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            canvasController.stopDrawDistanceCircle();
+            invalidate();
+        });
 	}
 	
 	private void setupCanvasScrollPaneResizeHandlers() {
@@ -268,8 +267,8 @@ public class OverviewController extends Controller {
 
 	
 	public boolean setZoom(String scale) {
-	    double ratioByWidth = calculateWidthRatio();
-	    double ratioByHeight = calculateHeightRatio();
+		final double ratioByWidth = calculateWidthRatio();
+		final double ratioByHeight = calculateHeightRatio();
 
 	    scale = scale.toUpperCase();
 
@@ -286,18 +285,18 @@ public class OverviewController extends Controller {
 	}
 
 	private double calculateWidthRatio() {
-	    double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
-	    double imageWidth = canvasController.getImage().getWidth();
+		final double screenWidth = canvasScrollPane.getWidth() - canvasController.getMargin() * 2 - 12;
+		final double imageWidth = canvasController.getImage().getWidth();
 	    return Math.max(2.0, screenWidth / imageWidth);
 	}
 
 	private double calculateHeightRatio() {
-	    double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
-	    double imageHeight = canvasController.getImage().getHeight();
+		final double screenHeight = canvasScrollPane.getHeight() - canvasController.getMargin() * 2 - 12;
+		final double imageHeight = canvasController.getImage().getHeight();
 	    return Math.max(2.0, screenHeight / imageHeight);
 	}
 
-	private boolean applyScale(double scaleValue, String scale) {
+	private boolean applyScale(final double scaleValue, final String scale) {
 	    final double actualScale = canvasController.setScale(scaleValue);
 
 	    if (scale.startsWith("MATCH_")) {
@@ -311,7 +310,7 @@ public class OverviewController extends Controller {
 	    return true;
 	}
 
-	private boolean parseAndSetScale(String scale, double defaultRatio) {
+	private boolean parseAndSetScale(final String scale, final double defaultRatio) {
 	    try {
 	        double scaleRatio = Double.parseDouble(scale.replace("X", ""));
 	        scaleRatio = Math.max(2d, Math.min(15d, scaleRatio));
@@ -339,7 +338,7 @@ public class OverviewController extends Controller {
 	public void setImage(final StitchImage stitchImage) {
 	    canvasController = new CanvasController(stitchImage, canvas);
 
-	    ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList(
+	    final ObservableList<StitchList> stitchListArrayList = FXCollections.observableArrayList(
 	        stitchList -> new Observable[]{stitchList.highlightProperty(), stitchList.completeProperty()}
 	    );
 
@@ -412,22 +411,17 @@ public class OverviewController extends Controller {
 	    showNumberItem.setSelected(Preferences.getBoolean("drawGridNumber", true));
 	    invalidate();
 
-	    if (Preferences.getBoolean("autoLoad", false)) {
-	        canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
-	        canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
-	    }
+	    if (!Preferences.getBoolean("autoLoad", false)) return;
+	    canvasScrollPane.setHvalue(Preferences.getDouble("scrollX", 0d));
+	    canvasScrollPane.setVvalue(Preferences.getDouble("scrollY", 0d));
 	}
 	
 	private ChangeListener<Number> createSizeChangeListener() {
 	    return (observable, oldValue, newValue) -> {
-	        if (canvasController == null) {
-	            return;
-	        }
-
-	        if (Preferences.getValue("scale", "MATCH_SCREEN").contains("MATCH")) {
-	            setZoom(Preferences.getValue("scale", "MATCH_SCREEN"));
-	            invalidate();
-	        }
+	        if (canvasController == null) return;
+	        if (!Preferences.getValue("scale", "MATCH_SCREEN").contains("MATCH")) return;
+            setZoom(Preferences.getValue("scale", "MATCH_SCREEN"));
+            invalidate();
 	    };
 	}
 
@@ -444,9 +438,7 @@ public class OverviewController extends Controller {
 	    final StitchList stitchList =
 	            stitchListByPixel.get(pixelKey(x, y));
 
-	    if (stitchList == null) {
-	        return;
-	    }
+	    if (stitchList == null) return;
 
 	    colorTable.requestFocus();
 	    colorTable.getSelectionModel().select(stitchList);
@@ -457,7 +449,7 @@ public class OverviewController extends Controller {
 		canvasController.invalidate();
 	}
 
-	public void highlightPixel(KeyCode code) {
+	public void highlightPixel(final KeyCode code) {
 	    if (x == -1 || y == -1) return;
 
 	    switch (code) {
@@ -469,23 +461,19 @@ public class OverviewController extends Controller {
 	    }
 	}
 
-	private void highlightPixel(double originalX, double originalY) {
-	    int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
-	    int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
+	private void highlightPixel(final double originalX, final double originalY) {
+		final int x = (int) ((originalX - canvasController.getMargin()) / canvasController.getScale());
+		final int y = (int) ((originalY - canvasController.getMargin()) / canvasController.getScale());
 	    highlightPixel(x, y);
 	}
 
 	private void highlightPixel(int x, int y) {
-	    if (x == -1 || y == -1) {
-	        return;
-	    }
+	    if (x == -1 || y == -1) return;
 
 	    final StitchList stitchList =
 	            stitchListByPixel.get(pixelKey(x, y));
 
-	    if (stitchList == null) {
-	        return;
-	    }
+	    if (stitchList == null) return;
 
 	    if (this.x == x && this.y == y) {
 	        x = -1;
@@ -548,9 +536,7 @@ public class OverviewController extends Controller {
 	
 	@FXML
 	public void loadMenu() {
-	    if (!confirmExit(this::showLoadDialog)) {
-	        return;
-	    }
+	    if (!confirmExit(this::showLoadDialog)) return;
 
 	    showLoadDialog();
 	}
@@ -559,34 +545,31 @@ public class OverviewController extends Controller {
 	    initializeCsvFile();
 	    initializeLoadFileChooser();
 
-	    File file = loadFileChooser.showOpenDialog(overviewStage);
+	    final File file = loadFileChooser.showOpenDialog(overviewStage);
 
-	    if (file != null) {
-	        handleFileLoad(file);
-	    }
+	    if (file == null) return;
+	    handleFileLoad(file);
 	}
 
 	private void initializeCsvFile() {
-	    if (csvFile == null) {
-	        csvFile = new File(Preferences.getValue("csvFile", "resources/dmc.csv"));
-	    }
+	    if (csvFile != null) return;
+	    csvFile = new File(Preferences.getValue("csvFile", "resources/dmc.csv"));
 	}
 
 	private void initializeLoadFileChooser() {
-	    if (loadFileChooser == null) {
-	        loadFileChooser = new FileChooser();
-	        loadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-	        dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"), "*.dmc");
-	        
-	        FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_all"), "*.*");
-	        FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_image"), "*.bmp", "*.jpg", "*.jpeg", "*.gif", "*.png", "*.apng");
+	    if (loadFileChooser != null) return;
+	    loadFileChooser = new FileChooser();
+        loadFileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        dmcFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_dmc"), "*.dmc");
+        
+        FileChooser.ExtensionFilter allFileFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_all"), "*.*");
+        FileChooser.ExtensionFilter imageFilter = new FileChooser.ExtensionFilter(Resources.getString("filter_image"), "*.bmp", "*.jpg", "*.jpeg", "*.gif", "*.png", "*.apng");
 
-	        loadFileChooser.getExtensionFilters().addAll(allFileFilter, dmcFilter, imageFilter);
-	    }
+        loadFileChooser.getExtensionFilters().addAll(allFileFilter, dmcFilter, imageFilter);
 	}
 
-	private void handleFileLoad(File file) {
-	    String extension = getExtension(file);
+	private void handleFileLoad(final File file) {
+		final String extension = getExtension(file);
 
 	    try {
 	        if (".dmc".equals(extension)) {
@@ -599,7 +582,7 @@ public class OverviewController extends Controller {
 	    }
 	}
 
-	private void loadDmc(File file) {
+	private void loadDmc(final File file) {
 	    dmcFile = file;
 	    overviewStage.setTitle(dmcFile.getName());
 	    main.load(new GraphicsEngine.Builder(csvFile, dmcFile), GraphicsEngine.Mode.LOAD);
@@ -610,10 +593,10 @@ public class OverviewController extends Controller {
         );
 	}
 
-	private void makeNewFile(File file) {
+	private void makeNewFile(final File file) {
 	    resetScrollPreferences();
 
-	    GraphicsEngine.Builder builder = new GraphicsEngine.Builder(csvFile, file);
+	    final GraphicsEngine.Builder builder = new GraphicsEngine.Builder(csvFile, file);
 	    builder.setColorLimit(Preferences.getInteger("maximumColorLimit", 0))
 	           .setBackground(
 	               Preferences.getColor(
@@ -636,9 +619,9 @@ public class OverviewController extends Controller {
 	    name = extractFileNameWithoutExtension(dmcFile);
 	}
 
-	private String extractFileNameWithoutExtension(File file) {
-	    String fileName = file.getName();
-	    int extensionIndex = fileName.lastIndexOf('.');
+	private String extractFileNameWithoutExtension(final File file) {
+		final String fileName = file.getName();
+		final int extensionIndex = fileName.lastIndexOf('.');
 
 	    if (extensionIndex <= 0) {
 	        return fileName;
@@ -652,9 +635,9 @@ public class OverviewController extends Controller {
 	    Preferences.setValue("scrollY", "0");
 	}
 
-	private String getExtension(File file) {
-	    String fileName = file.getName();
-	    int extensionIndex = fileName.lastIndexOf('.');
+	private String getExtension(final File file) {
+		final String fileName = file.getName();
+		final int extensionIndex = fileName.lastIndexOf('.');
 
 	    if (extensionIndex <= 0) {
 	        return "";
@@ -674,9 +657,7 @@ public class OverviewController extends Controller {
 	        final File targetFile,
 	        final Runnable onSuccess) {
 
-	    if (saveInProgress || save.isDisable()) {
-	        return;
-	    }
+	    if (saveInProgress || save.isDisable()) return;
 
 	    final StitchImage image = canvasController.getImage();
 
@@ -750,20 +731,17 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void saveAsMenu() {
-	    if (!saveAs.isDisable()) {
-	        initializeSaveToFileChooser();
+	    if (saveAs.isDisable()) return;
+    	initializeSaveToFileChooser();
 
-	        final File saveFile =
-	                saveToFileChooser.showSaveDialog(overviewStage);
-
-	        if (saveFile != null) {
-	            saveDocumentAsync(saveFile, () -> {
-	                dmcFile = saveFile;
-	                name = extractFileNameWithoutExtension(saveFile);
-	                overviewStage.setTitle(dmcFile.getName());
-	            });
-	        }
-	    }
+        final File saveFile = saveToFileChooser.showSaveDialog(overviewStage);
+        
+        if (saveFile == null) return;
+        saveDocumentAsync(saveFile, () -> {
+            dmcFile = saveFile;
+            name = extractFileNameWithoutExtension(saveFile);
+            overviewStage.setTitle(dmcFile.getName());
+        });
 	}
 
 	private void initializeSaveToFileChooser() {
@@ -782,63 +760,52 @@ public class OverviewController extends Controller {
 	}
 
 	private boolean confirmExit(final Runnable onSaveSuccess) {
-	    if (saveInProgress) {
-	        return false;
-	    }
+	    if (saveInProgress) return false;
 
-	    if (canvasController != null
-	            && canvasController.getImage().isChanged()) {
+	    if (canvasController == null || !canvasController.getImage().isChanged()) return true;
+	    initializeConfirmExitAlert();
 
-	        initializeConfirmExitAlert();
+        final Optional<ButtonType> result = confirmExitAlert.showAndWait();
 
-	        final Optional<ButtonType> result =
-	                confirmExitAlert.showAndWait();
+        if (!result.isPresent()) return false;
+        
+        if (result.get() == saveButton) {
+            saveDocumentAsync(dmcFile, onSaveSuccess);
+            return false;
+        }
+        
+        if (result.get() == notSaveButton) return true;
 
-	        if (result.isPresent()) {
-	            if (result.get() == saveButton) {
-	                saveDocumentAsync(dmcFile, onSaveSuccess);
-	                return false;
-	            } else if (result.get() == notSaveButton) {
-	                return true;
-	            }
-	        }
-
-	        return false;
-	    }
-
-	    return true;
+        return false;
 	}
 
 	private void initializeConfirmExitAlert() {
-	    if (confirmExitAlert == null) {
-	        saveButton = new ButtonType(Resources.getString("save"), ButtonData.YES);
-	        notSaveButton = new ButtonType(Resources.getString("save_no"), ButtonData.NO);
-	        ButtonType cancelButton = new ButtonType(Resources.getString("cancel_button"), ButtonData.CANCEL_CLOSE);
+	    if (confirmExitAlert != null) return;
+	    saveButton = new ButtonType(Resources.getString("save"), ButtonData.YES);
+        notSaveButton = new ButtonType(Resources.getString("save_no"), ButtonData.NO);
+        final ButtonType cancelButton = new ButtonType(Resources.getString("cancel_button"), ButtonData.CANCEL_CLOSE);
 
-	        confirmExitAlert = new Alert(AlertType.CONFIRMATION);
-	        confirmExitAlert.getDialogPane().getStylesheets().add(Resources.getCSS());
-	        confirmExitAlert.setTitle(Resources.getString("warning"));
-	        confirmExitAlert.setHeaderText(Resources.getString("file_changed_header"));
-	        confirmExitAlert.setContentText(Resources.getString("file_changed"));
+        confirmExitAlert = new Alert(AlertType.CONFIRMATION);
+        confirmExitAlert.getDialogPane().getStylesheets().add(Resources.getCSS());
+        confirmExitAlert.setTitle(Resources.getString("warning"));
+        confirmExitAlert.setHeaderText(Resources.getString("file_changed_header"));
+        confirmExitAlert.setContentText(Resources.getString("file_changed"));
 
-	        Image icon = new Image("file:resources/icon/information.png");
-	        confirmExitAlert.setGraphic(new ImageView(icon));
-	        ((Stage) confirmExitAlert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
+        final Image icon = new Image("file:resources/icon/information.png");
+        confirmExitAlert.setGraphic(new ImageView(icon));
+        ((Stage) confirmExitAlert.getDialogPane().getScene().getWindow()).getIcons().add(icon);
 
-	        confirmExitAlert.getButtonTypes().setAll(saveButton, notSaveButton, cancelButton);
-	    }
+        confirmExitAlert.getButtonTypes().setAll(saveButton, notSaveButton, cancelButton);
 	}
 
 	@FXML
 	public void exportBlueprintMenu() {
-	    if (!exportBlueprint.isDisable()) {
-	        initializeBlueprintFileChooser();
-	        File blueprintFile = blueprintFileChooser.showSaveDialog(overviewStage);
-	        
-	        if (blueprintFile != null) {
-	            exportBlueprintToFile(blueprintFile);
-	        }
-	    }
+	    if (exportBlueprint.isDisable()) return;
+	    initializeBlueprintFileChooser();
+        final File blueprintFile = blueprintFileChooser.showSaveDialog(overviewStage);
+        
+        if (blueprintFile == null) return;
+        exportBlueprintToFile(blueprintFile);
 	}
 
 	private void initializeBlueprintFileChooser() {
@@ -883,7 +850,7 @@ public class OverviewController extends Controller {
 	    );
 	}
 
-	private void exportBlueprintToFile(File blueprintFile) {
+	private void exportBlueprintToFile(final File blueprintFile) {
 	    blueprint.invalidate();
 	    blueprint.getCanvas().snapshot(null, blueprintWritableImage);
 
@@ -897,14 +864,12 @@ public class OverviewController extends Controller {
 
 	@FXML
 	public void exportConvertedImageMenu() {
-	    if (!exportConvertedImage.isDisable()) {
-	        initializeConvertedImageFileChooser();
-	        File imageFile = convertedImageFileChooser.showSaveDialog(overviewStage);
+	    if (exportConvertedImage.isDisable()) return;
+	    initializeConvertedImageFileChooser();
+        final File imageFile = convertedImageFileChooser.showSaveDialog(overviewStage);
 
-	        if (imageFile != null) {
-	            exportConvertedImageToFile(imageFile);
-	        }
-	    }
+        if (imageFile == null) return;
+        exportConvertedImageToFile(imageFile);
 	}
 
 	private void initializeConvertedImageFileChooser() {
@@ -935,8 +900,8 @@ public class OverviewController extends Controller {
 	    }
 	}
 
-	private void exportConvertedImageToFile(File imageFile) {
-	    BufferedImage bufferedImage = SwingFXUtils.fromFXImage(canvasController.getImage().getFXImage(), null);
+	private void exportConvertedImageToFile(final File imageFile) {
+		final BufferedImage bufferedImage = SwingFXUtils.fromFXImage(canvasController.getImage().getFXImage(), null);
 
 	    try {
 	        ImageIO.write(bufferedImage, "png", imageFile);
@@ -961,11 +926,7 @@ public class OverviewController extends Controller {
 	
 	@FXML
 	public void toggleWindowColorTable() {
-		if (toggleColorTableItem.isSelected() == true) {
-			setColorTable(true);
-		} else {
-			setColorTable(false);
-		}
+		setColorTable(toggleColorTableItem.isSelected());
 	}
 	
 	@FXML
@@ -1005,9 +966,8 @@ public class OverviewController extends Controller {
 	@FXML
 	public void onShowNumberItemClicked() {
 		Preferences.setValue("drawGridNumber", Boolean.toString(showNumberItem.isSelected()));
-		if(canvasController != null) {
-			canvasController.invalidate();
-		}
+		if(canvasController == null) return;
+		canvasController.invalidate();
 	}
 	
 	private Stage authorStage;

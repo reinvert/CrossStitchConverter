@@ -68,15 +68,12 @@ class CanvasController {
 	    text.setWrappingWidth(0);
 	    text.setLineSpacing(0);
 		
-		{
-			for (final PixelList pixelList : image.getPixelLists()) {
-	            if (pixelList.isHighlighted()) {
-	                highlightedCount++;
-	            }
-	        }
-			isHighlightExist = highlightedCount > 0;
-
-		}
+		for (final PixelList pixelList : image.getPixelLists()) {
+            if (pixelList.isHighlighted()) {
+                highlightedCount++;
+            }
+        }
+		isHighlightExist = highlightedCount > 0;
 	}
 
 	private void drawGrid(

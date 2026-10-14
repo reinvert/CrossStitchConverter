@@ -130,8 +130,11 @@ public final class GraphicsEngine implements Runnable{
         try {
             if (loadMode == Mode.NEW_FILE) {
                 processNewFile(imageFile);
-            } else if (loadMode == Mode.LOAD) {
+                return;
+            }
+            if (loadMode == Mode.LOAD) {
                 loadFromSavedFile(imageFile);
+                return;
             }
         } catch (Exception e) {
             LogPrinter.print(e);
@@ -194,18 +197,18 @@ public final class GraphicsEngine implements Runnable{
     }
 
     private void loadFromSavedFile(final File file) throws IOException, ClassNotFoundException {
-        StitchImage stitchImage = (StitchImage) Resources.readObject(file);
+        final StitchImage stitchImage = (StitchImage) Resources.readObject(file);
         notifyListeners(stitchImage);
     }
 
     private void notifyListeners(final StitchImage image) {
-        for (Listener listener : listeners) {
+        for (final Listener listener : listeners) {
             listener.onFinished(image);
         }
     }
 
-    private ColorConverter createColorConverter(BufferedImage image, StitchImage stitchImage, List<StitchColor> colorList) {
-        ColorConverter.Builder builder = new ColorConverter.Builder(image, stitchImage, colorList)
+    private ColorConverter createColorConverter(final BufferedImage image, final StitchImage stitchImage, final List<StitchColor> colorList) {
+    	final ColorConverter.Builder builder = new ColorConverter.Builder(image, stitchImage, colorList)
                 .setThreadCount(threadCount)
                 .setConvertMode(convertMode)
                 .setProgressListener(progressListener);
@@ -220,9 +223,7 @@ public final class GraphicsEngine implements Runnable{
             final List<String[]> csv) {
 
         for (final String[] row : csv) {
-            if (row.length > 0 && "ID".equals(row[0])) {
-                continue;
-            }
+            if (row.length > 0 && "ID".equals(row[0])) continue;
 
             if (row.length > 2 && row[2].contains("[")) {
                 return readColorListFromExpressions(csv);
@@ -242,9 +243,7 @@ public final class GraphicsEngine implements Runnable{
         for (int i = 0; i < csv.size(); i++) {
             final String[] row = csv.get(i);
 
-            if (row.length > 0 && "ID".equals(row[0])) {
-                continue;
-            }
+            if (row.length > 0 && "ID".equals(row[0])) continue;
 
             if (row.length < 3) {
                 throw new IllegalArgumentException(
@@ -260,18 +259,20 @@ public final class GraphicsEngine implements Runnable{
 
                 colors.add(new StitchColor(
                         rgb[0], rgb[1], rgb[2], name));
+                continue;
 
-            } else if (expression.startsWith("GrayLevel[")) {
+            }
+            
+            if (expression.startsWith("GrayLevel[")) {
                 final float[] gray = parseColorComponents(
                         expression, "GrayLevel[", 1);
 
                 colors.add(new StitchColor(
                         gray[0], gray[0], gray[0], name));
-
-            } else {
-                throw new IllegalArgumentException(
+                continue;
+            } 
+            throw new IllegalArgumentException(
                         "Unsupported color expression: " + expression);
-            }
         }
 
         return colors;
