@@ -40,6 +40,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
@@ -58,6 +59,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -89,6 +92,14 @@ public class OverviewController extends Controller {
 	public SplitPane verticalSplitPane, horizontalSplitPane;
 	@FXML
 	public TextField zoom;
+	@FXML
+	private HBox progressSegments;
+	@FXML
+	private Label progressLabel;
+	@FXML
+	private Region completedProgressSegment;
+	@FXML
+	private Region highlightedProgressSegment;
 
 	private int x = -1, y = -1;
 	
@@ -121,14 +132,11 @@ public class OverviewController extends Controller {
     }
 
     private void updateApplication() {
-        if (Preferences.getBoolean("updateNeverRemind", false)) {
-            return;
-        }
+        if (Preferences.getBoolean("updateNeverRemind", false)) return;
 
         executorService.submit(() -> {
-            if (UpdateChecker.hasUpdate()) {
-                Platform.runLater(() -> UpdateDialog.show(hostServices));
-            }
+            if (!UpdateChecker.hasUpdate()) return;
+            Platform.runLater(() -> UpdateDialog.show(hostServices));
         });
     }
 	
@@ -153,9 +161,7 @@ public class OverviewController extends Controller {
 			public void run() {
 					try {
 						final String dir = Preferences.getValue("autoLoadFile", "");
-						if(dir.equals("")) {
-							return;
-						}
+						if(dir.equals("")) return;
 						loadDmc(new File(dir));
 					} catch (final NoSuchElementException e) {
 						LogPrinter.error(Resources.getString("auto_load_file_not_found"));
@@ -180,6 +186,10 @@ public class OverviewController extends Controller {
 	    setupCanvasScrollPaneResizeHandlers();
 
 	    canvas.requestFocus();
+	    
+	    progressSegments.widthProperty().addListener(
+	            (observable, oldWidth, newWidth) -> updateProgressGraph()
+	    );
 	}
 
 	private void setupHighlightColumn() {
@@ -359,13 +369,27 @@ public class OverviewController extends Controller {
 	        }
 	    });
 
-	    stitchListArrayList.addListener((ListChangeListener<StitchList>) c -> {
-	        if (c.next() && c.wasUpdated()) {
-	            Platform.runLater(this::invalidate);
-	        }
-	    });
+	    stitchListArrayList.addListener(
+	            (ListChangeListener<StitchList>) change -> {
+	                boolean updated = false;
+
+	                while (change.next()) {
+	                    if (change.wasUpdated()) {
+	                        updated = true;
+	                    }
+	                }
+
+	                if (updated) {
+	                    updateProgress();
+	                    Platform.runLater(this::invalidate);
+	                }
+	            }
+	    );
 
 	    colorTable.setItems(stitchListArrayList);
+
+	    updateProgress();
+
 	    setZoom(Preferences.getValue("scale", "MATCH_WIDTH"));
 
 	    enableCanvasInteraction();
@@ -423,6 +447,61 @@ public class OverviewController extends Controller {
             setZoom(Preferences.getValue("scale", "MATCH_SCREEN"));
             invalidate();
 	    };
+	}
+	
+	private long totalPixelCount;
+	private long completedPixelCount;
+	private long highlightedPixelCount;
+
+	private void updateProgress() {
+	    totalPixelCount = 0L;
+	    completedPixelCount = 0L;
+	    highlightedPixelCount = 0L;
+
+	    for (final StitchList stitchList : colorTable.getItems()) {
+	        final long pixelCount =
+	                stitchList.totalNumberProperty().get();
+
+	        totalPixelCount += pixelCount;
+
+	        if (stitchList.isCompleted()) {
+	            completedPixelCount += pixelCount;
+	        } else if (stitchList.isHighlighted()) {
+	            highlightedPixelCount += pixelCount;
+	        }
+	    }
+
+	    final double completionRatio =
+	            totalPixelCount == 0L
+	                    ? 0.0
+	                    : (double) completedPixelCount / totalPixelCount;
+
+	    progressLabel.setText(
+	            String.format(
+	                    Locale.ROOT,
+	                    "%.2f%%",
+	                    completionRatio * 100.0
+	            )
+	    );
+
+	    updateProgressGraph();
+	}
+
+	private void updateProgressGraph() {
+	    final double width = progressSegments.getWidth();
+
+	    final double pixelsToWidth =
+	            totalPixelCount == 0L
+	                    ? 0.0
+	                    : width / totalPixelCount;
+
+	    completedProgressSegment.setPrefWidth(
+	            completedPixelCount * pixelsToWidth
+	    );
+
+	    highlightedProgressSegment.setPrefWidth(
+	            highlightedPixelCount * pixelsToWidth
+	    );
 	}
 
 	private void getClickedColor(
@@ -623,9 +702,7 @@ public class OverviewController extends Controller {
 		final String fileName = file.getName();
 		final int extensionIndex = fileName.lastIndexOf('.');
 
-	    if (extensionIndex <= 0) {
-	        return fileName;
-	    }
+	    if (extensionIndex <= 0) return fileName;
 
 	    return fileName.substring(0, extensionIndex);
 	}
@@ -639,9 +716,7 @@ public class OverviewController extends Controller {
 		final String fileName = file.getName();
 		final int extensionIndex = fileName.lastIndexOf('.');
 
-	    if (extensionIndex <= 0) {
-	        return "";
-	    }
+	    if (extensionIndex <= 0) return "";
 
 	    return fileName.substring(extensionIndex).toLowerCase(Locale.ROOT);
 	}
@@ -892,12 +967,11 @@ public class OverviewController extends Controller {
 	}
 	
 	private void initializePngExtensionFilter() {
-	    if (pngExtensionFilter == null) {
-	        pngExtensionFilter = new FileChooser.ExtensionFilter(
-	                Resources.getString("png_file"),
-	                "*.png"
-	        );
-	    }
+	    if (pngExtensionFilter != null) return;
+	    pngExtensionFilter = new FileChooser.ExtensionFilter(
+                Resources.getString("png_file"),
+                "*.png"
+        );
 	}
 
 	private void exportConvertedImageToFile(final File imageFile) {

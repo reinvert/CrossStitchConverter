@@ -14,6 +14,8 @@
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 
 <BorderPane fx:id="borderPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="1080.0" prefWidth="1920.0" style="-fx-focus-color: transparent;" stylesheets="@Style.css" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/27" fx:controller="com.stitch.converter.view.OverviewController">
    <right>
@@ -32,7 +34,7 @@
    <center>
       <BorderPane BorderPane.alignment="CENTER">
          <top>
-            <HBox fillHeight="false" maxHeight="20.0" prefHeight="20.0" prefWidth="1590.0" BorderPane.alignment="CENTER">
+            <HBox fillHeight="true" maxHeight="20.0" prefHeight="20.0" prefWidth="1590.0" BorderPane.alignment="CENTER">
                <children>
                   <MenuBar fx:id="menuBar" maxHeight="20.0" prefHeight="20.0">
                     <menus>
@@ -98,6 +100,55 @@
                     </menus>
                   </MenuBar>
                   <TextField fx:id="zoom" disable="true" focusTraversable="false" prefWidth="100.0" />
+                  <StackPane fx:id="progressGraph"
+           minWidth="0.0"
+           prefWidth="300.0"
+           maxWidth="1.7976931348623157E308"
+           minHeight="0.0"
+           prefHeight="20.0"
+           maxHeight="1.7976931348623157E308"
+           HBox.hgrow="ALWAYS"
+           style="-fx-background-color: #dedede;">
+
+    <children>
+        <HBox fx:id="progressSegments"
+              spacing="0.0"
+              fillHeight="true"
+              minWidth="0.0"
+              maxWidth="1.7976931348623157E308"
+              minHeight="0.0"
+              maxHeight="1.7976931348623157E308">
+
+            <children>
+                <Region fx:id="completedProgressSegment"
+                        minWidth="0.0"
+                        prefWidth="0.0"
+                        maxWidth="1.7976931348623157E308"
+                        minHeight="0.0"
+                        maxHeight="1.7976931348623157E308"
+                        style="-fx-background-color: #4CAF50;" />
+
+                <Region fx:id="highlightedProgressSegment"
+                        minWidth="0.0"
+                        prefWidth="0.0"
+                        maxWidth="1.7976931348623157E308"
+                        minHeight="0.0"
+                        maxHeight="1.7976931348623157E308"
+                        style="-fx-background-color: #FFD54F;" />
+            </children>
+        </HBox>
+
+        <Label fx:id="progressLabel"
+               text="0.00%"
+               alignment="CENTER"
+               maxWidth="1.7976931348623157E308"
+               maxHeight="1.7976931348623157E308"
+               mouseTransparent="true"
+               StackPane.alignment="CENTER"
+               style="-fx-background-color: transparent;
+                      -fx-text-fill: black;" />
+    </children>
+</StackPane>
                </children>
             </HBox>
          </top>
