@@ -120,12 +120,9 @@ class ColorConverter implements Runnable {
 
             for (final PaletteEntry entry : cachedPalette) {
                 final double calculatedDifference =
-                        ImageTools.calculateCIEDE2000Squared(
-                                targetLab,
-                                entry.lab,
-                                targetChroma,
-                                targetChroma
-                        );
+                		ImageTools.calculateCIEDE2000Squared(
+                			    targetLab, entry.lab, targetChroma, entry.chroma
+                			);
 
                 if (calculatedDifference < difference) {
                     alternateColor = outputColor;
