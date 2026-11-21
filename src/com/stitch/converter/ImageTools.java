@@ -168,7 +168,7 @@ final class ImageTools {
         return calculateCIEDE2000(
                 c1,
                 c2,
-                Math.hypot(c1.a, c1.b));
+                Math.hypot(c2.a, c2.b));
     }
 
     public static double calculateCIEDE2000(
@@ -179,7 +179,7 @@ final class ImageTools {
         return calculateCIEDE2000(
                 c1,
                 c2,
-                Math.hypot(c2.a, c2.b),
+                Math.hypot(c1.a, c1.b),
                 color2Chroma);
     }
 
